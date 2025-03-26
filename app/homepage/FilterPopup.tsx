@@ -16,7 +16,16 @@ interface SearchPopupProps {
 export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [gender, setGender] = useState("Male");
+  const [age, setAge] = useState('18');
   const times = ['Morning', 'Afternoon', 'Evening', 'Night']
+  const [time, setTime] = useState("Morning");
+
+  const clearFilter: () => void = () => {
+     setGender("Male");
+      setPriceRange([0, 100000]);
+      setTime("Morning");
+      setAge('18');
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -32,7 +41,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
         <Card className="px-3">
         <div className="space-y-2">
           <Label className="font-semibold">Whats Your Age?</Label>
-          <Select>
+          <Select value={age.toString()} onValueChange={(value) => setAge(value)}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Search By Age" />
                   </SelectTrigger>
@@ -67,7 +76,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
         <Card className="px-3">
         <div className="space-y-2">
           <Label className="font-semibold">Select Time</Label>
-          <Select>
+          <Select value={time} onValueChange={setTime}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Search By Time" />
                   </SelectTrigger>
@@ -91,6 +100,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
             max={100000}
             step={100}
             defaultValue={priceRange}
+            value={priceRange}
             onValueChange={setPriceRange}
           />
         </div>
@@ -98,7 +108,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
         {/* Action Buttons */}
         <div className="flex justify-center space-x-4">
-          <Button variant="destructive" className="rounded-2xl">Clear All</Button>
+          <Button variant="destructive" className="rounded-2xl" onClick={clearFilter}>Clear All</Button>
           <Button variant="destructive" className="rounded-2xl">
             <Search />Search
           </Button>

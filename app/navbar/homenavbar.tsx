@@ -241,9 +241,9 @@ const LocationSelector = () => {
     return (
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
-                <div className="w-2/12 min-w-[50px] flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer">
+                <div className=" flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer ">
                     <Image src="/Icons/location.svg" alt="Logo" width={13} height={15} />
-                    <div className="h-[18px] text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] leading-[18px]">
+                    <div className="text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] truncate max-w-[120px] leading-[18px] ">
                         {choosedLocation || ""}  {/* ✅ Show "Detecting..." until location is set */}
                     </div>
                 </div>
