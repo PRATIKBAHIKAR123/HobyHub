@@ -14,24 +14,24 @@ export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
-  
+
   // Validate phone number length
   const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
   return (
     <div className="">
-      <div className="text-[#4f6a85] login-title font-medium text-center mt-[10px] font-['Minion_Pro']">
+      <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
         Welcome to HobyHub!
       </div>
-      <div className=" h-[27px] relative text-center text-[#9c9e9e] text-md trajan-pro font-bold mt-[13px]">Start getting discovered locally and globally.</div>
-      <div className="container mx-auto flex flex-col md:flex-row sm:col items-center gap-2 justify-center mt-[30px]">
+      <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
         {/* Login Card */}
 
-        <Card className="px-[18px] py-[17px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
-          <h2 className="text-black text-lg font-bold trajan-pro">Login</h2>
-          <div className="bg-[#fefefe] rounded-[7px] border-[3px] border-[#dddfe3] px-[14px] py-[18px] mt-[23px]">
+        <Card className="px-[18px] py-[12px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
+          <h2 className="text-black text-lg font-bold trajan-pro mt-[8px]">Login</h2>
+          <div className="bg-[#fefefe] rounded-[7px] border-[3px] border-[#dddfe3] px-[14px] py-[18px] mt-[20px]">
             {/* Phone Input */}
             <label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Phone Number</label>
-            <div className="flex items-center  mt-2">
+            <div className="flex items-center">
               <Select>
                 <SelectTrigger className="w-[20%] h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
                   <SelectValue placeholder="+91" />
@@ -55,7 +55,7 @@ export default function LoginPage() {
             </p>
 
             {/* Features */}
-            <ul className="text-[#b6b6b7] text-[12.5px] trajan-pro mt-3 space-y-1">
+            <ul className="text-[#b6b6b7] text-[11.5px] trajan-pro mt-3 space-y-1">
               <li>✔ Get discovered by local & international learners easily</li>
               <li>✔ Showcase your workshops & skills</li>
               <li>✔ Connect with passionate hobbyists</li>
@@ -105,15 +105,14 @@ export default function LoginPage() {
           </div>
 
           {/* Button */}
-          <Button className={`mt-[26px]  sm:w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro ${
-          isPhoneValid ? " text-white" : " text-[#d4dde8]"
-        }`} disabled={!isPhoneValid} onClick={() => router.push("otp")}>
+          <Button className={`mt-[20px]  sm:w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro ${isPhoneValid ? " text-white" : " text-[#d4dde8]"
+            }`} disabled={!isPhoneValid} onClick={() => router.push("otp")}>
             Send OTP
           </Button>
         </Card>
 
         {/* Illustration */}
-        <Card className="rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px] max-h-[380px]">
+        <Card className=" px-[18px] py-[13px] rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px] max-h-[340px]">
           <CardContent>
             <Carousel className="w-full">
               <CarouselContent>
@@ -125,9 +124,10 @@ export default function LoginPage() {
                         alt="Illustration"
                         width={445}
                         height={445}
-                        className="w-[418px] max-h-[340px]"
+                        className="w-[418px] max-h-[320px]"
                       />
                     </div>
+
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -146,5 +146,8 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+
+
   );
+
 }
