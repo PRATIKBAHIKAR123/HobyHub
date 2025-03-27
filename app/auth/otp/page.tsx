@@ -14,11 +14,11 @@ export default function LoginPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   return (
     <div className="">
-      <div className="text-[#4f6a85] login-title font-medium text-center mt-[10px] font-['Minion_Pro']">
+      <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
         Welcome to HobyHub!
       </div>
-      <div className=" h-[27px] relative text-center text-[#9c9e9e] text-md trajan-pro font-bold mt-[13px]">Start getting discovered locally and globally.</div>
-      <div className="container mx-auto flex flex-col md:flex-row sm:col items-center gap-2 justify-center mt-[30px]">
+      <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <div className="container mx-auto flex flex-col md:flex-row sm:col items-center gap-2 justify-center mt-[15px]">
         {/* Login Card */}
 
         <Card className="px-[18px] py-[17px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
