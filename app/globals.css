@@ -314,5 +314,31 @@ color: #ABABAB;
       @apply top-42;
     }
   }
+
+        /* Custom Scrollbar Styles */
+        .custom-scrollbar {
+          /* Existing content can still scroll */
+          overflow-y: auto;
+        }
+    
+        /* WebKit (Chrome, Safari, newer versions of Opera) */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          /* Very thin scrollbar */
+        }
+    
+        /* Scrollbar Track */
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          /* Light grey background */
+          border-radius: 10px;
+        }
+    
+        /* Scrollbar Handle */
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #003161;
+          /* Dark grey scrollbar */
+          border-radius: 10px;
+        }
 }
 
