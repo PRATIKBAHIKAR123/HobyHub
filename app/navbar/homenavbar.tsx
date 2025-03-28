@@ -235,12 +235,17 @@ const LocationSelector = () => {
 
     const handleLocationChange = (newLocation: string) => {
         setChoosedLocation(newLocation);
-        setIsPopoverOpen(false);  // ✅ Close Popover after selection
+        setTimeout(() => {
+            setIsPopoverOpen(false);
+          }, 200); // ✅ Close Popover after selection
     };
 
     return (
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-            <PopoverTrigger onClick={() => setIsPopoverOpen(!isPopoverOpen)}>
+            <PopoverTrigger onClick={(e) => {
+                e.stopPropagation(); // Prevents immediate closing on input selection
+                setIsPopoverOpen(!isPopoverOpen);
+            }}>
                 <div className=" flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer ">
                     <Image src="/Icons/location.svg" alt="Logo" width={13} height={15} />
                     <div className="text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] truncate max-w-[120px] leading-[18px] ">
@@ -248,7 +253,7 @@ const LocationSelector = () => {
                     </div>
                 </div>
             </PopoverTrigger>
-            <LocationPopup onLocationChange={handleLocationChange}  />
+            <LocationPopup onLocationChange={handleLocationChange} />
         </Popover>
     );
 };

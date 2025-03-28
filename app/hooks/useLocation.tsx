@@ -4,6 +4,7 @@ const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts"; // Replace wit
 
 const useLocation = () => {
     const [location, setLocation] = useState("");
+    const [isDetecting, setisDetecting] = useState(false);
   
     const getAddressFromCoordinates = async (lat: number, lng: number) => {
       try {
@@ -23,14 +24,17 @@ const useLocation = () => {
     };
   
     const detectLocation = () => {
+      setisDetecting(true);
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
             getAddressFromCoordinates(latitude, longitude);
+            setisDetecting(false);
           },
           (error) => {
             console.error("Geolocation error:", error);
+            setisDetecting(false);
             setLocation("Location not available");
           }
         );
@@ -44,7 +48,7 @@ const useLocation = () => {
       detectLocation();
     }, []);
   
-    return { location, setLocation, detectLocation }; // ✅ Expose detectLocation function
+    return { location, setLocation, detectLocation, isDetecting }; // ✅ Expose detectLocation function
   };
   
 
