@@ -19,7 +19,6 @@ export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [gender, setGender] = useState("Male");
   const [email, setEmail] = useState("");
-  const [age, setAge] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>()
 
   // Validate phone number length

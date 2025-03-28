@@ -103,7 +103,7 @@ export default function LoginPage() {
               Privacy Policy
             </label>
           </div>
-          <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Don't have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a></span>
+          <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Dont have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a></span>
           {/* Button */}
           <Button className={` sm:w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro ${isPhoneValid ? " text-white" : " text-[#d4dde8]"
             }`} disabled={!isPhoneValid} onClick={() => router.push("otp")}>
