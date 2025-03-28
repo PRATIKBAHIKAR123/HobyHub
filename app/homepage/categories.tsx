@@ -82,6 +82,7 @@ export function Categories() {
                       {cat.title}
                     </div>
                   </div>
+                  
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
