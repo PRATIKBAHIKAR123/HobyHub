@@ -53,7 +53,7 @@ export function Categories() {
   }, [carouselApi]);
   return (
     <div className="bg-white md:px-4 sm:px-2 w-full sticky top-32 md:top-16 z-9  border-b-1 border-gray ">
-      <Carousel setApi={setCarouselApi} opts={{ align: "start"  }} className="w-[90%] mx-auto mb-3">
+      <Carousel setApi={setCarouselApi} opts={{ align: "start" }} className="w-[90%] mx-auto mb-3">
         <CarouselContent className="items-center text-center  gap-2 md:gap-4">
           {categories.map((cat, index) => (
             <CarouselItem key={index} className="basis-1/5 sm:basis-1/4 lg:basis-1/11 md:basis-1/12 hover:-translate-y-1 hover:bg-gray-100">
@@ -71,37 +71,55 @@ export function Categories() {
 
               <DropdownMenu
                 open={activeCategory === index}
-                onOpenChange={(open) => setActiveCategory(open ? index : null)}
+                onOpenChange={(open) => setActiveCategory(open ? index : null)} modal={false}
               >
                 <DropdownMenuTrigger asChild>
                   <div
-                    className="pt-2 pb-[8px] flex-col justify-center items-center gap-px inline-flex cursor-pointer"
+                    className="pt-2 pb-[8px] flex-col items-center gap-px inline-flex cursor-pointer"
                   >
                     <Image src={cat.img} alt={cat.title} width={50} height={50} />
-                    <div className="h-[13px] text-center text-[#003161] text-[11.87px] font-bold font-['Minion_Pro']">
+                    <div className="h-[13px] text-center text-[#003161] text-[12.5px] font-bold font-['Minion_Pro']">
                       {cat.title}
                     </div>
                   </div>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent
-                  className="absolute left-1/2 -translate-x-1/2 w-50 max-h-[410px] font-['Minion_Pro'] gap-4 overflow-y-auto custom-scrollbar"
-                  align="center"
+                  className="
+                    w-[180px] // Fixed width that works on mobile and desktop
+                    max-h-[60vh] 
+                    font-['Minion_Pro'] 
+                    overflow-y-auto 
+                    custom-scrollbar
+                    z-50
+                  "
+                  align="start" // Use start alignment
+                  side="bottom"
+                  sideOffset={10}
+                  // Add these to handle positioning
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  onInteractOutside={(e) => {
+                    e.preventDefault();
+                    setActiveCategory(null);
+                  }}
                 >
-                  {cat.sucategories?.length > 0 ? (
-                    cat.sucategories.map((scat, sindex) => (
-                      <DropdownMenuItem
-                        key={sindex}
-                        onClick={() => setActiveCategory(null)}
-                        // Added larger padding and increased font size
-                        className="py-5 px-2 text-base text-[16px]  hover:bg-gray-100"
-                      >
-                        {scat}
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <DropdownMenuItem disabled>No Subcategories</DropdownMenuItem>
-                  )}
+                  <div className="grid grid-cols-1 gap-2 p-2"> {/* Responsive grid layout */}
+
+                    {cat.sucategories?.length > 0 ? (
+                      cat.sucategories.map((scat, sindex) => (
+                        <DropdownMenuItem
+                          key={sindex}
+                          onClick={() => setActiveCategory(null)}
+                          // Added larger padding and increased font size
+                          className="py-5 px-2 text-base text-[16px]  hover:bg-gray-100"
+                        >
+                          {scat}
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <DropdownMenuItem disabled>No Subcategories</DropdownMenuItem>
+                    )}
+                  </div>
                 </DropdownMenuContent>
 
               </DropdownMenu>
