@@ -11,15 +11,38 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/datepicker";
+import { registerCustomer } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [gender, setGender] = useState("Male");
   const [email, setEmail] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>()
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [message, setMessage] = useState("");
+
+
+      const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        setPassword("123456");
+        const formData = {
+          name: name,
+          emailId: email,
+          password: password,
+          phoneNumber: phoneNumber,
+          gender: gender,
+        };
+        e.preventDefault();
+        try {
+          const data = await registerCustomer(formData);
+          console.log('',message,data)
+          router.push("/auth/login");
+        } catch (err) {
+          setMessage(String(err));
+        }
+      };
 
   // Validate phone number length
   //const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
@@ -29,6 +52,7 @@ export default function LoginPage() {
         Welcome to HobyHub!
       </div>
       <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <form onSubmit={handleSubmit}>
       <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
         {/* Login Card */}
 
@@ -165,7 +189,7 @@ export default function LoginPage() {
           <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Already have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("login")}>Sign In</a></span>
           {/* Button */}
           <Button className={` sm:w-full md:w-[30%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro color-[#fff]" 
-            }`} onClick={() => router.push("otp")}>
+            }`} >
             Create Account
           </Button>
         </Card>
@@ -204,6 +228,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+      </form>
     </div>
 
 

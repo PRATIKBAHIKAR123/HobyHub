@@ -9,20 +9,39 @@ import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { generateOTP } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [policyChecked, setPolicyChecked] = useState(false);
 
   // Validate phone number length
   const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
+
+    const [message, setMessage] = useState("");
+  
+      const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        try {
+          const data = await generateOTP(phoneNumber);
+          localStorage.setItem("phoneNumber", phoneNumber);
+          console.log("Login successful:", data);
+          setMessage("OTP Generate successful!");
+          router.push("/auth/otp");
+          console.log("Login successful:", message);
+        } catch (err) {
+          setMessage(String(err));
+        }
+      };
   return (
     <div className="">
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
         Welcome to HobyHub!
       </div>
       <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <form onSubmit={handleGenerateOTP}>
       <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
         {/* Login Card */}
 
@@ -96,7 +115,11 @@ export default function LoginPage() {
           </Card>
           {/* Checkbox & Policy */}
           <div className="flex items-center gap-2 mt-[15px]">
-            <Checkbox id="terms" />
+            <Checkbox
+              id="terms"
+              checked={policyChecked}
+              onCheckedChange={(checked) => setPolicyChecked(checked === true)}
+            />
             <label htmlFor="terms" className="text-[#c6c7c7] text-xs trajan-pro font-bold">
               By proceeding, you agree to our
               Terms & Conditions and
@@ -105,8 +128,8 @@ export default function LoginPage() {
           </div>
           <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Dont have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a></span>
           {/* Button */}
-          <Button className={` sm:w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro ${isPhoneValid ? " text-white" : " text-[#d4dde8]"
-            }`} disabled={!isPhoneValid} onClick={() => router.push("otp")}>
+          <Button className={` sm:w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer ${isPhoneValid && policyChecked ? " text-white" : " text-[#d4dde8]"
+            }`} disabled={!isPhoneValid||!policyChecked}>
             Send OTP
           </Button>
         </Card>
@@ -145,6 +168,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+      </form>
     </div>
 
 

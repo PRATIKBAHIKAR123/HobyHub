@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Carousel, CarouselContent, CarouselItem, } from "@/components/ui/carousel";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,30 @@ export default function LoginPage() {
   const [username] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
+  const isOtpComplete = otp.length === 4;
+  const [policyChecked, setPolicyChecked] = useState(false);
+  const [timer, setTimer] = useState(53); // Initial timer (53 seconds)
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
+
+
+    useEffect(() => {
+      if (timer > 0) {
+        const interval = setInterval(() => {
+          setTimer((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(interval);
+      } else {
+        setIsResendDisabled(false); // Enable resend when timer reaches 0
+      }
+    }, [timer]);
+  
+    // Resend OTP handler
+    const handleResendOtp = () => {
+      setTimer(53); // Reset timer
+      setIsResendDisabled(true); // Disable resend button again
+      // Call API to resend OTP
+    };
+
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -23,6 +47,7 @@ export default function LoginPage() {
         const data = await loginWithOtp(username, otp) as { token: string };
         localStorage.setItem("token", data.token); // Save token
         setMessage("Login successful!");
+        router.push("/");
         console.log("Login successful:", message);
       } catch (err) {
         setMessage(String(err));
@@ -35,39 +60,18 @@ export default function LoginPage() {
         Welcome to HobyHub!
       </div>
       <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <form onSubmit={handleLogin}>
       <div className="container mx-auto flex flex-col md:flex-row sm:col items-center gap-2 justify-center mt-[15px]">
         {/* Login Card */}
 
         <Card className="px-[18px] py-[17px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
-        <form onSubmit={handleLogin}>
+        
           <h2 className="text-black text-lg font-bold trajan-pro">Login</h2>
           <div className="bg-[#fefefe] rounded-[7px] border-[3px] border-[#dddfe3] px-[14px] py-[18px] mt-[23px]">
             {/* Phone Input */}
             <label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Enter OTP</label>
             <div className="flex flex-row flex-wrap  mt-1 gap-4">
-              {/* <span className="text-gray-600  px-3">+91</span> */}
-              {/* <Input
-                type="number"
-                max={1}
-                placeholder=""
-                className="items-center border border-gray-300 rounded-md outline-none flex-1 w-15 h-15"
-              />
-              <Input
-                type="text"
-                placeholder=""
-                className="items-center border border-gray-300 rounded-md outline-none flex-1 w-15 h-15"
-              />
-              <Input
-                type="text"
-                placeholder=""
-                className="items-center border border-gray-300 rounded-md outline-none flex-1 w-15 h-15"
-              />
-              <Input
-                type="text"
-                placeholder=""
-                className="items-center border border-gray-300 rounded-md outline-none flex-1 w-15 h-15"
-              /> */}
-
+              
               <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}
           required>
                 <InputOTPGroup className="flex flex-wrap  gap-2 md:gap-4">
@@ -80,7 +84,7 @@ export default function LoginPage() {
             </div>
 
             <p className="text-[#c9c9c9] text-sm trajan-pro mt-2">
-              <span className="text-[#345175] text-[14.90px] font-bold">00:53</span> <span className="hover:text-blue-200 hover:cursor-pointer">Resend OTP</span>
+              <span className="text-[#345175] text-[14.90px] font-bold">{timer > 0 ? `00:${timer.toString().padStart(2, "0")}` : "00:00"}</span> <span className="hover:text-blue-200 hover:cursor-pointer" onClick={!isResendDisabled ? handleResendOtp : undefined}>Resend OTP</span>
             </p>
 
 
@@ -92,7 +96,7 @@ export default function LoginPage() {
               <li>✔ Connect with passionate hobbyists</li>
             </ul>
           </div>
-  </form>
+  
           <Card className="md:hidden my-3 sm:block md:w-[566px] sm:w-[350px] h-[273px]">
             <CardContent>
               <Carousel className="w-full max-w-xs">
@@ -127,7 +131,9 @@ export default function LoginPage() {
           </Card>
           {/* Checkbox & Policy */}
           <div className="flex items-center gap-2 mt-[15px]">
-            <Checkbox id="terms" />
+            <Checkbox id="terms" 
+            checked={policyChecked}
+            onCheckedChange={(checked) => setPolicyChecked(checked === true)}/>
             <label htmlFor="terms" className="text-[#c6c7c7] text-xs trajan-pro font-bold">
               By proceeding, you agree to our
               Terms & Conditions and
@@ -136,7 +142,8 @@ export default function LoginPage() {
           </div>
 
           {/* Button */}
-          <Button className="mt-4  sm:w-full md:w-[20%] app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro" onClick={() => router.push("/")}>
+          <Button className="mt-4  sm:w-full md:w-[20%] app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro"
+            disabled={!isOtpComplete||!policyChecked}>
             Login
           </Button>
         </Card>
@@ -174,6 +181,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+      </form>
     </div>
   );
 }
