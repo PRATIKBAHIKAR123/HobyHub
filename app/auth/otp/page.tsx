@@ -8,10 +8,26 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
+import { loginWithOtp } from "@/services/authService";
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [username, setUsername] = useState("");
+  const [otp, setOtp] = useState("");
+  const [message, setMessage] = useState("");
+
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      try {
+        const data = await loginWithOtp(username, otp) as { token: string };
+        localStorage.setItem("token", data.token); // Save token
+        setMessage("Login successful!");
+      } catch (err: any) {
+        setMessage(err);
+      }
+    };
+    
   return (
     <div className="">
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
@@ -22,6 +38,7 @@ export default function LoginPage() {
         {/* Login Card */}
 
         <Card className="px-[18px] py-[17px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
+        <form onSubmit={handleLogin}>
           <h2 className="text-black text-lg font-bold trajan-pro">Login</h2>
           <div className="bg-[#fefefe] rounded-[7px] border-[3px] border-[#dddfe3] px-[14px] py-[18px] mt-[23px]">
             {/* Phone Input */}
@@ -73,7 +90,7 @@ export default function LoginPage() {
               <li>✔ Connect with passionate hobbyists</li>
             </ul>
           </div>
-
+  </form>
           <Card className="md:hidden my-3 sm:block md:w-[566px] sm:w-[350px] h-[273px]">
             <CardContent>
               <Carousel className="w-full max-w-xs">

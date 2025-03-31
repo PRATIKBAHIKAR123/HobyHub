@@ -183,7 +183,7 @@ export default function LoginPage() {
                         alt="Illustration"
                         width={445}
                         height={445}
-                        className="w-[418px] max-h-[540px]"
+                        className="w-[418px] h-[455px] max-h-[540px]"
                       />
                     </div>
 
