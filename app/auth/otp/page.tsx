@@ -13,7 +13,7 @@ import { loginWithOtp } from "@/services/authService";
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [username, setUsername] = useState("");
+  const [username] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
 
@@ -23,8 +23,9 @@ export default function LoginPage() {
         const data = await loginWithOtp(username, otp) as { token: string };
         localStorage.setItem("token", data.token); // Save token
         setMessage("Login successful!");
-      } catch (err: any) {
-        setMessage(err);
+        console.log("Login successful:", message);
+      } catch (err) {
+        setMessage(String(err));
       }
     };
     
@@ -67,7 +68,8 @@ export default function LoginPage() {
                 className="items-center border border-gray-300 rounded-md outline-none flex-1 w-15 h-15"
               /> */}
 
-              <InputOTP maxLength={6}>
+              <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}
+          required>
                 <InputOTPGroup className="flex flex-wrap  gap-2 md:gap-4">
                   <InputOTPSlot className=" text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15" index={0} />
                   <InputOTPSlot className=" text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15" index={1} />
