@@ -33,7 +33,6 @@ export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [message, setMessage] = useState("");
 
     const {
       register,
@@ -47,23 +46,30 @@ export default function LoginPage() {
       },
     });
   
-    const onSubmit = async (formData: any) => {
+    interface FormData {
+      name: string;
+      emailId: string;
+      phoneNumber: string;
+      gender: string;
+      dob: string;
+      password?: string;
+    }
+
+    const onSubmit = async (formData: FormData) => {
       formData.password = "123456"; // Default password
-  
+    
       try {
-        const data = await registerCustomer(formData);
-        
-        if(data.status === 200) {
-          toast.success("Registration successful!");
-          router.push("/auth/login");
-        }else{
-          setMessage(String(data.data));
-          toast.error(String(data.data));
-        }
-        
+      const data = await registerCustomer(formData);
+      
+      if (data.status === 200) {
+        toast.success("Registration successful!");
+        router.push("/auth/login");
+      } else {
+        toast.error(String(data.data));
+      }
+      
       } catch (err) {
-        setMessage(String(err));
-        console.log("err:", String(err));
+      console.log("err:", String(err));
       }
     };
 

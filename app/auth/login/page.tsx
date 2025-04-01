@@ -26,7 +26,7 @@ export default function LoginPage() {
       const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-          const data = await generateOTP(phoneNumber);
+           await generateOTP(phoneNumber);
           localStorage.setItem("phoneNumber", phoneNumber);
           toast.success('OTP Generate successful');
           setMessage("OTP Generate successful!");
