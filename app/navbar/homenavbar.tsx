@@ -105,7 +105,7 @@ export default function HomeNavbar() {
                         <Link onClick={() => setShowAuthModal(true)} href={""}>
                             <Image src="/Icons/heart.svg" alt="Logo" width={25} height={25} />
                         </Link>
-                        <Link href={'/auth/login'} >
+                        <Link href={'/vendor/profile'} >
                             <Image src="/Icons/user.svg" alt="Logo" width={25} height={25} />
                         </Link>
                         <div data-svg-wrapper className="justify-center items-center col:flex" onClick={toggleSidebar}>
@@ -159,7 +159,7 @@ export default function HomeNavbar() {
                             <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]">
                                 {isOnline ? "Online Classes" : "Offline Classes"}
                             </Label>
-                            <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-10 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
+                            <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-8 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
                                 checked={isOnline}
                                 onCheckedChange={(checked) => setIsOnline(checked)} />
                         </div>
