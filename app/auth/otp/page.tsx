@@ -108,6 +108,7 @@ export default function LoginPage() {
            {otpFailed&& <p className="text-red-500 text-md text-center">Please Enter Valid OTP</p>}
             <p className="text-[#c9c9c9] text-sm trajan-pro mt-2">
               <span className="text-[#345175] text-[14.90px] font-bold">{timer > 0 ? `00:${timer.toString().padStart(2, "0")}` : "00:00"}</span> <span className="hover:text-blue-200 hover:cursor-pointer" onClick={!isResendDisabled ? handleResendOtp : undefined}>Resend OTP</span>
+              <span className="hover:text-blue-200 text-[#3f3f3f] hover:cursor-pointer float-end" onClick={() => router.push('/auth/reset-password')}>Reset Password</span>
             </p>
 
 
