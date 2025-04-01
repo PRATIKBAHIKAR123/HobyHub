@@ -26,7 +26,7 @@ export default function ProfilePage() {
     location: "",
     name: "",
     profession: "",
-    profileImage: ""
+    profileImage: "/images/thumb5.png"
   });
 
   const [validationErrors, setValidationErrors] = useState<{

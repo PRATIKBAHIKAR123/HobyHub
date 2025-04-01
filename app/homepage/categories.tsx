@@ -47,6 +47,7 @@ export function Categories() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [categoriesWithSubs, setCategoriesWithSubs] = useState<Category[]>(categories);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

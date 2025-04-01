@@ -4,35 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import {  resetPassowrd } from "@/services/authService";
+import { useState, useEffect } from "react";
+import { resetPassowrd } from "@/services/authService";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
-    const [oldpassword, setOldPassword] = useState("");
-    const [newpassword, setnewPassword] = useState("");
-    const [confirmpassword, setnewConfirmPassword] = useState("");
-    const isPasswordValid = oldpassword.length >= 6 && newpassword.length >= 8;
+  const [oldpassword, setOldPassword] = useState("");
+  const [newpassword, setnewPassword] = useState("");
+  const [confirmpassword, setnewConfirmPassword] = useState("");
+  const [isSubmitted, setisSubmitted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-    const [isSubmitted,setisSubmitted] = useState(false);
-    const isPasswordMatch = confirmpassword === newpassword;
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-      const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-        setisSubmitted(true);
-        e.preventDefault();
-        if(isPasswordMatch){
-          try {
-            await resetPassowrd(newpassword, oldpassword);
-           toast.success('Passowrd Reset successful');
-           router.push("/auth/login");
-         } catch (err) {
-           toast.error(String(err));
-         }
-         setisSubmitted(false);
-        }
-       
-      };
+  const isPasswordValid = oldpassword.length >= 6 && newpassword.length >= 8;
+  const isPasswordMatch = confirmpassword === newpassword;
+
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    setisSubmitted(true);
+    e.preventDefault();
+    if (isPasswordMatch) {
+      try {
+        await resetPassowrd(newpassword, oldpassword);
+        toast.success('Password Reset successful');
+        router.push("/auth/login");
+      } catch (err) {
+        toast.error(String(err));
+      }
+      setisSubmitted(false);
+    }
+  };
+
+  if (!isClient) {
+    return null;
+  }
+
   return (
     <div className="">
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">

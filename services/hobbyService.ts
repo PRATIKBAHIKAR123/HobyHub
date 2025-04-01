@@ -25,9 +25,18 @@ interface ErrorResponse {
 
 /**
  * Get authentication token from local storage
+ * Safely handles server-side rendering by checking for window object
  */
 const getAuthToken = (): string | null => {
-    return localStorage.getItem("token");
+    if (typeof window !== 'undefined') {
+        try {
+            return localStorage.getItem("token");
+        } catch (error) {
+            console.error('Error accessing localStorage:', error);
+            return null;
+        }
+    }
+    return null;
 };
 
 /**
@@ -37,12 +46,17 @@ const getAuthToken = (): string | null => {
 export const getAllSubCategories = async (): Promise<SubCategory[]> => {
     try {
         const token = getAuthToken();
-        const response = await axios.post<SubCategory[]>(`${API_BASE_URL}/sub-category/list`, {
-            headers: {
-                'accept': '*/*',
-                'Authorization': token ? `Bearer ${token}` : ''
+        const response = await axios.post<SubCategory[]>(
+            `${API_BASE_URL}/sub-category/list`,
+            {}, // empty body
+            {
+                headers: {
+                    'accept': '*/*',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
             }
-        });
+        );
         return response.data;
     } catch (error) {
         const err = error as { response?: { data: ErrorResponse } };
@@ -57,12 +71,17 @@ export const getAllSubCategories = async (): Promise<SubCategory[]> => {
 export const getAllActivities = async (): Promise<Activity[]> => {
     try {
         const token = getAuthToken();
-        const response = await axios.post<Activity[]>(`${API_BASE_URL}/activities`, {
-            headers: {
-                'accept': '*/*',
-                'Authorization': token ? `Bearer ${token}` : ''
+        const response = await axios.post<Activity[]>(
+            `${API_BASE_URL}/activities`,
+            {}, // empty body
+            {
+                headers: {
+                    'accept': '*/*',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
             }
-        });
+        );
         return response.data;
     } catch (error) {
         const err = error as { response?: { data: ErrorResponse } };

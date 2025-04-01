@@ -24,7 +24,8 @@ export default function ClassDetailsPage() {
       <div className="flex:col md:flex gap-6 mt-4">
         {/* Main Image */}
         <div className="w-full md:w-[85%]">
-          <img src={selectedImage} alt="Class" className="w-full  max-h-128 rounded-md" />
+            <Image src={selectedImage} alt="Class" width={800}
+              height={600} className="w-full  max-h-128 rounded-md" />
         </div>
         {/* Thumbnail Images */}
         <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto">

@@ -7,36 +7,48 @@ import Image from "next/image";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateOTP } from "@/services/authService";
 import { toast } from "sonner";
+import { setStoredPhoneNumber } from "@/utils/localStorage";
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [policyChecked, setPolicyChecked] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Validate phone number length
   const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
-    const [message, setMessage] = useState("");
-  
-      const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        try {
-           await generateOTP(phoneNumber);
-          localStorage.setItem("phoneNumber", phoneNumber);
-          toast.success('OTP Generate successful');
-          setMessage("OTP Generate successful!");
-          router.push("/auth/otp");
-          console.log("Login successful:", message);
-        } catch (err) {
-          setMessage(String(err));
-          toast.error(String(err));
-        }
-      };
+  const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await generateOTP(phoneNumber);
+      if (isClient) {
+        setStoredPhoneNumber(phoneNumber);
+      }
+      toast.success('OTP Generate successful');
+      setMessage("OTP Generate successful!");
+      router.push("/auth/otp");
+      console.log("Login successful:", message);
+    } catch (err) {
+      setMessage(String(err));
+      toast.error(String(err));
+    }
+  };
+
+  if (!isClient) {
+    return null;
+  }
+
   return (
     <div className="">
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
