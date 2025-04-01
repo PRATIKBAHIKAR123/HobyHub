@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const loginWithOtp = async (username: string, loginOtp: string) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      const response = await axios.post(`${API_BASE_URL}/login`, {
         username,
         loginOtp,
       });
@@ -30,7 +30,9 @@ export const loginWithOtp = async (username: string, loginOtp: string) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/customer/register`, customerData);
       console.log("Response:", response.data);
-    } catch (error) {
+      return response;
+    } catch (error : any) {
       console.error("Error:", error);
+      return error.response;
     }
   };

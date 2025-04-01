@@ -12,37 +12,60 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/datepicker";
 import { registerCustomer } from "@/services/authService";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+
+const schema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  emailId: yup.string().email("Invalid email").required("Email is required"),
+  phoneNumber: yup
+    .string()
+    .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
+    .required("Phone number is required"),
+  gender: yup.string().required("Gender is required"),
+  dob: yup.string().required("Date Of Birth is required"),
+});
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [email, setEmail] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [message, setMessage] = useState("");
 
-
-      const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        setPassword("123456");
-        const formData = {
-          name: name,
-          emailId: email,
-          password: password,
-          phoneNumber: phoneNumber,
-          gender: gender,
-        };
-        e.preventDefault();
-        try {
-          const data = await registerCustomer(formData);
-          console.log('',message,data)
+    const {
+      register,
+      handleSubmit,
+      setValue,
+      formState: { errors },
+    } = useForm({
+      resolver: yupResolver(schema),
+      defaultValues: {
+        gender: "Male",  // Setting default gender
+      },
+    });
+  
+    const onSubmit = async (formData: any) => {
+      formData.password = "123456"; // Default password
+  
+      try {
+        const data = await registerCustomer(formData);
+        
+        if(data.status === 200) {
+          toast.success("Registration successful!");
           router.push("/auth/login");
-        } catch (err) {
-          setMessage(String(err));
+        }else{
+          setMessage(String(data.data));
+          toast.error(String(data.data));
         }
-      };
+        
+      } catch (err) {
+        setMessage(String(err));
+        console.log("err:", String(err));
+      }
+    };
 
   // Validate phone number length
   //const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
@@ -52,7 +75,7 @@ export default function LoginPage() {
         Welcome to HobyHub!
       </div>
       <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
       <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
         {/* Login Card */}
 
@@ -67,20 +90,20 @@ export default function LoginPage() {
                 <Input
                   type="text"
                   placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  {...register("name")}
                   className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
                 />
+                <p className="text-red-500 text-md">{errors.name?.message}</p>
               </div>
               <div>
                 <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">E-Mail</Label>
                 <Input
                   type="text"
                   placeholder="Enter your E-mail"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register("emailId")}
                   className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
                 />
+                <p className="text-red-500 text-md">{errors.emailId?.message}</p>
               </div>
               <div>
                 <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Contact</Label>
@@ -96,12 +119,13 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     placeholder="Enter your Contact"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/, ""))}
+                    {...register("phoneNumber")}
                     maxLength={10}
                     className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md rounded-l-none flex-1 border border-gray-300  border-l-0"
                   />
+                  
                 </div>
+                <p className="text-red-500 text-md">{errors.phoneNumber?.message}</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
               <div>
@@ -113,13 +137,19 @@ export default function LoginPage() {
                 onChange={(e) => setAge(e.target.value)}
                 className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
               /> */}
-                <DatePicker value={selectedDate} onChange={setSelectedDate} placeholder="Date Of Birth" className="w-full placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300" />
+                <DatePicker value={selectedDate}   onChange={(date) => {
+    setSelectedDate(date);
+    if (date) {
+      setValue("dob", date.toString(), { shouldValidate: true }); // ✅ Update form value
+    }
+  }} placeholder="Date Of Birth" className="w-full placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300" />
+                <p className="text-red-500 text-md">{errors.dob?.message}</p>
               </div>
               <div>
                 <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Select Gender</Label>
-                <Select value={gender} onValueChange={setGender}>
+                <Select {...register("gender")}>
                   <SelectTrigger className="w-full placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300">
-                    <SelectValue placeholder="Search By Time" />
+                    <SelectValue placeholder="Male" />
                   </SelectTrigger>
                   <SelectContent>
 
@@ -131,6 +161,7 @@ export default function LoginPage() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-red-500 text-md">{errors.gender?.message}</p>
               </div>
               </div>
             </div>
@@ -235,3 +266,6 @@ export default function LoginPage() {
   );
 
 }
+
+
+

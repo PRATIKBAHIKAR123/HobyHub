@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider } from "./sidebar/sidebarContext";
 import ClientLayout from "./ClientLayout";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
             <SidebarProvider>  {/* ✅ Ensure this wraps all components */}
       <ClientLayout>{children}</ClientLayout>
     </SidebarProvider>
+    <Toaster richColors/>
       </body>
     </html>
   );

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateOTP } from "@/services/authService";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,12 +28,13 @@ export default function LoginPage() {
         try {
           const data = await generateOTP(phoneNumber);
           localStorage.setItem("phoneNumber", phoneNumber);
-          console.log("Login successful:", data);
+          toast.success('OTP Generate successful');
           setMessage("OTP Generate successful!");
           router.push("/auth/otp");
           console.log("Login successful:", message);
         } catch (err) {
           setMessage(String(err));
+          toast.error(String(err));
         }
       };
   return (

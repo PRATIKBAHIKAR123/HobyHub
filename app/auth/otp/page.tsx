@@ -8,21 +8,28 @@ import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
-import { loginWithOtp } from "@/services/authService";
+import { generateOTP, loginWithOtp } from "@/services/authService";
+import { set } from "date-fns";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [username] = useState("");
+  const [username, setUsername] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const isOtpComplete = otp.length === 4;
   const [policyChecked, setPolicyChecked] = useState(false);
   const [timer, setTimer] = useState(53); // Initial timer (53 seconds)
   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [otpFailed, setotpFailed] = useState(false);
 
 
     useEffect(() => {
+      const storedPhoneNumber = localStorage.getItem("phoneNumber");
+      if (storedPhoneNumber) {
+        setUsername(storedPhoneNumber);
+      }
       if (timer > 0) {
         const interval = setInterval(() => {
           setTimer((prev) => prev - 1);
@@ -35,24 +42,41 @@ export default function LoginPage() {
   
     // Resend OTP handler
     const handleResendOtp = () => {
+      setOtp("");
+      setotpFailed(false);
       setTimer(53); // Reset timer
       setIsResendDisabled(true); // Disable resend button again
-      // Call API to resend OTP
+      handleGenerateOTP(); // Call the function to generate OTP
     };
 
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       try {
-        const data = await loginWithOtp(username, otp) as { token: string };
-        localStorage.setItem("token", data.token); // Save token
+        const data = await loginWithOtp(username, otp) as { AccessToken: string };
+        localStorage.setItem("userData", JSON.stringify(data)); // Save token
+        localStorage.setItem("token", data.AccessToken);
         setMessage("Login successful!");
-        router.push("/");
         console.log("Login successful:", message);
+        setotpFailed(false);
+        toast.success('Login successful');
+        router.push("/");
       } catch (err) {
-        setMessage(String(err));
+        setotpFailed(true);
+        toast.error(String(err));
       }
     };
+
+          const handleGenerateOTP = async () => {
+            try {
+              const data = await generateOTP(username);
+              toast.success('OTP Sent Successfully');
+              console.log("OTP Sent", data);
+            } catch (err) {
+              setMessage(String(err));
+              toast.error(String(err));
+            }
+          };
     
   return (
     <div className="">
@@ -82,7 +106,7 @@ export default function LoginPage() {
                 </InputOTPGroup>
               </InputOTP>
             </div>
-
+           {otpFailed&& <p className="text-red-500 text-md text-center">Please Enter Valid OTP</p>}
             <p className="text-[#c9c9c9] text-sm trajan-pro mt-2">
               <span className="text-[#345175] text-[14.90px] font-bold">{timer > 0 ? `00:${timer.toString().padStart(2, "0")}` : "00:00"}</span> <span className="hover:text-blue-200 hover:cursor-pointer" onClick={!isResendDisabled ? handleResendOtp : undefined}>Resend OTP</span>
             </p>
