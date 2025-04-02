@@ -11,8 +11,13 @@ import LocationPopup from "../homepage/locationPopup";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import useLocation from "../hooks/useLocation";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
+import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
+
 
 export default function HomeNavbar() {
+
     const { toggleSidebar } = useSidebar();
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
     const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
@@ -105,9 +110,19 @@ export default function HomeNavbar() {
                         <Link onClick={() => setShowAuthModal(true)} href={""}>
                             <Image src="/Icons/heart.svg" alt="Logo" width={25} height={25} />
                         </Link>
-                        <Link href={'/vendor/profile'} >
+                        {/* <Link href={'/vendor/profile'} >
                             <Image src="/Icons/user.svg" alt="Logo" width={25} height={25} />
-                        </Link>
+                        </Link> */}
+                        <DropdownMenu>
+                                <DropdownMenuTrigger>
+                                
+                                <Image src="/Icons/user.svg" alt="Logo" width={25} height={25} />
+                            
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <ProfileDropdown/>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         <div data-svg-wrapper className="justify-center items-center col:flex" onClick={toggleSidebar}>
                             <Image src="/Icons/hamburger.svg" alt="Logo" width={25} height={25} className="ml-1" />
                             <div className="text-[#f8f9fa] text-sm font-normal font-['Inter'] leading-snug">Menu</div>
@@ -128,9 +143,18 @@ export default function HomeNavbar() {
                             <Link onClick={() => setShowAuthModal(true)} href={""}>
                                 <Image src="/Icons/heart.svg" alt="Logo" width={24} height={30} />
                             </Link>
-                            <Link href={'/auth/login'} >
+                            
+                            
+                            <DropdownMenu>
+                                <DropdownMenuTrigger>
+                                
                                 <Image src="/Icons/user.svg" alt="Logo" width={24} height={30} />
-                            </Link>
+                            
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <ProfileDropdown/>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
@@ -272,3 +296,23 @@ const FilterButton = ({ setIsFilterPopupOpen }: FilterButtonProps) => {
 
     )
 }
+
+const ProfileDropdown = () => {
+    const router = useRouter();
+
+    const handleLogOut = () => {
+
+    };
+  return (
+    <>
+      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">Profile</DropdownMenuItem>
+      
+      <LogOutConfirmation 
+          
+          onConfirm={handleLogOut}
+        />
+    </>
+  );
+};
