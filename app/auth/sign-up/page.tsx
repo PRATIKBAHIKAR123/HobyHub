@@ -3,9 +3,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import Image from "next/image";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +13,9 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
+import { TermsAndPrivacyContent } from "@/components/TermsAndPrivacyContent";
+import { ImageCarousel } from "@/components/ImageCarousel";
+import { useRouter } from "next/navigation";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -31,9 +30,9 @@ const schema = yup.object().shape({
 
 export default function LoginPage() {
   const router = useRouter();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isTermsChecked, setIsTermsChecked] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
     register,
@@ -84,6 +83,15 @@ export default function LoginPage() {
 
   // Validate phone number length
   //const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
+
+  const carouselImages = [
+    "/images/mobile.png",
+    "/images/mobile.png",
+    "/images/mobile.png",
+    "/images/mobile.png",
+    "/images/mobile.png"
+  ];
+
   return (
     <div className="">
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
@@ -104,7 +112,7 @@ export default function LoginPage() {
 
                 <Input
                   type="text"
-                  placeholder="Enter your full name"
+                  placeholder="Enter Your Full Name"
                   {...register("name")}
                   className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
                 />
@@ -114,7 +122,7 @@ export default function LoginPage() {
                 <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">E-Mail <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
-                  placeholder="Enter your E-mail"
+                  placeholder="Enter Your Email"
                   {...register("emailId")}
                   className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
                 />
@@ -124,7 +132,7 @@ export default function LoginPage() {
                 <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Contact <span className="text-red-500">*</span></Label>
                 <div className="flex items-center">
                   <Select>
-                    <SelectTrigger className="w-[20%] h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
+                    <SelectTrigger className="w-[25%] h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
                       <SelectValue placeholder="+91" />
                     </SelectTrigger>
                     <SelectContent>
@@ -133,7 +141,7 @@ export default function LoginPage() {
                   </Select>
                   <Input
                     type="text"
-                    placeholder="Enter your Contact"
+                    placeholder="Enter Your Contact"
                     {...register("phoneNumber")}
                     maxLength={10}
                     className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md rounded-l-none flex-1 border border-gray-300  border-l-0"
@@ -191,38 +199,18 @@ export default function LoginPage() {
             </ul> */}
           </div>
 
+          {/* Mobile Carousel */}
           <Card className="md:hidden my-3 sm:block md:w-[566px] sm:w-[350px] h-[273px]">
             <CardContent>
-              <Carousel className="w-full max-w-xs">
-                <CarouselContent>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <CarouselItem key={index}>
-                      <div className="flex justify-center">
-                        <Image
-                          src="/images/mobile.png"
-                          alt="Illustration"
-                          width={300}
-                          height={260}
-                          className="w-[300px] h-[238px]"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-              <div className="flex justify-center mt-4 space-x-2">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-4 h-4 rounded-full transition-all ${currentIndex === index ? "bg-[#3E606C]" : "bg-[#E4E4E4]"
-                      }`}
-                    onClick={() => setCurrentIndex(index)}
-                  />
-                ))}
-              </div>
-
+              <ImageCarousel 
+                images={carouselImages}
+                width={300}
+                height={260}
+                className="w-[300px] h-[238px]"
+              />
             </CardContent>
           </Card>
+
           {/* Checkbox & Policy */}
           <div className="flex items-center gap-2 mt-[15px]">
             <Checkbox 
@@ -230,12 +218,29 @@ export default function LoginPage() {
               checked={isTermsChecked}
               onCheckedChange={(checked) => setIsTermsChecked(checked as boolean)}
             />
-            <label htmlFor="terms" className="text-[#c6c7c7] text-xs trajan-pro font-bold">
-              By proceeding, you agree to our
-              Terms & Conditions and
-              Privacy Policy
+            <label htmlFor="terms" className="text-[#c6c7c7] text-xs mt-2 trajan-pro font-bold">
+              By proceeding, you agree to our{" "}
+              <button 
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-[#3e606e] hover:underline"
+              >
+                Terms & Conditions
+              </button>{" "}
+              and{" "}
+              <button 
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-[#3e606e] hover:underline"
+              >
+                Privacy Policy
+              </button>
             </label>
           </div>
+          <TermsAndPrivacyContent 
+            isOpen={showTermsModal} 
+            onClose={() => setShowTermsModal(false)} 
+          />
           <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Already have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("login")}>Sign In</a></span>
           {/* Button */}
           <Button 
@@ -247,37 +252,15 @@ export default function LoginPage() {
           </Button>
         </Card>
 
-        {/* Illustration */}
-        <Card className=" px-[18px] py-[13px] rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px] ">
+        {/* Desktop Carousel */}
+        <Card className="px-[18px] py-[13px] rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px]">
           <CardContent className="relative">
-            <Carousel className="w-full">
-              <CarouselContent>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <CarouselItem key={index}>
-                    <div className="flex justify-center">
-                      <Image
-                        src="/images/mobile.png"
-                        alt="Illustration"
-                        width={445}
-                        height={445}
-                        className="w-[418px] h-[455px] max-h-[540px]"
-                      />
-                    </div>
-
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-            <div className="flex justify-center mt-[24px] space-x-1 absolute w-full">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <button
-                  key={index}
-                  className={`w-3 h-3 rounded-full transition-all ${currentIndex === index ? "bg-[#3E606C]" : "bg-[#E4E4E4]"
-                    }`}
-                  onClick={() => setCurrentIndex(index)}
-                />
-              ))}
-            </div>
+            <ImageCarousel 
+              images={carouselImages}
+              width={445}
+              height={445}
+              className="w-[418px] h-[455px] max-h-[540px]"
+            />
           </CardContent>
         </Card>
       </div>
