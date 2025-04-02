@@ -12,6 +12,7 @@ interface UserProfile {
   location?: string;
   profession?: string;
   profileImage?: string;
+  dob?:string;
 }
 
 interface ProfileUpdateData {
@@ -21,6 +22,7 @@ interface ProfileUpdateData {
   password?: string;
   phoneNumber: string;
   gender?: string;
+  dob?: string;
 }
 
 interface ErrorResponse {

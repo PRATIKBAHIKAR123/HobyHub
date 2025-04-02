@@ -35,7 +35,7 @@ export default function RootLayout({
             <SidebarProvider>  {/* ✅ Ensure this wraps all components */}
       <ClientLayout>{children}</ClientLayout>
     </SidebarProvider>
-    <Toaster richColors/>
+    <Toaster richColors position="top-right"/>
       </body>
     </html>
   );
