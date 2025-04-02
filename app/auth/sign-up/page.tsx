@@ -25,53 +25,62 @@ const schema = yup.object().shape({
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
-  gender: yup.string().required("Gender is required"),
-  dob: yup.string().required("Date Of Birth is required"),
+  gender: yup.string(),
+  dob: yup.string(),
 });
 
 export default function LoginPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [isTermsChecked, setIsTermsChecked] = useState(false);
 
-    const {
-      register,
-      handleSubmit,
-      setValue,
-      formState: { errors },
-    } = useForm({
-      resolver: yupResolver(schema),
-      defaultValues: {
-        gender: "Male",  // Setting default gender
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
+
+  // Watch all form fields
+  const formValues = watch();
   
-    interface FormData {
-      name: string;
-      emailId: string;
-      phoneNumber: string;
-      gender: string;
-      dob: string;
-      password?: string;
-    }
+  // Check if all required fields are filled
+  const isFormValid = formValues.name && 
+                     formValues.emailId && 
+                     formValues.phoneNumber && 
+                     isTermsChecked;
 
-    const onSubmit = async (formData: FormData) => {
-      formData.password = "123456"; // Default password
+  interface FormData {
+    name: string;
+    emailId: string;
+    phoneNumber: string;
+    gender?: string;
+    dob?: string;
+    password?: string;
+  }
+
+  const onSubmit = async (formData: FormData) => {
+    formData.password = "123456"; // Default password
+  
+    try {
+    const data = await registerCustomer(formData);
     
-      try {
-      const data = await registerCustomer(formData);
-      
-      if (data.status === 200) {
-        toast.success("Registration successful!");
-        router.push("/auth/login");
-      } else {
-        toast.error(String(data.data));
-      }
-      
-      } catch (err) {
-      console.log("err:", String(err));
-      }
-    };
+    if (data.status === 200) {
+      toast.success("Registration successful!");
+      router.push("/auth/login");
+    } else {
+      toast.error(String(data.data));
+    }
+    
+    } catch (err) {
+    console.log("err:", String(err));
+    }
+  };
 
   // Validate phone number length
   //const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
@@ -80,18 +89,18 @@ export default function LoginPage() {
       <div className="text-[#4f6a85] login-title font-medium text-center mt-2 text-[24px] font-['Minion_Pro']">
         Welcome to HobyHub!
       </div>
-      <div className=" h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
+      <div className="h-[27px] text-[14px] relative text-center mt-1 text-[#9c9e9e] trajan-pro font-bold">Start getting discovered locally and globally.</div>
       <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
-        {/* Login Card */}
-
-        <Card className="px-[18px] py-[12px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
+        <div className="container mx-auto flex flex-col md:flex-row items-start gap-2 justify-center mt-[16px]">
+          {/* Login Card */}
+          <Card className="px-[18px] py-[12px] gap-0 rounded-none shadow-sm bg-white md:max-w-[569px] sm:max-w-[369px]">
           <h2 className="text-black text-lg font-bold trajan-pro mt-[8px]">Sign Up</h2>
+          <p className="text-red-500 text-sm mt-1">* Required Fields</p>
           <div className="bg-[#fefefe] rounded-[7px] border-[3px] border-[#dddfe3] px-[14px] py-[18px] mt-[20px]">
             {/* Phone Input */}
             <div className="flex-col flex gap-2 justify-between">
               <div>
-                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Name</Label>
+                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Name <span className="text-red-500">*</span></Label>
 
                 <Input
                   type="text"
@@ -102,7 +111,7 @@ export default function LoginPage() {
                 <p className="text-red-500 text-md">{errors.name?.message}</p>
               </div>
               <div>
-                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">E-Mail</Label>
+                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">E-Mail <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   placeholder="Enter your E-mail"
@@ -112,7 +121,7 @@ export default function LoginPage() {
                 <p className="text-red-500 text-md">{errors.emailId?.message}</p>
               </div>
               <div>
-                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Contact</Label>
+                <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Contact <span className="text-red-500">*</span></Label>
                 <div className="flex items-center">
                   <Select>
                     <SelectTrigger className="w-[20%] h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
@@ -216,7 +225,11 @@ export default function LoginPage() {
           </Card>
           {/* Checkbox & Policy */}
           <div className="flex items-center gap-2 mt-[15px]">
-            <Checkbox id="terms" />
+            <Checkbox 
+              id="terms" 
+              checked={isTermsChecked}
+              onCheckedChange={(checked) => setIsTermsChecked(checked as boolean)}
+            />
             <label htmlFor="terms" className="text-[#c6c7c7] text-xs trajan-pro font-bold">
               By proceeding, you agree to our
               Terms & Conditions and
@@ -225,8 +238,11 @@ export default function LoginPage() {
           </div>
           <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Already have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("login")}>Sign In</a></span>
           {/* Button */}
-          <Button className={` sm:w-full md:w-[30%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro color-[#fff]" 
-            }`} >
+          <Button 
+            type="submit"
+            className={`sm:w-full md:w-[30%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro color-[#fff]`}
+            disabled={!isFormValid}
+          >
             Create Account
           </Button>
         </Card>

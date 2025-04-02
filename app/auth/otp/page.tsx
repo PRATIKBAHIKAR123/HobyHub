@@ -2,27 +2,22 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Image from "next/image";
-import { Carousel, CarouselContent, CarouselItem, } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
 import { generateOTP, loginWithOtp } from "@/services/authService";
 import { toast } from "sonner";
+import { ImageCarousel } from "@/components/ImageCarousel";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [username, setUsername] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const isOtpComplete = otp.length === 4;
-  const [policyChecked, setPolicyChecked] = useState(false);
-  const [timer, setTimer] = useState(53); // Initial timer (53 seconds)
+  const [timer, setTimer] = useState(53);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [otpFailed, setotpFailed] = useState(false);
-
 
   useEffect(() => {
     const storedPhoneNumber = localStorage.getItem("phoneNumber");
@@ -47,7 +42,6 @@ export default function LoginPage() {
     setIsResendDisabled(true); // Disable resend button again
     handleGenerateOTP(); // Call the function to generate OTP
   };
-
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -134,38 +128,17 @@ export default function LoginPage() {
 
             <Card className="md:hidden my-3 sm:block w-full h-[240px] md:h-[273px]">
               <CardContent className="p-0 md:p-4">
-                <Carousel className="w-full max-w-xs mx-auto">
-                  <CarouselContent>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <CarouselItem key={index}>
-                        <div className="flex justify-center">
-                          <Image
-                            src="/images/mobile.png"
-                            alt="Illustration"
-                            width={240}
-                            height={200}
-                            className="w-auto h-[200px] md:h-[238px] object-contain"
-                          />
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                </Carousel>
-                <div className="flex justify-center mt-6 md:mt-4 space-x-2">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <button
-                      key={index}
-                      className={`w-3 h-3 rounded-full transition-all ${currentIndex === index ? "bg-[#3E606C]" : "bg-[#E4E4E4]"
-                        }`}
-                      onClick={() => setCurrentIndex(index)}
-                    />
-                  ))}
-                </div>
+                <ImageCarousel 
+                  images={Array(5).fill("/images/mobile.png")}
+                  width={240}
+                  height={200}
+                  className="w-auto h-[200px] md:h-[238px]"
+                />
               </CardContent>
             </Card>
 
             {/* Checkbox & Policy */}
-            <div className="flex items-start md:items-center gap-2 mt-[15px]">
+            {/* <div className="flex items-start md:items-center gap-2 mt-[15px]">
               <Checkbox id="terms"
                 checked={policyChecked}
                 className="mt-1 md:mt-0"
@@ -175,12 +148,12 @@ export default function LoginPage() {
                 Terms & Conditions and
                 Privacy Policy
               </label>
-            </div>
+            </div> */}
 
             {/* Button */}
-            <div className="flex justify-center md:justify-start">
-              <Button className="mt-4 w-full md:w-[20%] app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro"
-                disabled={!isOtpComplete || !policyChecked}>
+            <div className="flex justify-center md:justify-start mt-2">
+              <Button className="mt-4 w-full md:w-[20%] app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer"
+                disabled={!isOtpComplete}>
                 Login
               </Button>
             </div>
@@ -189,33 +162,12 @@ export default function LoginPage() {
           {/* Illustration */}
           <Card className="rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px] max-h-[380px]">
             <CardContent>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <CarouselItem key={index}>
-                      <div className="flex justify-center">
-                        <Image
-                          src="/images/mobile.png"
-                          alt="Illustration"
-                          width={445}
-                          height={445}
-                          className="w-[418px] max-h-[340px]"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-              <div className="flex justify-center mt-[24px] space-x-1">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-3 h-3 rounded-full transition-all ${currentIndex === index ? "bg-[#3E606C]" : "bg-[#E4E4E4]"
-                      }`}
-                    onClick={() => setCurrentIndex(index)}
-                  />
-                ))}
-              </div>
+              <ImageCarousel 
+                images={Array(5).fill("/images/mobile.png")}
+                width={445}
+                height={445}
+                className="w-[418px] max-h-[340px]"
+              />
             </CardContent>
           </Card>
         </div>
