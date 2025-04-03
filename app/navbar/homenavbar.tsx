@@ -139,16 +139,16 @@ export default function HomeNavbar() {
                         <div className="p-1">
                             <Image src="/images/HobyHub.ai.png" alt="Logo" width={152} height={36} />
                         </div>
-                        <div className="flex gap-2 p-1">
+                        <div className="flex gap-2 p-1 items-center">
                             <Link onClick={() => setShowAuthModal(true)} href={""}>
-                                <Image src="/Icons/heart.svg" alt="Logo" width={24} height={30} />
+                                <Image src="/Icons/heart.svg" alt="Logo" width={24} height={24} />
                             </Link>
                             
                             
                             <DropdownMenu>
                                 <DropdownMenuTrigger>
                                 
-                                <Image src="/Icons/user.svg" alt="Logo" width={24} height={30} />
+                                <Image src="/Icons/user.svg" alt="Logo" width={24} height={24} />
                             
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
