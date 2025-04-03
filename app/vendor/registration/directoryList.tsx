@@ -31,9 +31,9 @@ import {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px] justify-center text-black text-[12px] font-normal trajan-pro">S No.</TableHead>
-            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">S No.</TableHead>
-            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">S No.</TableHead>
-            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">S No.</TableHead>
+            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Address</TableHead>
+            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Contact Info</TableHead>
+            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Primary Contact</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
