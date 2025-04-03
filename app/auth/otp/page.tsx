@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { generateOTP, loginWithOtp } from "@/services/authService";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,21 +19,27 @@ export default function LoginPage() {
   const [timer, setTimer] = useState(53);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [otpFailed, setotpFailed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Timer effect
   useEffect(() => {
-    const storedPhoneNumber = localStorage.getItem("phoneNumber");
-    if (storedPhoneNumber) {
-      setUsername(storedPhoneNumber);
-    }
     if (timer > 0) {
       const interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(interval);
     } else {
-      setIsResendDisabled(false); // Enable resend when timer reaches 0
+      setIsResendDisabled(false);
     }
   }, [timer]);
+
+  // Initial setup effect
+  useEffect(() => {
+    const storedPhoneNumber = localStorage.getItem("phoneNumber");
+    if (storedPhoneNumber) {
+      setUsername(storedPhoneNumber);
+    }
+  }, []);
 
   // Resend OTP handler
   const handleResendOtp = () => {
@@ -45,6 +52,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const data = await loginWithOtp(username, otp) as { AccessToken: string };
       localStorage.setItem("userData", JSON.stringify(data)); // Save token
@@ -57,6 +65,8 @@ export default function LoginPage() {
     } catch (err) {
       setotpFailed(true);
       toast.error(String(err));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -88,7 +98,13 @@ export default function LoginPage() {
               {/* Phone Input */}
               <label className="text-[#9d9d9d] text-[12px] md:text-[12.80px] font-bold trajan-pro">Enter OTP</label>
               <div className="flex flex-row mt-1 gap-2 md:gap-4">
-                <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)} required>
+                <InputOTP 
+                  maxLength={6} 
+                  value={otp} 
+                  onChange={(value) => setOtp(value)} 
+                  required
+                  autoFocus
+                >
                   <InputOTPGroup className="flex flex-wrap gap-2 md:gap-4">
                     <InputOTPSlot
                       className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15"
@@ -156,9 +172,18 @@ export default function LoginPage() {
 
             {/* Button */}
             <div className="flex justify-center md:justify-start mt-2">
-              <Button className="mt-4 w-full md:w-[20%] app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer"
-                disabled={!isOtpComplete}>
-                Login
+              <Button 
+                className={`mt-4 ${isLoading ? 'w-full md:w-[30%]' : 'w-full md:w-[20%]'} app-bg-color text-white text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer`}
+                disabled={!isOtpComplete || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    Verifying...
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </div>
           </Card>

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { TermsAndPrivacyContent } from "@/components/TermsAndPrivacyContent";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
@@ -65,19 +67,23 @@ export default function LoginPage() {
 
   const onSubmit = async (formData: FormData) => {
     formData.password = "123456"; // Default password
+    setIsLoading(true);
   
     try {
-    const data = await registerCustomer(formData);
-    
-    if (data.status === 200) {
-      toast.success("Registration successful!");
-      router.push("/auth/login");
-    } else {
-      toast.error(String(data.data));
-    }
-    
+      const data = await registerCustomer(formData);
+      
+      if (data.status === 200) {
+        toast.success("Registration successful!");
+        router.push("/auth/login");
+      } else {
+        toast.error(String(data.data));
+      }
+      
     } catch (err) {
-    console.log("err:", String(err));
+      console.log("err:", String(err));
+      toast.error(String(err));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -114,6 +120,7 @@ export default function LoginPage() {
                   placeholder="Enter Your Full Name"
                   {...register("name")}
                   className="placeholder:text-[#e2e3e5] h-[48px] outline-none  rounded-l-md flex-1 border border-gray-300"
+                  autoFocus
                 />
                 <p className="text-red-500 text-md">{errors.name?.message}</p>
               </div>
@@ -245,9 +252,16 @@ export default function LoginPage() {
           <Button 
             type="submit"
             className={`sm:w-full md:w-[30%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro color-[#fff]`}
-            disabled={!isFormValid}
+            disabled={!isFormValid || isLoading}
           >
-            Create Account
+            {isLoading ? (
+              <>
+                Creating...
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              </>
+            ) : (
+              "Create Account"
+            )}
           </Button>
         </Card>
 

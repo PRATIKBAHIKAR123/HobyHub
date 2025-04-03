@@ -5,20 +5,27 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { generateOTP } from "@/services/authService";
 import { toast } from "sonner";
 import { setStoredPhoneNumber } from "@/utils/localStorage";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setIsClient(true);
+    // Focus the input field after component mounts
+    if (phoneInputRef.current) {
+      phoneInputRef.current.focus();
+    }
   }, []);
 
   // Validate phone number length
@@ -26,6 +33,7 @@ export default function LoginPage() {
 
   const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       await generateOTP(phoneNumber);
       if (isClient) {
@@ -38,6 +46,8 @@ export default function LoginPage() {
     } catch (err) {
       setMessage(String(err));
       toast.error(String(err));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,11 +82,13 @@ export default function LoginPage() {
                   </SelectContent>
                 </Select>
                 <Input
+                  ref={phoneInputRef}
                   type="text"
                   placeholder="Enter your number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/, ""))}
                   maxLength={10}
+                  autoFocus
                   className="placeholder:text-[#e2e3e5] h-[42px] md:h-[48px] outline-none rounded-l-md rounded-l-none flex-1 border border-gray-300 border-l-0 text-sm md:text-base"
                 />
               </div>
@@ -126,8 +138,18 @@ export default function LoginPage() {
             <span className="text-[#9d9d9d] text-[10px] md:text-[11.80px] py-3 mt-2 font-bold trajan-pro">Dont have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a></span>
             {/* Button */}
             <div className="flex justify-center md:justify-start">
-              <Button className={`w-full md:w-[20%] app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer ${isPhoneValid ? " text-white" : " text-[#d4dde8]"}`} disabled={!isPhoneValid}>
-                Send OTP
+              <Button 
+                className={`${isLoading ? 'w-full md:w-[30%]' : 'w-full md:w-[20%]'} app-bg-color text-sm rounded-lg border border-[#90a2b7] trajan-pro cursor-pointer ${isPhoneValid ? " text-white" : " text-[#d4dde8]"}`} 
+                disabled={!isPhoneValid || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    Sending...
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  "Send OTP"
+                )}
               </Button>
             </div>
           </Card>
