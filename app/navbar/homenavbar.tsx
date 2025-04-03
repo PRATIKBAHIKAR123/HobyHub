@@ -1,4 +1,3 @@
-
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 import { useSidebar } from "../sidebar/sidebarContext";
@@ -14,6 +13,7 @@ import useLocation from "../hooks/useLocation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export default function HomeNavbar() {
@@ -267,12 +267,23 @@ const LocationSelector = () => {
                 e.stopPropagation(); // Prevents immediate closing on input selection
                 setIsPopoverOpen(!isPopoverOpen);
             }}>
-                <div className=" flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer ">
-                    <Image src="/Icons/location.svg" alt="Logo" width={13} height={15} />
-                    <div className="text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] truncate max-w-[120px] leading-[18px] ">
-                        {choosedLocation || ""}  {/* ✅ Show "Detecting..." until location is set */}
-                    </div>
-                </div>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer">
+                                <Image src="/Icons/location.svg" alt="Logo" width={13} height={15} />
+                                <div className="text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] truncate max-w-[120px] leading-[18px]">
+                                    {choosedLocation || ""}
+                                </div>
+                            </div>
+                        </TooltipTrigger>
+                        {choosedLocation && (
+                            <TooltipContent side="bottom" className="bg-white text-gray-800">
+                                {choosedLocation}
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                </TooltipProvider>
             </PopoverTrigger>
             <LocationPopup onLocationChange={handleLocationChange} />
         </Popover>
