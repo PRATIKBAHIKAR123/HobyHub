@@ -126,13 +126,17 @@ export default function LoginPage() {
               </ul>
             </div>
 
-            <Card className="md:hidden my-3 sm:block w-full h-[240px] md:h-[273px]">
-              <CardContent className="p-0 md:p-4">
+            <Card className="md:hidden my-3 sm:block w-full">
+              <CardContent className="p-0">
                 <ImageCarousel 
-                  images={Array(5).fill("/images/mobile.png")}
+                  images={["/images/mobile.png",
+                    "/images/computer-security-with-login-password-padlock%201.png",
+                    "/images/verification-code.jpg",
+                    "/images/mobile-encryption.jpg"   
+                  ]}
                   width={240}
                   height={200}
-                  className="w-auto h-[200px] md:h-[238px]"
+                  className="w-auto h-[200px]"
                 />
               </CardContent>
             </Card>
@@ -160,16 +164,22 @@ export default function LoginPage() {
           </Card>
 
           {/* Illustration */}
-          <Card className="rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px] max-h-[380px]">
-            <CardContent>
-              <ImageCarousel 
-                images={Array(5).fill("/images/mobile.png")}
-                width={445}
-                height={445}
-                className="w-[418px] max-h-[340px]"
-              />
-            </CardContent>
-          </Card>
+          <div className="hidden md:block">
+            <Card className="rounded-none shadow-sm md:w-[585px] sm:w-[350px] px-[18px] py-[17px]">
+              <CardContent className="p-0">
+                <ImageCarousel 
+                  images={[
+                    "/images/mobile.png",
+                    "/images/computer-security-with-login-password-padlock%201.png",
+                    "/images/verification-code.jpg",
+                    "/images/mobile-encryption.jpg"                  ]}
+                  width={445}
+                  height={340}
+                  className="w-[418px] h-[340px]"
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </form>
     </div>

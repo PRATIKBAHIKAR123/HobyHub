@@ -86,10 +86,9 @@ export default function LoginPage() {
 
   const carouselImages = [
     "/images/mobile.png",
-    "/images/mobile.png",
-    "/images/mobile.png",
-    "/images/mobile.png",
-    "/images/mobile.png"
+    "/images/computer-security-with-login-password-padlock%201.png",
+    "/images/verification-code.jpg",
+    "/images/mobile-encryption.jpg"
   ];
 
   return (
@@ -200,8 +199,8 @@ export default function LoginPage() {
           </div>
 
           {/* Mobile Carousel */}
-          <Card className="md:hidden my-3 sm:block md:w-[566px] sm:w-[350px] h-[273px]">
-            <CardContent>
+          <Card className="md:hidden my-3 sm:block md:w-[566px] sm:w-[350px]">
+            <CardContent className="p-0">
               <ImageCarousel 
                 images={carouselImages}
                 width={300}
@@ -253,13 +252,13 @@ export default function LoginPage() {
         </Card>
 
         {/* Desktop Carousel */}
-        <Card className="px-[18px] py-[13px] rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px]">
-          <CardContent className="relative">
+        <Card className="px-[18px] py-[17px] rounded-none shadow-sm hidden md:block md:w-[585px] sm:w-[350px]">
+          <CardContent className="p-0">
             <ImageCarousel 
               images={carouselImages}
               width={445}
-              height={445}
-              className="w-[418px] h-[455px] max-h-[540px]"
+              height={340}
+              className="w-[418px] h-[340px]"
             />
           </CardContent>
         </Card>
