@@ -57,11 +57,13 @@ export default function HomeNavbar() {
         <>
             <div className="hidden md:block sticky top-0 z-50">
                 <div className="w-full py-2 h-[67.88px] bg-[#003161] border-b border-[#dee2e6] justify-between flex">
-                    <div className="w-20 pl-[2.25rem]">
-                        <Image src="/images/HobyHub.ai.png" alt="Logo" width={220} height={48} />
+                    <div className="min-w-[180px] pl-[2rem]">
+                        <Image src="/images/HobyHub.ai.png" alt="Logo" width={160} height={40} priority />
                     </div>
                     <div className="bg-white/10 items-center rounded-lg px-4 gap-4 py-2 flex ">
-                        <LocationSelector />
+                        <div className="min-w-[100px]">
+                            <LocationSelector />
+                        </div>
 
                         <div className="min-w-[515px] flex-grow w-7/12 h-[44.38px] p-[3.19px] bg-white rounded-md shadow-[0px_8px_16px_0px_rgba(0,0,0,0.15)] flex items-center">
                             {/* Input Field */}
@@ -271,8 +273,8 @@ const LocationSelector = () => {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer">
-                                <Image src="/Icons/location.svg" alt="Logo" width={13} height={15} />
-                                <div className="text-center text-[#f8f9fa] text-[10.31px] font-normal font-['Inter'] truncate max-w-[120px] leading-[18px]">
+                                <Image src="/Icons/location.svg" alt="Logo" width={12} height={14} className="flex-shrink-0" />
+                                <div className="text-center text-[#f8f9fa] text-[9.5px] font-normal font-['Inter'] truncate max-w-[85px] leading-[16px]">
                                     {choosedLocation || ""}
                                 </div>
                             </div>
@@ -310,20 +312,39 @@ const FilterButton = ({ setIsFilterPopupOpen }: FilterButtonProps) => {
 
 const ProfileDropdown = () => {
     const router = useRouter();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // Check if user is logged in using the correct token key
+        const token = localStorage.getItem('token');
+        setIsLoggedIn(!!token);
+    }, []); // Empty dependency array means this runs once on mount
 
     const handleLogOut = () => {
-
+        // Handle logout logic
     };
+
     return (
         <>
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">Profile</DropdownMenuItem>
-
-            <LogOutConfirmation
-
-                onConfirm={handleLogOut}
-            />
+            {isLoggedIn ? (
+                <>
+                    <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">
+                        Profile
+                    </DropdownMenuItem>
+                    <LogOutConfirmation onConfirm={handleLogOut} />
+                </>
+            ) : (
+                <>
+                    <DropdownMenuItem onClick={() => router.push('/auth/login')} className="hover:cursor-pointer">
+                        Login
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/auth/sign-up')} className="hover:cursor-pointer">
+                        Sign Up
+                    </DropdownMenuItem>
+                </>
+            )}
         </>
     );
 };

@@ -13,33 +13,33 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { removeStored, removeStoredToken } from "@/utils/localStorage";
+import { removeStored, removeStoredToken, getStoredToken } from "@/utils/localStorage";
 
 interface LogOutConfirmationProps {
   // Function to call when user confirms logout
   onConfirm?: () => void;
   // For controlled external trigger
-  buttonText?: string;
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 export function LogOutConfirmation({ 
   onConfirm,
-  buttonText = "Log Out",
 }: LogOutConfirmationProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const isLoggedIn = !!getStoredToken();
 
   const handleConfirm = () => {
-    // Default logout logic (can be overridden with onConfirm prop)
-    if (onConfirm) {
-      onConfirm();
+    if (isLoggedIn) {
+      // Default logout logic (can be overridden with onConfirm prop)
+      if (onConfirm) {
+        onConfirm();
+      }
       removeStoredToken();
       removeStored('userData');
       router.push("/auth/login");
     } else {
-      // Default logout behavior - modify as needed
-      
+      router.push("/auth/login");
     }
     setOpen(false);
   };
@@ -47,21 +47,28 @@ export function LogOutConfirmation({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-      <DropdownMenuItem onSelect={(event) => {
-      // Prevent the default behavior which closes the dropdown
-      event.preventDefault();
-    }}>{buttonText}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={(event) => {
+          event.preventDefault();
+        }}>
+          {isLoggedIn ? "Log Out" : "Sign In"}
+        </DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isLoggedIn ? "Are you sure you want to log out?" : "Sign In Required"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            You will be logged out of the application and will need to sign in again to access your account.
+            {isLoggedIn 
+              ? "You will be logged out of the application and will need to sign in again to access your account."
+              : "You need to sign in to access this feature."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>Log Out</AlertDialogAction>
+          <AlertDialogAction onClick={handleConfirm}>
+            {isLoggedIn ? "Log Out" : "Sign In"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
