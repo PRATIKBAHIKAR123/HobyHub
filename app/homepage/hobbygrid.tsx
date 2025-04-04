@@ -5,6 +5,7 @@ import { Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAllActivities } from "@/services/hobbyService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Activity {
   id: number;
@@ -14,6 +15,35 @@ interface Activity {
   subCategoryId: string;
   title: string;
   description: string;
+}
+
+function HobbyCardSkeleton() {
+  return (
+    <div className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative">
+      {/* Image Skeleton */}
+      <Skeleton className="h-[250px] w-full rounded-tl-2xl rounded-tr-2xl" />
+      
+      {/* Views Count Skeleton */}
+      <div className="absolute top-2 left-2">
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+
+      {/* Content Section */}
+      <div className="p-4">
+        {/* Title Skeleton */}
+        <Skeleton className="h-5 w-3/4 mb-2" />
+
+        {/* Location Badge Skeleton */}
+        <Skeleton className="h-[29px] w-[180px] rounded-[20px]" />
+
+        {/* Bottom Info Skeleton */}
+        <div className="flex justify-between items-center mt-3">
+          <Skeleton className="h-4 w-[100px]" />
+          <Skeleton className="h-4 w-[80px]" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function HobbyGrid() {
@@ -37,7 +67,13 @@ export default function HobbyGrid() {
   }, []);
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading activities...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
+        {[...Array(8)].map((_, index) => (
+          <HobbyCardSkeleton key={index} />
+        ))}
+      </div>
+    );
   }
 
   return (

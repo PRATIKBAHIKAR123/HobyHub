@@ -5,13 +5,26 @@ import Footer from "../footer/footer";
 import { Categories } from "./categories";
 import HobbyGrid from "./hobbygrid";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+import Loader from "../components/Loader";
 
 export default function Homepage() {
-
     const [distance, setDistance] = useState("10");
     const [filter, setFilter] = useState("2");
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate loading time
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (isLoading) {
+        return <Loader />;
+    }
 
     return (
         <div>

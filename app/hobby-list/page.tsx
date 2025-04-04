@@ -5,9 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
-
+import { Skeleton } from "@/components/ui/skeleton";
 
 const classes = Array(6).fill({
   title: "Yoga Classes",
@@ -19,76 +19,169 @@ const classes = Array(6).fill({
   price: "$239 - $499",
 });
 
-export default function ClassDetails() {
-    const [isListView, setIsListView] = useState<boolean>(true);
+function NavigationSkeleton() {
   return (
-    <div className="p-6">
-      
-
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[#767676] text-[22.70px] font-semibold ">Classes</h2>
-        <div className="flex gap-2">
-        <ToggleGroup
-      type="single"
-      className="hidden md:block border-2 border-gray-300 rounded-md p-1"
-    >
-      <ToggleGroupItem
-        value="list"
-        onClick={() => setIsListView(true)}
-        className={clsx(isListView && "yellow-bg text-black")}
-      >
-        <Image
-          src="/Icons/classes-menu-list.png"
-          alt="class"
-          height={18}
-          width={18}
-        />
-      </ToggleGroupItem>
-
-      <ToggleGroupItem
-        value="grid"
-        onClick={() => setIsListView(false)}
-        className={clsx(!isListView && "yellow-bg text-black")}
-      >
-        <Image
-          src="/Icons/Menu Candy Box.png"
-          alt="class"
-          height={18}
-          width={18}
-        />
-      </ToggleGroupItem>
-    </ToggleGroup>
-          <div className="border-2 border-gray-300 rounded-md p-1 flex">
-          <Button className="app-bg-color text-white">Online Classes</Button>
-          <Button variant="outline" className="ml-1">Offline Classes</Button>
-          </div>
-        </div>
-      </div>
-      { !isListView &&(<ClassGridList />)}
-     { isListView &&(<ClassList/>)}
+    <div className="flex gap-4 mb-8">
+      {/* <Skeleton className="h-10 w-28" /> */}
     </div>
   );
 }
 
- function ClassGridList() {
-  return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {classes.map((item, index) => (
-    <Card key={index} className=" bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
+function GridCardSkeleton() {
+  return (
+    <Card className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
       <CardContent className="px-6">
-        <h3 className="text-lg font-bold flex items-center gap-2">
-          <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
-        </h3>
-        <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.weekDay}</p></p>
-        <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.time}</p></p>
-        <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.age}</p></p>
-        <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.session}</p></p>
-        <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
-        <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
-        <Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div></Button>
+        <div className="flex items-center gap-2 mb-4">
+          <Skeleton className="h-12 w-12 rounded-full" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="flex justify-between mt-[18px]">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        ))}
+        <Skeleton className="w-full h-10 mt-4" />
       </CardContent>
     </Card>
-  ))}
-</div>
+  );
+}
+
+function ClassDetailsSkeleton() {
+  return (
+    <div className="">
+      <NavigationSkeleton />
+      
+      {/* Header and Controls Skeleton */}
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-48" />
+        </div>
+      </div>
+
+      {/* Grid Cards Skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, index) => (
+          <GridCardSkeleton key={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ClassListSkeleton() {
+  return (
+    <div className="p-6">
+      <NavigationSkeleton />
+      
+      {/* Header and Controls Skeleton */}
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton className="h-8 w-32" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-48" />
+        </div>
+      </div>
+
+      <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {[...Array(8)].map((_, index) => (
+                <TableHead key={index}>
+                  <Skeleton className="h-4 w-full" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {[...Array(8)].map((_, colIndex) => (
+                  <TableCell key={colIndex}>
+                    <Skeleton className="h-8 w-full" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+export default function ClassDetails() {
+  const [isListView, setIsListView] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return isListView ? <ClassListSkeleton /> : <ClassDetailsSkeleton />;
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-[#767676] text-[22.70px] font-semibold">Classes</h2>
+        <div className="flex gap-2">
+          <ToggleGroup type="single" className="hidden md:block border-2 border-gray-300 rounded-md p-1">
+            <ToggleGroupItem
+              value="list"
+              onClick={() => setIsListView(true)}
+              className={clsx(isListView && "yellow-bg text-black")}
+            >
+              <Image src="/Icons/classes-menu-list.png" alt="class" height={18} width={18} />
+            </ToggleGroupItem>
+
+            <ToggleGroupItem
+              value="grid"
+              onClick={() => setIsListView(false)}
+              className={clsx(!isListView && "yellow-bg text-black")}
+            >
+              <Image src="/Icons/Menu Candy Box.png" alt="class" height={18} width={18} />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <div className="border-2 border-gray-300 rounded-md p-1 flex">
+            <Button className="app-bg-color text-white">Online Classes</Button>
+            <Button variant="outline" className="ml-1">Offline Classes</Button>
+          </div>
+        </div>
+      </div>
+      {!isListView && <ClassGridList />}
+      {isListView && <ClassList />}
+    </div>
+  );
+}
+
+function ClassGridList() {
+  return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {classes.map((item, index) => (
+      <Card key={index} className=" bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
+        <CardContent className="px-6">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
+          </h3>
+          <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.weekDay}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.time}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.age}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.session}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
+          <Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div></Button>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
 }
 
 function ClassList() {
@@ -120,46 +213,46 @@ function ClassList() {
   ]
   
   return <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
-  <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Class Name</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Schedule </TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Age group</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Start date</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">End date</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">No. of Sessions</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Cost ($)</TableHead>
-            <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Action</TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Class Name</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Schedule </TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Age group</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Start date</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">End date</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">No. of Sessions</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Cost ($)</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Action</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {classes.map((c) => (
+          <TableRow key={c.sno}>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" width={10}>{c.name}</TableCell>
+            
+            <TableCell className="justify-center">
+              <div className="items-center gap-2">
+              <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.schedule}</div>
+                  <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.scheduletime}</div>
+              </div>
+            </TableCell>
+            <TableCell className="justify-center">
+              <div className="items-center gap-2">
+              <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.agegroup}</div>
+                  <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.gender}</div>
+              </div>
+            </TableCell>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.stratdate}</TableCell>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.enddate}</TableCell>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.sessions}</TableCell>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" ><Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium ">Inquire Now</div></Button></TableCell>
+            
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {classes.map((c) => (
-            <TableRow key={c.sno}>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" width={10}>{c.name}</TableCell>
-              
-              <TableCell className="justify-center">
-                <div className="items-center gap-2">
-                <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.schedule}</div>
-                    <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.scheduletime}</div>
-              </div>
-              </TableCell>
-              <TableCell className="justify-center">
-                <div className="items-center gap-2">
-                <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.agegroup}</div>
-                    <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.gender}</div>
-              </div>
-              </TableCell>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.stratdate}</TableCell>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.enddate}</TableCell>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.sessions}</TableCell>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
-              <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" ><Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium ">Inquire Now</div></Button></TableCell>
-              
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        ))}
+      </TableBody>
+    </Table>
   
-</div>
+  </div>
 }

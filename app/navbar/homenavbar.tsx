@@ -26,7 +26,7 @@ export default function HomeNavbar() {
     const [showDropdown, setShowDropdown] = useState(false);
 
 
-    const [isOnline, setIsOnline] = useState(false); 
+    const [isOnline, setIsOnline] = useState(false);
 
     // Sample data (Replace with API results)
     const options = ["Read", "Dance", "Music", "Rock Climbing", "Riding", "running", "running", "running", "running"];
@@ -52,7 +52,7 @@ export default function HomeNavbar() {
         setSearchText(option);
         setShowDropdown(false);
     };
-    
+
     return (
         <>
             <div className="hidden md:block sticky top-0 z-50">
@@ -101,7 +101,7 @@ export default function HomeNavbar() {
                         <div className="px-3 w-full">
                             <div className="flex-col float-right items-center gap-2 cursor-pointer">
                                 <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-8 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
-                                    onCheckedChange={(checked) => setIsOnline(checked)}  />
+                                    onCheckedChange={(checked) => setIsOnline(checked)} />
                                 <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]"> {isOnline ? "Online Classes" : "Offline Classes"}</Label>
                             </div>
                         </div>
@@ -114,15 +114,15 @@ export default function HomeNavbar() {
                             <Image src="/Icons/user.svg" alt="Logo" width={25} height={25} />
                         </Link> */}
                         <DropdownMenu>
-                                <DropdownMenuTrigger>
-                                
+                            <DropdownMenuTrigger>
+
                                 <Image src="/Icons/user.svg" alt="Logo" width={25} height={25} />
-                            
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <ProfileDropdown/>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <ProfileDropdown />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <div data-svg-wrapper className="justify-center items-center col:flex" onClick={toggleSidebar}>
                             <Image src="/Icons/hamburger.svg" alt="Logo" width={25} height={25} className="ml-1" />
                             <div className="text-[#f8f9fa] text-sm font-normal font-['Inter'] leading-snug">Menu</div>
@@ -143,16 +143,16 @@ export default function HomeNavbar() {
                             <Link onClick={() => setShowAuthModal(true)} href={""}>
                                 <Image src="/Icons/heart.svg" alt="Logo" width={24} height={24} />
                             </Link>
-                            
-                            
+
+
                             <DropdownMenu>
                                 <DropdownMenuTrigger>
-                                
-                                <Image src="/Icons/user.svg" alt="Logo" width={24} height={24} />
-                            
+
+                                    <Image src="/Icons/user.svg" alt="Logo" width={24} height={24} />
+
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <ProfileDropdown/>
+                                    <ProfileDropdown />
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -314,16 +314,16 @@ const ProfileDropdown = () => {
     const handleLogOut = () => {
 
     };
-  return (
-    <>
-      <DropdownMenuLabel>My Account</DropdownMenuLabel>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">Profile</DropdownMenuItem>
-      
-      <LogOutConfirmation 
-          
-          onConfirm={handleLogOut}
-        />
-    </>
-  );
+    return (
+        <>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">Profile</DropdownMenuItem>
+
+            <LogOutConfirmation
+
+                onConfirm={handleLogOut}
+            />
+        </>
+    );
 };
