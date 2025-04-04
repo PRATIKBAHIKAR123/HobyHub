@@ -192,8 +192,8 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
         // Otherwise use geocoding
         const results = await getGeocode({ address: description });
         const latLng = await getLatLng(results[0]);
-        lat = latLng.lat;
-        lng = latLng.lng;
+        // lat = latLng.lat;
+        // lng = latLng.lng;
         
         // Get the most specific name from address components
         const addressComponents = results[0].address_components;
@@ -232,11 +232,13 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
       // Update location and notify parent
       setLocation(exactLocation);
       onLocationChange(exactLocation);
-    } catch (error) {}
+    } catch (error) {
+      console.log("Error fetching location details:", error);
+    }
     };
   
 
-  const handleChange = (e: { target: { value: any; }; }) => {
+  const handleChange = (e: { target: { value: string; }; }) => {
     const newValue = e.target.value;
     
     // if (ready) {

@@ -6,7 +6,6 @@ import { useSidebar } from "./sidebarContext";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect } from "react";
 
 // Menu items.
 const menuItems = [
