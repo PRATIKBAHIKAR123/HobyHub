@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { Skeleton } from "@/components/ui/skeleton";
+import withAuth from "../auth/withAuth";
 
 const classes = Array(6).fill({
   title: "Yoga Classes",
@@ -113,7 +114,7 @@ function ClassListSkeleton() {
   );
 }
 
-export default function ClassDetails() {
+function ClassDetails() {
   const [isListView, setIsListView] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -256,3 +257,5 @@ function ClassList() {
   
   </div>
 }
+
+export default withAuth(ClassDetails);

@@ -33,7 +33,7 @@ export function AuthDialog({ open, setOpen  }: PopupScreenProps) {
             <DialogContent className="sm:max-w-[425px]">
                 <div className="flex-col gap-4 py-4 text-center">
                     <div className="justify-center text-black text-[28px] font-medium font-['Minion_Pro']">Login and View</div>
-                    <div className="justify-center text-black text-lg font-medium font-['Minion_Pro']">You have to login first to see class location</div>
+                    <div className="justify-center text-black text-lg font-medium font-['Minion_Pro']">You have to login first to see details</div>
                 </div>
                 <DialogFooter className="sm:justify-center justify-center">
                     <Button 

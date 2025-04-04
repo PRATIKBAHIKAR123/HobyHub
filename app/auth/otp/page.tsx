@@ -131,7 +131,7 @@ export default function LoginPage() {
                   <span className="text-[#345175] text-[13px] md:text-[14.90px] font-bold">{timer > 0 ? `00:${timer.toString().padStart(2, "0")}` : "00:00"}</span>{" "}
                   <span className="hover:text-blue-200 hover:cursor-pointer" onClick={!isResendDisabled ? handleResendOtp : undefined}>Resend OTP</span>
                 </div>
-                <span className="hover:text-blue-200 text-[#3f3f3f] hover:cursor-pointer" onClick={() => router.push('/auth/reset-password')}>Reset Password</span>
+                
               </div>
 
               {/* Features */}

@@ -113,7 +113,7 @@ export function Categories() {
                 onOpenChange={(open) => handleCategoryClick(open, cat.id)}
                 modal={false}
               >
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger asChild onMouseEnter={() => setActiveCategory(cat.id)} onMouseLeave={() => setActiveCategory(null)}>
                   <div className="pt-2 pb-[8px] flex-col items-center gap-px inline-flex cursor-pointer">
                     <Image src={cat.img} alt={cat.title} width={50} height={50} />
                     <div className="h-[13px] text-center text-[#003161] text-[12.5px] font-bold font-['Minion_Pro']">

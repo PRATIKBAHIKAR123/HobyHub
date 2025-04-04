@@ -300,6 +300,11 @@ color: #ABABAB;
 
 }
 
+.pac-container {
+  z-index: 99999 !important;
+  position: relative;
+}
+
 @layer utilities {
   .invisible-border {
     @apply focus-visible:ring-0 focus-visible:border-transparent focus-visible:outline-none border-none;

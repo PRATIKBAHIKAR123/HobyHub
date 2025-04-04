@@ -92,7 +92,7 @@ export default function LoginPage() {
                   className="placeholder:text-[#e2e3e5] h-[42px] md:h-[48px] outline-none rounded-l-md rounded-l-none flex-1 border border-gray-300 border-l-0 text-sm md:text-base"
                 />
               </div>
-
+              
               <p className="text-[#c9c9c9] text-[11px] md:text-[12.5px] trajan-pro mt-2">
                 We ll send you an OTP via WhatsApp and SMS to verify your account.
               </p>
@@ -103,6 +103,7 @@ export default function LoginPage() {
                 <li>✔ Showcase your workshops & skills</li>
                 <li>✔ Connect with passionate hobbyists</li>
               </ul>
+              
             </div>
 
             <Card className="md:hidden my-3 sm:block w-full">
@@ -135,7 +136,8 @@ export default function LoginPage() {
               Privacy Policy
             </label>
           </div> */}
-            <span className="text-[#9d9d9d] text-[10px] md:text-[11.80px] py-3 mt-2 font-bold trajan-pro">Dont have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a></span>
+            <span className="text-[#9d9d9d] text-[10px] md:text-[11.80px] py-3 mt-2 font-bold trajan-pro">Dont have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("sign-up")}>Sign Up!</a><span className="hover:text-blue-200 text-[10px] md:text-[11.80px] text-[#3f3f3f] float-right hover:cursor-pointer  trajan-pro" onClick={() => router.push('/auth/reset-password')}>Reset Password</span></span>
+            
             {/* Button */}
             <div className="flex justify-center md:justify-start">
               <Button 

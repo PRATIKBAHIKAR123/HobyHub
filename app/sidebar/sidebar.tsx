@@ -29,20 +29,11 @@ export function AppSidebar() {
     const isMobile = useIsMobile();
     const router = useRouter();
     const { isSidebarOpen, toggleSidebar } = useSidebar();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    useEffect(() => {
-        // Check if user is logged in
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-    }, []);
-
-    const handleNavigation = (route: string, requiresAuth: boolean = false) => {
-        if (requiresAuth && !isLoggedIn) {
-            router.push('/auth/login');
-        } else {
+    const handleNavigation = (route: string) => {
+        
             router.push(route);
-        }
+        
         toggleSidebar();
     };
 
@@ -56,7 +47,7 @@ export function AppSidebar() {
                             {item.submenus.map((i, mindex) => (
                                 <div
                                     key={mindex}
-                                    onClick={() => !i.isDisabled && handleNavigation(i.link, i.name === "Hobby Class")}
+                                    onClick={() => !i.isDisabled && handleNavigation(i.link)}
                                     className={`flex items-center gap-3 px-6 py-[0.5rem] hover:cursor-pointer ${
                                         i.isDisabled ? "text-gray-400 " : "text-gray-800 hover:text-black"
                                     }`}
