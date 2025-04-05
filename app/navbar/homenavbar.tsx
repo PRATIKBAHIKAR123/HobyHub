@@ -14,7 +14,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useRouter } from "next/navigation";
 import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAllSubCategories } from "@/services/hobbyService";
 
+interface SubCategory {
+  categoryId: number;
+  title: string;
+  imagePath: string | null;
+  id: number;
+}
 
 export default function HomeNavbar() {
 
@@ -22,14 +29,24 @@ export default function HomeNavbar() {
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
     const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
     const [searchText, setSearchText] = useState("");
-    const [filteredOptions, setFilteredOptions] = useState<string[]>([]);
+    const [filteredOptions, setFilteredOptions] = useState<SubCategory[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
-
+    const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
 
     const [isOnline, setIsOnline] = useState(false);
 
-    // Sample data (Replace with API results)
-    const options = ["Read", "Dance", "Music", "Rock Climbing", "Riding", "running", "running", "running", "running"];
+    // Fetch all subcategories when component mounts
+    useEffect(() => {
+        const fetchSubCategories = async () => {
+            try {
+                const subCategories = await getAllSubCategories();
+                setAllSubCategories(subCategories);
+            } catch (error) {
+                console.error("Failed to fetch subcategories:", error);
+            }
+        };
+        fetchSubCategories();
+    }, []);
 
     // Filter results based on input
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,8 +54,8 @@ export default function HomeNavbar() {
         setSearchText(value);
 
         if (value.length > 1) {
-            const filtered = options.filter((option) =>
-                option.toLowerCase().includes(value.toLowerCase())
+            const filtered = allSubCategories.filter((subCategory) =>
+                subCategory.title.toLowerCase().includes(value.toLowerCase())
             );
             setFilteredOptions(filtered);
             setShowDropdown(filtered.length > 0);
@@ -48,8 +65,8 @@ export default function HomeNavbar() {
     };
 
     // Handle selection
-    const handleSelect = (option: string) => {
-        setSearchText(option);
+    const handleSelect = (subCategory: SubCategory) => {
+        setSearchText(subCategory.title);
         setShowDropdown(false);
     };
 
@@ -65,7 +82,7 @@ export default function HomeNavbar() {
                             <LocationSelector />
                         </div>
 
-                        <div className="min-w-[515px] flex-grow w-7/12 h-[44.38px] p-[3.19px] bg-white rounded-md shadow-[0px_8px_16px_0px_rgba(0,0,0,0.15)] flex items-center">
+                        <div className="min-w-[515px] flex-grow w-7/12 h-[44.38px] p-[3.19px] bg-white rounded-md shadow-[0px_8px_16px_0px_rgba(0,0,0,0.15)] flex items-center relative">
                             {/* Input Field */}
                             <Input
                                 type="text"
@@ -76,17 +93,19 @@ export default function HomeNavbar() {
                             />
                             {/* Autocomplete Dropdown */}
                             {showDropdown && (
-                                <ul className=" w-[510px] search-list mt-1 ">
-                                    {filteredOptions.map((option, index) => (
-                                        <li
-                                            key={index}
-                                            className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer"
-                                            onClick={() => handleSelect(option)}
-                                        >
-                                            {option}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="absolute left-0 right-0 top-[100%] translate-y-1 bg-white border border-gray-200 rounded-md shadow-lg z-[60] w-full">
+                                    <ul className="max-h-[300px] overflow-y-auto w-full">
+                                        {filteredOptions.map((subCategory) => (
+                                            <li
+                                                key={subCategory.id}
+                                                className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                onClick={() => handleSelect(subCategory)}
+                                            >
+                                                {subCategory.title}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             )}
                             {/* Search Icon */}
                             <div className="px-2">
@@ -203,14 +222,13 @@ type SearchInputProps = {
     searchText: string;
     handleSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
     showDropdown: boolean;
-    filteredOptions: string[]; // Adjust the type if your options are objects
-    handleSelect: (value: string) => void; // Update the type as per your data
-
+    filteredOptions: SubCategory[];
+    handleSelect: (subCategory: SubCategory) => void;
 };
 
 const SearchInput = ({ searchText, handleSearch, showDropdown, filteredOptions, handleSelect }: SearchInputProps) => {
     return (
-        <div className="min-w-[280px] md:w-[515px] flex-grow w-7/12 h-[44.38px] p-[3.19px] bg-white rounded-md shadow-[0px_8px_16px_0px_rgba(0,0,0,0.15)] flex items-center">
+        <div className="min-w-[280px] md:w-[515px] flex-grow w-7/12 h-[44.38px] p-[3.19px] bg-white rounded-md shadow-[0px_8px_16px_0px_rgba(0,0,0,0.15)] flex items-center relative">
             {/* Input Field */}
             <Input
                 type="text"
@@ -221,17 +239,19 @@ const SearchInput = ({ searchText, handleSearch, showDropdown, filteredOptions, 
             />
             {/* Autocomplete Dropdown */}
             {showDropdown && (
-                <ul className=" w-[510px] search-list mt-1 ">
-                    {filteredOptions.map((option: string, index: number) => (
-                        <li
-                            key={index}
-                            className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => handleSelect(option)}
-                        >
-                            {option}
-                        </li>
-                    ))}
-                </ul>
+                <div className="absolute left-0 right-0 top-[100%] translate-y-1 bg-white border border-gray-200 rounded-md shadow-lg z-[60] w-full">
+                    <ul className="max-h-[300px] overflow-y-auto w-full">
+                        {filteredOptions.map((subCategory) => (
+                            <li
+                                key={subCategory.id}
+                                className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => handleSelect(subCategory)}
+                            >
+                                {subCategory.title}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
             {/* Search Icon */}
             <div className="px-2">

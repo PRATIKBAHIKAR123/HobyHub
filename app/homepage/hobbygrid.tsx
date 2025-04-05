@@ -15,6 +15,20 @@ interface Activity {
   subCategoryId: string;
   title: string;
   description: string;
+  thumbnailImage: string;
+  sessionCountFrom: number;
+  sessionCountTo: number;
+  ageRestrictionFrom: number;
+  ageRestrictionTo: number;
+  address: string;
+  road: string;
+  area: string;
+  state: string;
+  city: string;
+  pincode: string;
+  country: string;
+  longitude: string;
+  latitute: string;
 }
 
 function HobbyCardSkeleton() {
@@ -87,7 +101,7 @@ export default function HobbyGrid() {
           {/* Image Section */}
           <div className="relative">
             <img
-              src="/images/yoga.jpeg" // Static image for now
+              src={`https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`}
               alt={activity.title} 
               className="h-[250px] w-full rounded-tl-2xl rounded-tr-2xl object-cover"
             />
@@ -103,23 +117,20 @@ export default function HobbyGrid() {
 
             <div className="w-auto h-[29px] pl-[11px] pr-[9px] pt-0.5 pb-0.5 bg-[#c8daeb] rounded-[20px] justify-center items-center gap-[5px] inline-flex">
               <Image src={'/Icons/location-pin-black.svg'} height={14} width={12} alt="pin"/>
-              { /* <span className="text-[#212529] text-sm font-medium font-['Minion_Pro'] leading-[21px]">
-                {activity.description}
-              </span>*/}
               <span className="text-[#212529] text-sm font-medium font-['Minion_Pro'] leading-[21px]">
-                Reviwar Peth - Pune
+                {activity.area} - {activity.city}
               </span>
             </div>
 
             <div className="flex justify-between items-center mt-3">
               <span className="text-[#212529] text-xs font-normal font-['Trajan_Pro'] flex gap-2">
                 <Image src={"/Icons/user-ic.svg"} alt="user" height={14} width={14}/>
-                <span>10 - 70 YEARS</span>
+                <span>{activity.ageRestrictionFrom} - {activity.ageRestrictionTo} YEARS</span>
               </span>
               <div className="flex items-center gap-2">
                 <Image src={"/Icons/calender-blk.svg"} alt="user" height={14} width={14}/>
                 <span className="text-[#212529] text-[11.16px] font-normal font-['Trajan_Pro'] mt-[5px]">
-                  SESSION 25
+                  SESSION {activity.sessionCountFrom}
                 </span>
               </div>
             </div>

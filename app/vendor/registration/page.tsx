@@ -214,15 +214,55 @@ export default function RegistrationForm() {
 
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Institute Name</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Weekday Selection</Label>
+                <div className="grid grid-cols-2 gap-2 p-2 border border-[#05244f] rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="monday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="monday" className="text-sm">Monday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="tuesday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="tuesday" className="text-sm">Tuesday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="wednesday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="wednesday" className="text-sm">Wednesday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="thursday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="thursday" className="text-sm">Thursday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="friday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="friday" className="text-sm">Friday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="saturday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="saturday" className="text-sm">Saturday</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="sunday" className="h-4 w-4 border-[#05244f]" />
+                    <label htmlFor="sunday" className="text-sm">Sunday</label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
+                <Input type="number" min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Cost Range</Label>
                 <Select>
                   <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                    <SelectValue placeholder="Institute Name" />
+                    <SelectValue placeholder="Select Cost Range" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Pune</SelectItem>
-                    <SelectItem value="dark">Nashik</SelectItem>
-                    <SelectItem value="system">Mumbai</SelectItem>
+                    <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
+                    <SelectItem value="1000-2000">₹1,000 - ₹2,000</SelectItem>
+                    <SelectItem value="2000-3000">₹2,000 - ₹3,000</SelectItem>
+                    <SelectItem value="3000-4000">₹3,000 - ₹4,000</SelectItem>
+                    <SelectItem value="4000-5000">₹4,000 - ₹5,000</SelectItem>
+                    <SelectItem value="5000+">₹5,000+</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -239,7 +279,6 @@ export default function RegistrationForm() {
                     <SelectItem value="dark">Female</SelectItem>
                   </SelectContent>
                 </Select>
-
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">Age</Label>
@@ -252,33 +291,6 @@ export default function RegistrationForm() {
                     <SelectItem value="dark">15 Years</SelectItem>
                   </SelectContent>
                 </Select>
-
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Institute Name</Label>
-                <Select>
-                  <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                    <SelectValue placeholder="Institute Name" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">12 Years</SelectItem>
-                    <SelectItem value="dark">15 Years</SelectItem>
-                  </SelectContent>
-                </Select>
-
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Institute Name</Label>
-                <Select>
-                  <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                    <SelectValue placeholder="Institute Name" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">12 Years</SelectItem>
-                    <SelectItem value="dark">15 Years</SelectItem>
-                  </SelectContent>
-                </Select>
-
               </div>
             </div>
           </div></>

@@ -8,6 +8,13 @@ interface SubCategory {
   id: number;
 }
 
+interface Category {
+  title: string;
+  imagePath: string | null;
+  sort: number;
+  id: number;
+}
+
 interface Activity {
   id: number;
   vendorId: number;
@@ -16,6 +23,20 @@ interface Activity {
   subCategoryId: string;
   title: string;
   description: string;
+  thumbnailImage: string;
+  sessionCountFrom: number;
+  sessionCountTo: number;
+  ageRestrictionFrom: number;
+  ageRestrictionTo: number;
+  address: string;
+  road: string;
+  area: string;
+  state: string;
+  city: string;
+  pincode: string;
+  country: string;
+  longitude: string;
+  latitute: string;
 }
 
 interface ErrorResponse {
@@ -89,10 +110,35 @@ export const getAllActivities = async (): Promise<Activity[]> => {
     }
 };
 
+/**
+ * Get all categories
+ * @returns List of all categories
+ */
+export const getAllCategories = async (): Promise<Category[]> => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.get<Category[]>(
+            `${API_BASE_URL}/category/list`,
+            {
+                headers: {
+                    'accept': '*/*',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        const err = error as { response?: { data: ErrorResponse } };
+        throw err.response?.data?.message || "Failed to fetch categories";
+    }
+};
+
 // Export all functions as named exports
 export const hobbyService = {
     getAllSubCategories,
-    getAllActivities
+    getAllActivities,
+    getAllCategories
 };
 
 export default hobbyService;
