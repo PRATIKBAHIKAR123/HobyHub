@@ -18,7 +18,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { registerVendor } from "@/services/vendorService";
-import { Check, CircleCheckBig } from "lucide-react";
+import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 
 // Personal details form schema
@@ -92,7 +92,7 @@ export default function RegistrationForm() {
     setValue: setValuePersonal,
     watch: watchPersonal,
     formState: { errors: errorsPersonal },
-    reset: resetPersonal,
+    //reset: resetPersonal,
   } = useForm({
     resolver: yupResolver(personalDetailsSchema),
     mode: "onChange",
@@ -104,7 +104,7 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitInstitute,
     setValue: setValueInstitute,
     formState: { errors: errorsInstitute },
-    reset: resetInstitute,
+    //reset: resetInstitute,
   } = useForm({
     resolver: yupResolver(instituteDetailsSchema),
     mode: "onChange",
@@ -115,8 +115,8 @@ export default function RegistrationForm() {
     register: registerAdditional,
     handleSubmit: handleSubmitAdditional,
     setValue: setValueAdditional,
-    formState: { errors: errorsAdditional },
-    reset: resetAdditional,
+    //formState: { errors: errorsAdditional },
+    //reset: resetAdditional,
   } = useForm({
     resolver: yupResolver(additionalInfoSchema),
     mode: "onChange",
@@ -128,7 +128,7 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitClass,
     setValue: setValueClass,
     formState: { errors: errorsClass },
-    reset: resetClass,
+    //reset: resetClass,
   } = useForm({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
@@ -195,7 +195,7 @@ export default function RegistrationForm() {
   };
 
   // Save personal details to localStorage and proceed to the next section
-  const savePersonalDetails = (data: any) => {
+  const savePersonalDetails = (data: unknown) => {
     localStorage.setItem('personalDetails', JSON.stringify(data));
     setCompletedSections(prev => ({...prev, personalDetails: true}));
     setActiveAccordion("item-1");
@@ -203,10 +203,10 @@ export default function RegistrationForm() {
   };
 
   // Save institute details to localStorage and proceed to the next section
-  const saveInstituteDetails = (data: any) => {
+  const saveInstituteDetails = (data: unknown) => {
     // Save images data with institute details
     const instituteData = {
-      ...data,
+      ...(typeof data === 'object' && data !== null ? data : {}),
       images: images
     };
     localStorage.setItem('instituteDetails', JSON.stringify(instituteData));
@@ -215,14 +215,14 @@ export default function RegistrationForm() {
   };
 
   // Save additional info to localStorage
-  const saveAdditionalInfo = (data: any) => {
+  const saveAdditionalInfo = (data: unknown) => {
     localStorage.setItem('additionalInfo', JSON.stringify(data));
     setCompletedSections(prev => ({...prev, additionalInfo: true}));
     toast.success("Additional information saved successfully!");
   };
 
   // Save class details to localStorage
-  const saveClassDetails = (data: any) => {
+  const saveClassDetails = (data: unknown) => {
     localStorage.setItem('classDetails', JSON.stringify(data));
     setCompletedSections(prev => ({...prev, classDetails: true}));
     toast.success("Class details saved successfully!");
@@ -889,30 +889,30 @@ export default function RegistrationForm() {
 }
 
 // Types
-interface FormData {
-  name: string;
-  emailId: string;
-  phoneNumber: string;
-  gender?: string;
-  dob?: string;
-  password?: string;
-  confirmPassword?: string;
-  programTitle?: string;
-  instituteName?: string;
-  since?: string;
-  gstNo?: string;
-  introduction?: string;
-  websiteName?: string;
-  classLevel?: string;
-  instagramAccount?: string;
-  youtubeAccount?: string;
-  className?: string;
-  category?: string;
-  subCategory?: string;
-  location?: string;
-  contact?: string;
-  time?: string;
-  experienceLevel?: string;
-  classSize?: string;
-  age?: string;
-}
+// interface FormData {
+//   name: string;
+//   emailId: string;
+//   phoneNumber: string;
+//   gender?: string;
+//   dob?: string;
+//   password?: string;
+//   confirmPassword?: string;
+//   programTitle?: string;
+//   instituteName?: string;
+//   since?: string;
+//   gstNo?: string;
+//   introduction?: string;
+//   websiteName?: string;
+//   classLevel?: string;
+//   instagramAccount?: string;
+//   youtubeAccount?: string;
+//   className?: string;
+//   category?: string;
+//   subCategory?: string;
+//   location?: string;
+//   contact?: string;
+//   time?: string;
+//   experienceLevel?: string;
+//   classSize?: string;
+//   age?: string;
+// }
