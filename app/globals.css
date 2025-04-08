@@ -314,6 +314,16 @@ color: #ABABAB;
     @apply bg-white absolute border border-t-0 border-gray-200 rounded-none shadow-lg z-999 top-27 md:top-10;
   }
 
+  .accordian-trigger-active {
+    color: #05244f;
+    cursor: pointer;
+  }
+
+  .accordian-trigger-inactive {
+    color: gray !important;
+    cursor: not-allowed !important;
+  }
+
   @screen sm {
     .search-list {
       @apply top-42;

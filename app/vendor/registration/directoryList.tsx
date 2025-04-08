@@ -55,8 +55,8 @@ import {
         <TableFooter>
           <TableRow>
           <TableCell ></TableCell>
-            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Class Details</Button></TableCell>
-            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Class Details</Button></TableCell>
+            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Address</Button></TableCell>
+            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Contact</Button></TableCell>
             <TableCell ></TableCell>
           </TableRow>
         </TableFooter>

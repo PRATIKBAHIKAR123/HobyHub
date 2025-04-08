@@ -9,9 +9,11 @@ interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   setShowClassFields:  (open: boolean) => void;
+  setShowCourseFields:  (open: boolean) => void;
+  setAccordianOpen: (open: string) => void;
 }
 
-export default function PopupScreen({ open, setOpen, setShowClassFields  }: PopupScreenProps) {
+export default function PopupScreen({ open, setOpen, setShowClassFields, setShowCourseFields, setAccordianOpen  }: PopupScreenProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -21,6 +23,7 @@ export default function PopupScreen({ open, setOpen, setShowClassFields  }: Popu
           <Card onClick={() => {
               setShowClassFields(true);
               setOpen(false); // Close dialog after clicking
+              setAccordianOpen('item-4')
             }} className="w-40 md:w-55 p-4 cursor-pointer hover:shadow-lg">
             <CardContent className="flex flex-col items-center gap-2">
             <Image src={'/Icons/Video.svg'} height={56} width={56} alt="Books" />
@@ -28,7 +31,11 @@ export default function PopupScreen({ open, setOpen, setShowClassFields  }: Popu
               <p className="text-gray-500 text-sm">Provide class-related information</p>
             </CardContent>
           </Card>
-          <Card className="w-40 md:w-55 p-4 cursor-pointer hover:shadow-lg">
+          <Card onClick={() => {
+              setShowCourseFields(true);
+              setOpen(false); // Close dialog after clicking
+              setAccordianOpen('item-5')
+            }} className="w-40 md:w-55 p-4 cursor-pointer hover:shadow-lg">
             <CardContent className="flex flex-col items-center gap-2">
               <Image src={'/Icons/Books.svg'} height={56} width={56} alt="Books" />
               <h3 className="text-lg font-semibold">Course Form</h3>

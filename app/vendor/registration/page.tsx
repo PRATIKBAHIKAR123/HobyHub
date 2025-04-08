@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { registerVendor } from "@/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
+import { ClassTable } from "./classList";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -63,9 +64,28 @@ const classDetailsSchema = yup.object().shape({
   time: yup.string().required("Time is required"),
   gender: yup.string(),
   age: yup.string(),
+  cost: yup.string(),
   classSize: yup.string(), // Added classSize to the schema
-  instituteName: yup.string(), // Added instituteName to the schema
+  weekdays: yup.array(), // Added instituteName to the schema
   experienceLevel: yup.string(), // Added experienceLevel to the schema
+  noOfSessions: yup.string(), // Added noOfSessions to the schema
+});
+
+// Class details form schema
+const courseDetailsSchema = yup.object().shape({
+  className: yup.string().required("Class name is required"),
+  category: yup.string().required("Category is required"),
+  subCategory: yup.string(),
+  location: yup.string().required("Location is required"),
+  contact: yup.string().required("Contact is required"),
+  time: yup.string().required("Time is required"),
+  gender: yup.string(),
+  age: yup.string(),
+  cost: yup.string(),
+  classSize: yup.string(), // Added classSize to the schema
+  weekdays: yup.array(), // Added instituteName to the schema
+  experienceLevel: yup.string(), // Added experienceLevel to the schema
+  noOfSessions: yup.string(), // Added noOfSessions to the schema
 });
 
 export default function RegistrationForm() {
@@ -73,6 +93,9 @@ export default function RegistrationForm() {
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
+  const [showCourseFields, setShowCourseFields] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [editIndexforCourse, setEditIndexforCourse] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
   const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
@@ -84,6 +107,32 @@ export default function RegistrationForm() {
     additionalInfo: false,
     classDetails: false
   });
+
+  const [classes, setClasses] = useState<any[]>([]);
+  const [course, setCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    if(showClassFields){
+      setActiveAccordion("item-4");
+    }
+  }, [showClassFields]);
+
+  useEffect(() => {
+    if(!completedSections.personalDetails){
+      setActiveAccordion("item-0");
+    }
+    else if(!completedSections.instituteDetails){
+      setActiveAccordion("item-1");
+    }else if(!completedSections.additionalInfo){
+      setActiveAccordion("item-2");
+    }
+  }, [activeAccordion, completedSections]);
+
+  useEffect(() => {
+    if(showCourseFields){
+      setActiveAccordion("item-5");
+    }
+  }, [activeAccordion]);
 
   // Form for personal details
   const {
@@ -128,12 +177,24 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitClass,
     setValue: setValueClass,
     formState: { errors: errorsClass },
-    //reset: resetClass,
+    watch: watchClass,
+    reset: resetClass,
   } = useForm({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
   });
 
+  const {
+    register: registerCourse,
+    handleSubmit: handleSubmitCourse,
+    setValue: setValueCourse,
+    formState: { errors: errorsCourse },
+    watch: watchCourse,
+    reset: resetCourse,
+  } = useForm({
+    resolver: yupResolver(courseDetailsSchema),
+    mode: "onChange",
+  });
   // Load saved data from localStorage on component mount
   useEffect(() => {
     // Load personal details
@@ -169,20 +230,55 @@ export default function RegistrationForm() {
     // Load class details
     const savedClassDetails = localStorage.getItem('classDetails');
     if (savedClassDetails) {
+      console.log('savedClassDetails',savedClassDetails)
       const classData = JSON.parse(savedClassDetails);
+      console.log('classData',classData)
+      setClasses(classData);
+      console.log('classes',classes)
       Object.keys(classData).forEach((key) => {
         setValueClass(key as keyof typeof classDetailsSchema.fields, classData[key]);
       });
-      setShowClassFields(true);
-      setCompletedSections(prev => ({...prev, classDetails: true}));
+      setShowClassFields(false);
+      // setCompletedSections(prev => ({...prev, classDetails: true}));    
     }
 
+    // Load course details
+    const savedCourseDetails = localStorage.getItem('corseDetails');
+    if (savedCourseDetails) {
+      const courseData = JSON.parse(savedCourseDetails);
+      setCourses(courseData);
+      Object.keys(courseData).forEach((key) => {
+        setValueCourse(key as keyof typeof courseDetailsSchema.fields, courseData[key]);
+      });
+      setShowCourseFields(false);
+      // setCompletedSections(prev => ({...prev, classDetails: true}));    
+    }
     // Load saved images
     const savedImages = localStorage.getItem('images');
     if (savedImages) {
       setImages(JSON.parse(savedImages));
     }
-  }, [setValuePersonal, setValueInstitute, setValueAdditional, setValueClass]);
+  }, [setValuePersonal, setValueInstitute, setValueAdditional, setClasses, setValueClass, setCourses, setValueCourse]);
+
+  useEffect(() => {
+    localStorage.setItem("classDetails", JSON.stringify(classes));
+  }, [classes]);
+
+  useEffect(() => {
+    localStorage.setItem("corseDetails", JSON.stringify(course));
+  }, [course]);
+  
+  const handleDeleteClass = (index: number) => {
+    // Remove the class at the specified index
+    const updatedClasses = classes.filter((_, i) => i !== index);
+    setClasses(updatedClasses); // Update state
+  };
+
+  const handleDeleteCourse = (index: number) => {
+    // Remove the class at the specified index
+    const updatedClasses = course.filter((_, i) => i !== index);
+    setCourses(updatedClasses); // Update state
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from((event.target as HTMLInputElement)?.files || []);
@@ -211,6 +307,7 @@ export default function RegistrationForm() {
     };
     localStorage.setItem('instituteDetails', JSON.stringify(instituteData));
     setCompletedSections(prev => ({...prev, instituteDetails: true}));
+    setActiveAccordion("item-2");
     toast.success("Institute details saved successfully!");
   };
 
@@ -222,12 +319,35 @@ export default function RegistrationForm() {
   };
 
   // Save class details to localStorage
-  const saveClassDetails = (data: unknown) => {
-    localStorage.setItem('classDetails', JSON.stringify(data));
-    setCompletedSections(prev => ({...prev, classDetails: true}));
-    toast.success("Class details saved successfully!");
-  };
+const saveClassDetails = (data: any) => {
+  // Create a new array with the existing classes plus the new one
+  const updatedClasses = [...classes, {...data}];
+  
+  // Update the state
+  setClasses(updatedClasses);
+  
+  // Save to localStorage
+  localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
+  
+  setCompletedSections(prev => ({...prev, classDetails: true}));
+  toast.success("Class details saved successfully!");
+  
+  // Reset the form and hide the class fields
+  resetClass();
+  setShowClassFields(false);
+};
 
+
+  const saveCourseDetails = (data: any) => {
+    const updatedClasses = [...course, {...data}];
+    localStorage.setItem('corseDetails', JSON.stringify(updatedClasses));
+    setCourses(updatedClasses);
+    setCompletedSections(prev => ({...prev, classDetails: true}));
+    toast.success("Course details saved successfully!");
+    resetCourse();
+    setShowCourseFields(false);
+   // Reset the class form after saving
+  };
   // Final form submission - gather all data and submit to API
   const handleFinalSubmit = async () => {
     setIsLoading(true);
@@ -273,6 +393,48 @@ export default function RegistrationForm() {
     }
   };
 
+  const handleWeekdayChange = (day: any,isCLassfields: boolean) => {
+    const currentWeekdays = isCLassfields?watchClass('weekdays') || []:watchCourse('weekdays') || []; // Get current weekdays value
+    
+    // If day is already selected, remove it; otherwise, add it
+    if(isCLassfields){
+      if (currentWeekdays.includes(day)) {
+        setValueClass('weekdays', currentWeekdays.filter((d: any) => d !== day));
+      } else {
+        setValueClass('weekdays', [...currentWeekdays, day]);
+      }
+    }else{
+      if (currentWeekdays.includes(day)) {
+        setValueCourse('weekdays', currentWeekdays.filter((d: any) => d !== day));
+      } else {
+        setValueCourse('weekdays', [...currentWeekdays, day]);
+      }
+    }
+    
+  };
+
+  const handleEditClass = (index: number) => {
+    setEditIndex(index); // Set the index of the class being edited
+    const classToEdit = classes[index];
+    console.log(editIndex)
+    setActiveAccordion("item-4");
+    Object.keys(classToEdit).forEach((key) => {
+      setValueClass(key as keyof typeof classDetailsSchema.fields, classToEdit[key as keyof typeof classDetailsSchema.fields]);
+    });
+    setShowClassFields(true); // Show the class form
+  };
+
+  const handleEditCourse = (index: number) => {
+    setEditIndexforCourse(index); // Set the index of the class being edited
+    const classToEdit = course[index];
+    setActiveAccordion("item-5");
+    console.log(editIndexforCourse)
+    Object.keys(classToEdit).forEach((key) => {
+      setValueCourse(key as keyof typeof courseDetailsSchema.fields, classToEdit[key as keyof typeof courseDetailsSchema.fields]);
+    });
+    setShowCourseFields(true); // Show the class form
+  };
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -291,8 +453,8 @@ export default function RegistrationForm() {
           {/* Personal Details Section */}
           <AccordionItem value="item-0">
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-              <AccordionTrigger>
-                <div className="text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center">
+              <AccordionTrigger onClick={(e) => e.preventDefault()}>
+                <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.personalDetails || activeAccordion=='item-0' ? "accordian-trigger-active" : "accordian-trigger-inactive"}`}>
                   Personal Details
                   {completedSections.personalDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
                 </div>
@@ -405,8 +567,8 @@ export default function RegistrationForm() {
           {/* Institute Details Section */}
           <AccordionItem value="item-1">
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-              <AccordionTrigger>
-                <div className="text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center">
+              <AccordionTrigger onClick={(e) => e.preventDefault()}>
+              <div className={` text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.instituteDetails ||activeAccordion=='item-1' ? "accordian-trigger-active" : "accordian-trigger-inactive"} "`}>
                   Institute Details
                   {completedSections.instituteDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
                 </div>
@@ -536,8 +698,8 @@ export default function RegistrationForm() {
         {/* Additional Information Section */}
         <AccordionItem value="item-2">
         <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-        <AccordionTrigger>
-          <div className="text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center">
+        <AccordionTrigger onClick={(e) => e.preventDefault()}>
+          <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.additionalInfo ||activeAccordion=='item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"} `}>
             Additional information
             {completedSections.additionalInfo && <CircleCheckBig className="text-[#46a758] ml-2"/>}
           </div>
@@ -590,7 +752,7 @@ export default function RegistrationForm() {
           </AccordionContent>
         </div>
         </AccordionItem>
-        </Accordion>
+        
         {/* Class Details Button */}
         <Button 
           variant="outline" 
@@ -604,15 +766,21 @@ export default function RegistrationForm() {
           open={isOpen} 
           setOpen={setIsOpen} 
           setShowClassFields={setShowClassFields} 
+          setShowCourseFields ={setShowCourseFields}
+          setAccordianOpen={setActiveAccordion}
         />
         
         {/* Class Details Section */}
         {showClassFields && (
+          <AccordionItem value="item-4">
           <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
+          <AccordionTrigger>
             <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
               Class Details
               {completedSections.classDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
             </div>
+            </AccordionTrigger>
+            <AccordionContent>
             <form onSubmit={handleSubmitClass(saveClassDetails)}>
               <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6">
                 <div className="flex flex-col gap-2">
@@ -643,7 +811,7 @@ export default function RegistrationForm() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
-                  <Select onValueChange={(value) => setValueClass("subCategory", value)}>
+                  <Select onValueChange={(value) => setValueClass("subCategory", value)} value={watchClass("subCategory") || ""}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Sub Category" />
                     </SelectTrigger>
@@ -661,7 +829,7 @@ export default function RegistrationForm() {
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                     Location<span className="text-red-500">*</span>
                   </Label>
-                  <Select onValueChange={(value) => setValueClass("location", value)}>
+                  <Select value={watchClass("location") || ""} onValueChange={(value) => setValueClass("location", value)}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Location" />
                     </SelectTrigger>
@@ -690,7 +858,7 @@ export default function RegistrationForm() {
                     Contact<span className="text-red-500">*
                     </span>
                   </Label>
-                  <Select onValueChange={(value) => setValueClass("contact", value)}>
+                  <Select onValueChange={(value) => setValueClass("contact", value)} value={watchClass("contact") || ""}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Contact" />
                     </SelectTrigger>
@@ -723,11 +891,11 @@ export default function RegistrationForm() {
               
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
-                <Input type="number" min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
+                <Input type="number" {...registerClass("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">Cost Range</Label>
-                <Select>
+                <Select value={watchClass("cost") || ""} onValueChange={(value) => setValueClass("cost", value)}>
                   <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                     <SelectValue placeholder="Select Cost Range" />
                   </SelectTrigger>
@@ -747,7 +915,7 @@ export default function RegistrationForm() {
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                     Time<span className="text-red-500">*</span>
                   </Label>
-                  <Select onValueChange={(value) => setValueClass("time", value)}>
+                  <Select onValueChange={(value) => setValueClass("time", value)} value={watchClass("time") || ""}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Time" />
                     </SelectTrigger>
@@ -762,39 +930,26 @@ export default function RegistrationForm() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md">
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="monday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="monday" className="text-sm">Monday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="tuesday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="tuesday" className="text-sm">Tuesday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="wednesday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="wednesday" className="text-sm">Wednesday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="thursday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="thursday" className="text-sm">Thursday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="friday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="friday" className="text-sm">Friday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="saturday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="saturday" className="text-sm">Saturday</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="sunday" className="h-4 w-4 border-[#05244f]" />
-                    <label htmlFor="sunday" className="text-sm">Sunday</label>
-                  </div>
-                </div>
+                 <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md">
+        {[
+          'Monday', 'Tuesday', 'Wednesday', 
+          'Thursday', 'Friday', 'Saturday', 'Sunday'
+        ].map((day) => (
+          <div key={day} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id={day.toLowerCase()}
+              className="h-4 w-4 border-[#05244f]"
+              onChange={() => handleWeekdayChange(day,true)}
+              checked={(watchClass('weekdays') || []).includes(day)}
+            />
+            <label htmlFor={day.toLowerCase()} className="text-sm">{day}</label>
+          </div>
+        ))}
+      </div>
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Size</Label>
-                  <Select onValueChange={(value) => setValueClass("classSize", value)}>
+                  <Select onValueChange={(value) => setValueClass("classSize", value)} value={watchClass("classSize") || ""}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Class Size" />
                     </SelectTrigger>
@@ -813,7 +968,7 @@ export default function RegistrationForm() {
               <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4 mb-6">
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Gender</Label>
-                  <Select onValueChange={(value) => setValueClass("gender", value)}>
+                  <Select value={watchClass("gender") || ""} onValueChange={(value) => setValueClass("gender", value)}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Gender" />
                     </SelectTrigger>
@@ -827,7 +982,7 @@ export default function RegistrationForm() {
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Age</Label>
-                  <Select onValueChange={(value) => setValueClass("age", value)}>
+                  <Select onValueChange={(value) => setValueClass("age", value)} value={watchClass("age") || ""}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Age" />
                     </SelectTrigger>
@@ -841,7 +996,7 @@ export default function RegistrationForm() {
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
-                  <Select onValueChange={(value) => setValueClass("experienceLevel", value)}>
+                  <Select value={watchClass("experienceLevel") || ""} onValueChange={(value) => setValueClass("experienceLevel", value)}>
                     <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                       <SelectValue placeholder="Prior Knowledge" />
                     </SelectTrigger>
@@ -864,9 +1019,282 @@ export default function RegistrationForm() {
                 {isLoading ? "Saving..." : "Save Class Details"}
               </Button>
             </form>
+            </AccordionContent>
           </div>
+          </AccordionItem>
         )}
+        
+                {/* Class Details Section */}
+                {showCourseFields && (
+          <AccordionItem value="item-5">
+          <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
+          <AccordionTrigger>
+            <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
+              Course Details
+              {completedSections.classDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
+            </div>
+            </AccordionTrigger>
+            <AccordionContent>
+            <form onSubmit={handleSubmitCourse(saveCourseDetails)}>
+              <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Course Name<span className="text-red-500">*</span>
+                  </Label>
+                  <Input 
+                    placeholder="Class Name" 
+                    {...registerCourse("className")} 
+                    className="h-[52px] border-[#05244f]" 
+                  />
+                  {errorsCourse.className && (
+                    <p className="text-red-500 text-xs">{errorsCourse.className.message}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                    Category<span className="text-red-500">*</span>
+                  </Label>
+                  <Input 
+                    placeholder="Category" 
+                    {...registerCourse("category")} 
+                    className="h-[52px] border-[#05244f]" 
+                  />
+                  {errorsCourse.category && (
+                    <p className="text-red-500 text-xs">{errorsCourse.category.message}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
+                  <Select onValueChange={(value) => setValueCourse("subCategory", value)} value={watchCourse("subCategory") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Sub Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="subCategory1">Sub Category 1</SelectItem>
+                      <SelectItem value="subCategory2">Sub Category 2</SelectItem>
+                      <SelectItem value="subCategory3">Sub Category 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                    Location<span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={watchCourse("location") || ""} onValueChange={(value) => setValueCourse("location", value)}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pune">Pune</SelectItem>
+                      <SelectItem value="Nashik">Nashik</SelectItem>
+                      <SelectItem value="Mumbai">Mumbai</SelectItem>
+                      <div className="p-2 border-t border-gray-200">
+                        <Button 
+                          className="w-full" 
+                          variant="outline" 
+                          onClick={() => setIsLocationPopupOpen(true)}
+                        >
+                          + Add New Location
+                        </Button>
+                      </div>
+                    </SelectContent>
+                  </Select>
+                  {errorsCourse.location && (
+                    <p className="text-red-500 text-xs">{errorsCourse.location.message}</p>
+                  )}
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                    Contact<span className="text-red-500">*
+                    </span>
+                  </Label>
+                  <Select onValueChange={(value) => setValueCourse("contact", value)} value={watchCourse("contact") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Contact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="contact1">Contact 1</SelectItem>
+                        <SelectItem value="contact2">Contact 2</SelectItem>
+                        <SelectItem value="contact3">Contact 3</SelectItem>
+                      </SelectGroup>
+                      <div className="p-2 border-t border-gray-200">
+                        <Button 
+                          className="w-full" 
+                          variant="outline" 
+                          onClick={() => setIsContactPopupOpen(true)}
+                        >
+                          + Add Contact
+                        </Button>
+                      </div>
+                    </SelectContent>
+                  </Select>
+                  {errorsCourse.contact && (
+                    <p className="text-red-500 text-xs">{errorsCourse.contact.message}</p>
+                  )}
+                </div>
+                
+                <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} />
+                <ContactPopupScreen open={isContactPopupOpen} setOpen={setIsContactPopupOpen} />
 
+                
+              
+              <div className="flex flex-col gap-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
+                <Input type="number" {...registerCourse("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Cost Range</Label>
+                <Select value={watchCourse("cost") || ""} onValueChange={(value) => setValueCourse("cost", value)}>
+                  <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                    <SelectValue placeholder="Select Cost Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
+                    <SelectItem value="1000-2000">₹1,000 - ₹2,000</SelectItem>
+                    <SelectItem value="2000-3000">₹2,000 - ₹3,000</SelectItem>
+                    <SelectItem value="3000-4000">₹3,000 - ₹4,000</SelectItem>
+                    <SelectItem value="4000-5000">₹4,000 - ₹5,000</SelectItem>
+                    <SelectItem value="5000+">₹5,000+</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    </div>
+
+                
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                    Time<span className="text-red-500">*</span>
+                  </Label>
+                  <Select onValueChange={(value) => setValueCourse("time", value)} value={watchCourse("time") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">Morning</SelectItem>
+                      <SelectItem value="afternoon">Afternoon</SelectItem>
+                      <SelectItem value="evening">Evening</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errorsCourse.time && (
+                    <p className="text-red-500 text-xs">{errorsCourse.time.message}</p>
+                  )}
+                </div>
+
+                 <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md">
+        {[
+          'Monday', 'Tuesday', 'Wednesday', 
+          'Thursday', 'Friday', 'Saturday', 'Sunday'
+        ].map((day) => (
+          <div key={day} className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id={day.toLowerCase()}
+              className="h-4 w-4 border-[#05244f]"
+              onChange={() => handleWeekdayChange(day,false)}
+              checked={(watchCourse('weekdays') || []).includes(day)}
+            />
+            <label htmlFor={day.toLowerCase()} className="text-sm">{day}</label>
+          </div>
+        ))}
+      </div>
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Size</Label>
+                  <Select onValueChange={(value) => setValueCourse("classSize", value)} value={watchCourse("classSize") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Class Size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Small (1-5)</SelectItem>
+                      <SelectItem value="medium">Medium (6-15)</SelectItem>
+                      <SelectItem value="large">Large (16+)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2 p-2 border border-[#05244f] rounded-md">
+              <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
+              Course criteria 
+            </div>
+              <div className="grid md:grid-cols-4 sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Gender</Label>
+                  <Select value={watchCourse("gender") || ""} onValueChange={(value) => setValueCourse("gender", value)}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Age</Label>
+                  <Select onValueChange={(value) => setValueCourse("age", value)} value={watchCourse("age") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Age" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12">12 Years</SelectItem>
+                      <SelectItem value="15">15 Years</SelectItem>
+                      <SelectItem value="18">18+ Years</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
+                  <Select value={watchClass("experienceLevel") || ""} onValueChange={(value) => setValueCourse("experienceLevel", value)}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Prior Knowledge" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                </div>
+                
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="my-4 app-bg-color text-white flex justify-end"
+                disabled={isLoading}
+              >
+                {isLoading ? "Saving..." : "Save Course Details"}
+              </Button>
+            </form>
+            </AccordionContent>
+          </div>
+          </AccordionItem>
+        )}
+</Accordion>
+{classes.length>0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
+          <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Classes</div>
+          <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
+            <ClassTable classes={classes} handleDelete={handleDeleteClass} handleEdit={handleEditClass}/>
+            <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsOpen(true)}>+ Add More Details</Button>
+          </div>
+        </div>
+}
+
+{course.length>0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
+          <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Courses</div>
+          <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
+            <ClassTable classes={course} handleDelete={handleDeleteCourse} handleEdit={handleEditCourse}/>
+            <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsOpen(true)}>+ Add More Details</Button>
+          </div>
+        </div>
+}
         {/* Directory Section */}
         <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Directory</div>
