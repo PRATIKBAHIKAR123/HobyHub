@@ -21,6 +21,7 @@ import { registerVendor } from "@/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
+import SuccessPopupScreen from "./SuccessPopupScreen";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -100,6 +101,8 @@ export default function RegistrationForm() {
   const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
   const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
+  const [vendorId, setVendorId] = useState("");
   const [activeAccordion, setActiveAccordion] = useState("item-0");
   const [completedSections, setCompletedSections] = useState({
     personalDetails: false,
@@ -371,7 +374,9 @@ const saveClassDetails = (data: any) => {
       const response = await registerVendor(formData);
 
       if (response.status === 200) {
-        toast.success("Registration successful!");
+        // Set the vendor ID from response and show success popup
+        setVendorId(response.data.vendorId || "254893"); // Using a default ID if not provided
+        setIsSuccessPopupOpen(true);
         
         // Clear localStorage after successful submission
         localStorage.removeItem('personalDetails');
@@ -379,9 +384,6 @@ const saveClassDetails = (data: any) => {
         localStorage.removeItem('additionalInfo');
         localStorage.removeItem('classDetails');
         localStorage.removeItem('images');
-        
-        // Redirect to login page
-        router.push("/auth/login");
       } else {
         toast.error(String(response.data));
       }
@@ -1303,6 +1305,13 @@ const saveClassDetails = (data: any) => {
           </div>
         </div>
 
+        {/* Success Popup */}
+        <SuccessPopupScreen 
+          open={isSuccessPopupOpen} 
+          setOpen={setIsSuccessPopupOpen}
+          vendorId={vendorId}
+        />
+        
         {/* Final Submit Button */}
         <Button 
           onClick={handleFinalSubmit} 

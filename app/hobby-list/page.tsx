@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { Skeleton } from "@/components/ui/skeleton";
 import withAuth from "../auth/withAuth";
+import InquiryPopupScreen from "../components/InquiryPopupScreen";
+import DeletePopupScreen from "../components/DeletePopupScreen";
 
 const classes = Array(6).fill({
   title: "Yoga Classes",
@@ -165,9 +167,20 @@ function ClassDetails() {
 }
 
 function ClassGridList() {
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+
+  const handleDelete = () => {
+    // Handle delete logic here
+    console.log('Deleting class:', selectedClassToDelete);
+    // After successful deletion, you might want to refresh the list
+  };
+
   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {classes.map((item, index) => (
-      <Card key={index} className=" bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
+      <Card key={index} className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
         <CardContent className="px-6">
           <h3 className="text-lg font-bold flex items-center gap-2">
             <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
@@ -178,14 +191,49 @@ function ClassGridList() {
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.session}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
-          <Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div></Button>
+          <div className="flex justify-between gap-2 mt-4">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setSelectedClassToDelete(item);
+                setIsDeleteOpen(true);
+              }}
+              className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
+            >
+              Delete
+            </Button>
+            <Button className="flex-1 app-bg-color">
+              <div className="text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     ))}
+    <InquiryPopupScreen 
+      open={isInquiryOpen} 
+      setOpen={setIsInquiryOpen}
+      classDetails={selectedClass}
+    />
+    <DeletePopupScreen 
+      open={isDeleteOpen}
+      setOpen={setIsDeleteOpen}
+      onDelete={handleDelete}
+    />
   </div>
 }
 
 function ClassList() {
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+
+  const handleDelete = () => {
+    // Handle delete logic here
+    console.log('Deleting class:', selectedClassToDelete);
+    // After successful deletion, you might want to refresh the list
+  };
+
   const classes = [
     {
       sno: "01",
@@ -224,7 +272,7 @@ function ClassList() {
           <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">End date</TableHead>
           <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">No. of Sessions</TableHead>
           <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Cost ($)</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Action</TableHead>
+          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -248,13 +296,37 @@ function ClassList() {
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.enddate}</TableCell>
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.sessions}</TableCell>
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" ><Button  className="w-full app-bg-color mt-4"><div className=" text-white text-[14px] font-medium ">Inquire Now</div></Button></TableCell>
-            
+            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">
+              <div className="flex gap-2">
+                {/* <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedClassToDelete(c);
+                    setIsDeleteOpen(true);
+                  }}
+                  className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
+                >
+                  Delete
+                </Button> */}
+                <Button className="flex-1 app-bg-color">
+                  <div className="text-white text-[14px] font-medium">Inquire Now</div>
+                </Button>
+              </div>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  
+    <InquiryPopupScreen 
+      open={isInquiryOpen} 
+      setOpen={setIsInquiryOpen}
+      classDetails={selectedClass}
+    />
+    <DeletePopupScreen 
+      open={isDeleteOpen}
+      setOpen={setIsDeleteOpen}
+      onDelete={handleDelete}
+    />
   </div>
 }
 

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
 
 const thumbnails = [
-  "/images/thumb2.png",
+  // "/images/thumb2.png",
   "/images/thumb3.png",
   "/images/thumb4.png",
   "/images/thumb5.png",
@@ -88,6 +88,7 @@ function HobbyDetailsPageContent() {
   const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [apiImage, setApiImage] = useState("");
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
 
@@ -112,7 +113,9 @@ function HobbyDetailsPageContent() {
         const specificActivity = data.find((activity: ActivityData) => activity.id === parseInt(activityId));
         if (specificActivity) {
           setActivityData(specificActivity);
-          setSelectedImage(`https://api.hobyhub.com${specificActivity.thumbnailImage.replace(/\\/g, '/')}`);
+          const imageUrl = `https://api.hobyhub.com${specificActivity.thumbnailImage.replace(/\\/g, '/')}`;
+          setApiImage(imageUrl);
+          setSelectedImage(imageUrl);
         }
         setIsLoading(false);
       } catch (error) {
@@ -134,6 +137,11 @@ function HobbyDetailsPageContent() {
 
   const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
+  const allThumbnails = [
+    apiImage,
+    ...thumbnails
+  ];
+
   return (
     <div className="p-6">
       <div className="flex:col md:flex gap-6 mt-4">
@@ -152,16 +160,23 @@ function HobbyDetailsPageContent() {
         </div>
         {/* Thumbnail Images */}
         <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
-          {thumbnails.map((thumb, index) => (
-            <Image
+          {allThumbnails.map((thumb, index) => (
+            <div 
               key={index}
-              src={thumb}
-              alt="Thumbnail"
-              width={120}
-              height={96}
-              className="w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500"
+              className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
+                selectedImage === thumb ? 'border-blue-500' : 'border-transparent'
+              } hover:border-blue-500`}
               onClick={() => setSelectedImage(thumb)}
-            />
+            >
+              <Image
+                src={thumb}
+                alt="Thumbnail"
+                width={120}
+                height={96}
+                className="rounded-lg"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
           ))}
         </div>
       </div>

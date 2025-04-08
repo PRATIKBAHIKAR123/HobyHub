@@ -15,19 +15,19 @@ export default function VendorNavbar() {
                     <div className="bg-white px-6 gap-4 py-2 flex w-full justify-between">
                     <div className="relative w-[400px] content-center">
                             {/* Search Icon inside Input */}
-                            <Image
+                            {/* <Image
                                 src="/Icons/searchicon.svg"
                                 alt="Search"
                                 width={12}
                                 height={13}
                                 className="absolute left-4 top-[26px] transform -translate-y-1/2"
-                            />
+                            /> */}
 
                             {/* Input Field */}
-                            <Input
+                            {/* <Input
                                 placeholder="Search here..."
                                 className="placeholder:text-gray-500 bg-[#fcfcfd] w-full h-[38px] pl-10 border rounded-lg"
-                            />
+                            /> */}
                         </div>
                         <div className="justify-between items-center inline-flex gap-2">
                             <div className="w-[38px] h-[38px] relative bg-[#c8daeb] rounded-full justify-center items-center flex" >
