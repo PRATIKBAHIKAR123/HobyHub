@@ -201,7 +201,10 @@ function ClassGridList() {
             >
               Delete
             </Button>
-            <Button className="flex-1 app-bg-color">
+            <Button 
+              className="flex-1 app-bg-color"
+              onClick={() => setIsInquiryOpen(true)}
+            >
               <div className="text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div>
             </Button>
           </div>
@@ -295,7 +298,10 @@ function ClassList() {
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">
               <div className="flex gap-2">
-                <Button className="flex-1 app-bg-color">
+                <Button 
+                  className="flex-1 app-bg-color"
+                  onClick={() => setIsInquiryOpen(true)}
+                >
                   <div className="text-white text-[14px] font-medium">Inquire Now</div>
                 </Button>
               </div>

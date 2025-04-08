@@ -90,7 +90,6 @@ const courseDetailsSchema = yup.object().shape({
 });
 
 export default function RegistrationForm() {
-  const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
