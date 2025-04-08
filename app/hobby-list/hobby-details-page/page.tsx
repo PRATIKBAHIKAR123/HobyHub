@@ -138,17 +138,20 @@ function HobbyDetailsPageContent() {
     <div className="p-6">
       <div className="flex:col md:flex gap-6 mt-4">
         {/* Main Image */}
-        <div className="w-full md:w-[85%]">
-          <Image 
-            src={selectedImage} 
-            alt={activityData.title} 
-            width={800}
-            height={600} 
-            className="w-full max-h-128 rounded-md" 
-          />
+        <div className="w-full md:w-[85%] bg-white">
+          <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center">
+            <Image 
+              src={selectedImage} 
+              alt={activityData.title} 
+              width={800}
+              height={557} 
+              className="rounded-md object-contain"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
         </div>
         {/* Thumbnail Images */}
-        <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto">
+        <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
           {thumbnails.map((thumb, index) => (
             <Image
               key={index}
@@ -156,7 +159,7 @@ function HobbyDetailsPageContent() {
               alt="Thumbnail"
               width={120}
               height={96}
-              className="w-[120px] md:w-45 md:h-24 mt-[2px] rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500"
+              className="w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500"
               onClick={() => setSelectedImage(thumb)}
             />
           ))}

@@ -74,8 +74,8 @@ export default function HomeNavbar() {
         <>
             <div className="hidden md:block sticky top-0 z-50">
                 <div className="w-full py-2 h-[67.88px] bg-[#003161] border-b border-[#dee2e6] justify-between flex">
-                    <div className="min-w-[180px] pl-[2rem]">
-                        <Image src="/images/HobyHub.ai.png" alt="Logo" width={160} height={40} priority />
+                    <div className="min-w-[220px] pl-[2rem]">
+                        <Image src="/images/HobyHub.ai.png" alt="Logo" width={200} height={50} priority />
                     </div>
                     <div className="bg-white/10 items-center rounded-lg px-4 gap-4 py-2 flex ">
                         <div className="min-w-[100px]">
