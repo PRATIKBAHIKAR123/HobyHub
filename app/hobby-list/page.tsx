@@ -168,9 +168,8 @@ function ClassDetails() {
 
 function ClassGridList() {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [selectedClass] = useState<any>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
 
   const handleDelete = () => {
     // Handle delete logic here
@@ -210,9 +209,8 @@ function ClassGridList() {
       </Card>
     ))}
     <InquiryPopupScreen 
-      open={isInquiryOpen} 
-      setOpen={setIsInquiryOpen}
-      classDetails={selectedClass}
+      isOpen={isInquiryOpen} 
+      onClose={() => setIsInquiryOpen(false)}
     />
     <DeletePopupScreen 
       open={isDeleteOpen}
@@ -224,9 +222,8 @@ function ClassGridList() {
 
 function ClassList() {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [selectedClass] = useState<any>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
 
   const handleDelete = () => {
     // Handle delete logic here
@@ -298,16 +295,6 @@ function ClassList() {
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
             <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">
               <div className="flex gap-2">
-                {/* <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedClassToDelete(c);
-                    setIsDeleteOpen(true);
-                  }}
-                  className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
-                >
-                  Delete
-                </Button> */}
                 <Button className="flex-1 app-bg-color">
                   <div className="text-white text-[14px] font-medium">Inquire Now</div>
                 </Button>
@@ -318,9 +305,8 @@ function ClassList() {
       </TableBody>
     </Table>
     <InquiryPopupScreen 
-      open={isInquiryOpen} 
-      setOpen={setIsInquiryOpen}
-      classDetails={selectedClass}
+      isOpen={isInquiryOpen} 
+      onClose={() => setIsInquiryOpen(false)}
     />
     <DeletePopupScreen 
       open={isDeleteOpen}

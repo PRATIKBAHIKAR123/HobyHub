@@ -7,10 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 interface InquiryPopupScreenProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedClass?: any;
 }
 
-export default function InquiryPopupScreen({ isOpen, onClose, selectedClass }: InquiryPopupScreenProps) {
+export default function InquiryPopupScreen({ isOpen, onClose }: InquiryPopupScreenProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission logic here
