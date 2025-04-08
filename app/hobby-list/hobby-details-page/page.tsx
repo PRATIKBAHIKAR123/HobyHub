@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
 
@@ -84,7 +84,7 @@ function HobbyDetailsPageSkeleton() {
   );
 }
 
-export default function ClassDetailsPage() {
+function HobbyDetailsPageContent() {
   const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
@@ -112,7 +112,6 @@ export default function ClassDetailsPage() {
         const specificActivity = data.find((activity: ActivityData) => activity.id === parseInt(activityId));
         if (specificActivity) {
           setActivityData(specificActivity);
-          // Set the main image to the API thumbnail image
           setSelectedImage(`https://api.hobyhub.com${specificActivity.thumbnailImage.replace(/\\/g, '/')}`);
         }
         setIsLoading(false);
@@ -142,7 +141,7 @@ export default function ClassDetailsPage() {
         <div className="w-full md:w-[85%]">
           <Image 
             src={selectedImage} 
-            alt={activityData?.title || ''} 
+            alt={activityData.title} 
             width={800}
             height={600} 
             className="w-full max-h-128 rounded-md" 
@@ -151,10 +150,12 @@ export default function ClassDetailsPage() {
         {/* Thumbnail Images */}
         <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto">
           {thumbnails.map((thumb, index) => (
-            <img
+            <Image
               key={index}
               src={thumb}
               alt="Thumbnail"
+              width={120}
+              height={96}
               className="w-[120px] md:w-45 md:h-24 mt-[2px] rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500"
               onClick={() => setSelectedImage(thumb)}
             />
@@ -201,5 +202,13 @@ export default function ClassDetailsPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ClassDetailsPage() {
+  return (
+    <Suspense fallback={<HobbyDetailsPageSkeleton />}>
+      <HobbyDetailsPageContent />
+    </Suspense>
   );
 }
