@@ -95,7 +95,7 @@ export default function HobbyGrid() {
       {activities.map((activity) => (
         <div 
           key={activity.id} 
-          onClick={() => router.push("hobby-list/hobby-details-page")} 
+          onClick={() => router.push(`/hobby-list/hobby-details-page?id=${activity.id}`)} 
           className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
         >
           {/* Image Section */}
