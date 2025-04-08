@@ -231,95 +231,76 @@ function ClassList() {
   const handleDelete = () => {
     // Handle delete logic here
     console.log('Deleting class:', selectedClassToDelete);
+    setIsDeleteOpen(false);
     // After successful deletion, you might want to refresh the list
   };
 
-  const classes = [
-    {
-      sno: "01",
-      name:'Beginner Piano Lessons',
-      schedule: "Mon , Wed",
-      scheduletime: "5 PIM to 6 PM",
-      agegroup: "6-10 Years",
-      gender: "Boys/Girls",
-      stratdate: "16-0-24",
-      enddate: "16-0-24",
-      sessions:12,
-      cost:'$250'
-    },
-    {
-      sno: "02",
-      name:'Beginner Piano Lessons',
-      schedule: "Mon , Wed",
-      scheduletime: "5 PIM to 6 PM",
-      agegroup: "6-10 Years",
-      gender: "Boys/Girls",
-      stratdate: "16-0-24",
-      enddate: "16-0-24",
-      sessions:12,
-      cost:'$250'
-    },
-  ]
-  
-  return <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Class Name</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Schedule </TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Age group</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Start date</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">End date</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">No. of Sessions</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Cost ($)</TableHead>
-          <TableHead className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {classes.map((c) => (
-          <TableRow key={c.sno}>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" width={10}>{c.name}</TableCell>
-            
-            <TableCell className="justify-center">
-              <div className="items-center gap-2">
-              <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.schedule}</div>
-                  <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.scheduletime}</div>
-              </div>
-            </TableCell>
-            <TableCell className="justify-center">
-              <div className="items-center gap-2">
-              <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.agegroup}</div>
-                  <div className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">{c.gender}</div>
-              </div>
-            </TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.stratdate}</TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.enddate}</TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.sessions}</TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']" >{c.cost}</TableCell>
-            <TableCell className="justify-center text-black text-xs font-bold font-['Trajan_Pro']">
-              <div className="flex gap-2">
-                <Button 
-                  className="flex-1 app-bg-color"
-                  onClick={() => setIsInquiryOpen(true)}
-                >
-                  <div className="text-white text-[14px] font-medium">Inquire Now</div>
-                </Button>
-              </div>
-            </TableCell>
+  return (
+    <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>S.No</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Schedule</TableHead>
+            <TableHead>Schedule Time</TableHead>
+            <TableHead>Age Group</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Start Date</TableHead>
+            <TableHead>End Date</TableHead>
+            <TableHead>Sessions</TableHead>
+            <TableHead>Cost</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-    <InquiryPopupScreen 
-      isOpen={isInquiryOpen} 
-      onClose={() => setIsInquiryOpen(false)}
-    />
-    <DeletePopupScreen 
-      open={isDeleteOpen}
-      setOpen={setIsDeleteOpen}
-      onDelete={handleDelete}
-    />
-  </div>
+        </TableHeader>
+        <TableBody>
+          {classes.map((item, index) => (
+            <TableRow key={index}>
+              <TableCell>{item.sno}</TableCell>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>{item.schedule}</TableCell>
+              <TableCell>{item.scheduletime}</TableCell>
+              <TableCell>{item.agegroup}</TableCell>
+              <TableCell>{item.gender}</TableCell>
+              <TableCell>{item.stratdate}</TableCell>
+              <TableCell>{item.enddate}</TableCell>
+              <TableCell>{item.sessions}</TableCell>
+              <TableCell>{item.cost}</TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedClassToDelete(item);
+                      setIsDeleteOpen(true);
+                    }}
+                    className="border-red-500 text-red-500 hover:bg-red-50"
+                  >
+                    Delete
+                  </Button>
+                  <Button 
+                    className="app-bg-color"
+                    onClick={() => setIsInquiryOpen(true)}
+                  >
+                    <div className="text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div>
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <InquiryPopupScreen 
+        isOpen={isInquiryOpen} 
+        onClose={() => setIsInquiryOpen(false)}
+      />
+      <DeletePopupScreen 
+        open={isDeleteOpen}
+        setOpen={setIsDeleteOpen}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
 }
 
 export default withAuth(ClassDetails);
