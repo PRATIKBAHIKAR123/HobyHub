@@ -168,9 +168,9 @@ function ClassDetails() {
 
 function ClassGridList() {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedClass] = useState<any>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete] = useState<any>(null);
 
   const handleDelete = () => {
     // Handle delete logic here
@@ -224,9 +224,9 @@ function ClassGridList() {
 
 function ClassList() {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedClass] = useState<any>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete] = useState<any>(null);
 
   const handleDelete = () => {
     // Handle delete logic here

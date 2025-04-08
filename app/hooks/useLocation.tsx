@@ -86,7 +86,7 @@ const useLocation = () => {
   // Auto-detect location on startup
   useEffect(() => {
     detectLocation();
-  }, []);
+  }, [detectLocation]);
 
   return { 
     location, 

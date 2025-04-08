@@ -41,6 +41,7 @@ interface PhotoOptionsDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onDelete: () => void;
+  setProfile: React.Dispatch<React.SetStateAction<ProfileData>>;
 }
 
 function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
@@ -96,7 +97,7 @@ function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
   );
 }
 
-function PhotoOptionsDialog({ open, setOpen, onDelete }: PhotoOptionsDialogProps) {
+function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOptionsDialogProps) {
   const handleGalleryClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -106,8 +107,14 @@ function PhotoOptionsDialog({ open, setOpen, onDelete }: PhotoOptionsDialogProps
     input.onchange = (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files[0]) {
-        const file = target.files[0];
-        // TODO: Handle file upload
+        // Create a URL for the selected file
+        const fileUrl = URL.createObjectURL(target.files[0]);
+        // Here you would typically upload the file to your server
+        // For now, we'll just update the profile image with the local URL
+        setProfile((prev) => ({
+          ...prev,
+          profileImage: fileUrl
+        }));
         setOpen(false);
       }
     };
@@ -738,6 +745,7 @@ export default function ProfilePage() {
           open={isPhotoOptionsOpen}
           setOpen={setIsPhotoOptionsOpen}
           onDelete={handleDeletePhoto}
+          setProfile={setProfile}
         />
 
         {/* Delete Photo Dialog */}

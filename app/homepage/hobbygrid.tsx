@@ -100,10 +100,12 @@ export default function HobbyGrid() {
         >
           {/* Image Section */}
           <div className="relative">
-            <img
+            <Image
               src={`https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`}
-              alt={activity.title} 
-              className="h-[250px] w-full rounded-tl-2xl rounded-tr-2xl object-cover"
+              alt={activity.title}
+              width={300}
+              height={200}
+              className="w-full h-48 object-cover rounded-t-lg"
             />
             <div className="absolute top-2 left-2 bg-[#c8daeb] bg-opacity-70 rounded-full px-[11px] py-[5px] flex items-center">
               <Eye size={16} className="mr-1" />

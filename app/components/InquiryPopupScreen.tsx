@@ -5,20 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 interface InquiryPopupScreenProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  classDetails?: any;
+  isOpen: boolean;
+  onClose: () => void;
+  selectedClass?: any;
 }
 
-export default function InquiryPopupScreen({ open, setOpen, classDetails }: InquiryPopupScreenProps) {
+export default function InquiryPopupScreen({ isOpen, onClose, selectedClass }: InquiryPopupScreenProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission logic here
-    setOpen(false);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[600px] p-0">
         <div className="p-6">
           <h2 className="text-[#05244f] text-[24px] font-medium text-center font-['Minion_Pro'] mb-4">
@@ -89,7 +89,7 @@ export default function InquiryPopupScreen({ open, setOpen, classDetails }: Inqu
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 className="border-[#05244f] text-[#05244f]"
               >
                 Close

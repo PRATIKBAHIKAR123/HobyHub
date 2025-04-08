@@ -159,6 +159,10 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
     }
   }, [scriptLoaded, ready]);
 
+  useEffect(() => {
+    initializePlacesDirectly();
+  }, [initializePlacesDirectly]);
+
   const handleInputFocus = () => {
     setInputFocused(true);
     if (value && value.length > 0 && ready) {
