@@ -4,8 +4,17 @@ import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { useSearchParams } from 'next/navigation';
 import withAuth from "@/app/auth/withAuth";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
+import dynamic from 'next/dynamic';
+
+// Dynamically import MapComponent with SSR disabled
+const MapComponent = dynamic(() => import('@/app/components/MapComponent'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
+      Loading Map...
+    </div>
+  )
+});
 
 interface ActivityData {
   id: number;
@@ -59,28 +68,23 @@ function HobbyContactDetailsPageContent() {
   const activityId = searchParams.get('id');
 
   useEffect(() => {
-    // Get the data from sessionStorage which was saved in hobby details page
     const savedData = sessionStorage.getItem('activityData');
     if (savedData) {
       const data = JSON.parse(savedData);
       if (data.id === parseInt(activityId || '')) {
         setActivityData(data);
       }
+    } else {
+      console.warn("Activity data not found in sessionStorage");
     }
   }, [activityId]);
 
   if (!activityData) {
-    return <div className="p-6 text-center">No Contact details available</div>;
+    return <div className="p-6 text-center">Loading contact details...</div>;
   }
 
-  const containerStyle = {
-    width: "100%",
-    height: "400px",
-    borderRadius: "10px",
-    border: "1px solid #d2dae4",
-  };
-
-  const center = { lat: parseFloat(activityData.latitute), lng: parseFloat(activityData.longitude) };
+  // Construct the full address string
+  const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
   return (
     <div className="p-6">
@@ -118,24 +122,18 @@ function HobbyContactDetailsPageContent() {
           <div>
             <h4 className="text-black text-[12px] font-bold">Address</h4>
             <div className="text-sm">
-              {activityData.address}, {activityData.road}, {activityData.area}, {activityData.city}, {activityData.state} - {activityData.pincode}, {activityData.country}
+              {fullAddress}
             </div>
           </div>
         </div>
       </Card>
 
-      <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2">Map Direction</div>
-      <div>
-        <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY!}>
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={center}
-            zoom={15}
-          >
-            <Marker position={center} />
-          </GoogleMap>
-        </LoadScript>
-      </div>
+      <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2 mt-6">Map Direction</div>
+      <MapComponent
+        lat={parseFloat(activityData.latitute)}
+        lng={parseFloat(activityData.longitude)}
+        address={fullAddress}
+      />
     </div>
   );
 }

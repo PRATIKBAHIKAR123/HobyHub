@@ -177,7 +177,7 @@ function ClassDetails() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000); // Reduced loading time for better UX
     return () => clearTimeout(timer);
   }, []);
 
