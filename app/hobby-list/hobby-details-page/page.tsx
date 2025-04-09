@@ -150,7 +150,25 @@ function HobbyDetailsPageContent() {
         }
 
         setActivityData(activity);
-        const imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
+        // Handle image URL with fallback
+        let imageUrl;
+        if (activity.thumbnailImage) {
+          try {
+            // Try to construct the full URL
+            imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
+            // Test if image exists
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              imageUrl = '/images/noimg.png';
+            }
+          } catch {
+            // If image is not available, use default image
+            imageUrl = '/images/noimg.png';
+          }
+        } else {
+          // If no thumbnail image is provided, use default image
+          imageUrl = '/images/noimg.png';
+        }
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);
         setIsLoading(false);
