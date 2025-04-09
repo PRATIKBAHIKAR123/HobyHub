@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 
 const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
+const DEFAULT_LOCATION = "Pune";
 
 const useLocation = () => {
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
 
@@ -43,20 +44,20 @@ const useLocation = () => {
           districtComponent?.long_name || 
           sublocalityComponent?.long_name ||
           addressComponents[1]?.long_name ||
-          "Unknown location";
+          DEFAULT_LOCATION;
         
         setLocation(locationName);
         setCoordinates({ lat, lng });
         
         return locationName;
       } else {
-        setLocation("Location not found");
-        return "Location not found";
+        setLocation(DEFAULT_LOCATION);
+        return DEFAULT_LOCATION;
       }
     } catch (error) {
       console.error("Error fetching address:", error);
-      setLocation("Error fetching location");
-      return "Error fetching location";
+      setLocation(DEFAULT_LOCATION);
+      return DEFAULT_LOCATION;
     }
   };
 
@@ -73,20 +74,20 @@ const useLocation = () => {
         (error) => {
           console.error("Geolocation error:", error);
           setIsDetecting(false);
-          setLocation("Location not available");
+          setLocation(DEFAULT_LOCATION);
         },
         { timeout: 10000, enableHighAccuracy: true }
       );
     } else {
       setIsDetecting(false);
-      setLocation("Geolocation not supported");
+      setLocation(DEFAULT_LOCATION);
     }
   };
 
   // Auto-detect location on startup
   useEffect(() => {
     detectLocation();
-  }, [detectLocation]);
+  }, []); // Empty dependency array to run only once on mount
 
   return { 
     location, 
