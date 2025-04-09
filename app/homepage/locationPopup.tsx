@@ -124,6 +124,13 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
     }
   }, [location, setValue, value, ready]);
   
+  // Initialize input value with location when component mounts
+  useEffect(() => {
+    if (location && !value) {
+      setValue(location, false);
+    }
+  }, [location, value, setValue]);
+  
   // Function to directly initialize places autocomplete without the hook
   // as a fallback mechanism
   const initializePlacesDirectly = () => {
@@ -238,6 +245,9 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
       onLocationChange(exactLocation);
     } catch (error) {
       console.log("Error fetching location details:", error);
+      // Set default location if there's an error
+      setLocation("Pune");
+      onLocationChange("Pune");
     }
     };
   
@@ -245,9 +255,8 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
   const handleChange = (e: { target: { value: string; }; }) => {
     const newValue = e.target.value;
     
-    // if (ready) {
-      setValue(newValue);
-    // }
+    // Always update the input value regardless of ready state
+    setValue(newValue);
     
     if (!newValue) {
       setLocation("");
