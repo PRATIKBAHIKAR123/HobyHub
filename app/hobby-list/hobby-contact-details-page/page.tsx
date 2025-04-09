@@ -1,20 +1,12 @@
 "use client";
 
-import { Card, CardHeader } from "@/components/ui/card";
-import Image from "next/image";
+import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { useSearchParams } from 'next/navigation';
 import withAuth from "@/app/auth/withAuth";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 
-const thumbnails = [
-  "/images/thumb2.png",
-  "/images/thumb3.png",
-  "/images/thumb4.png",
-  "/images/thumb5.png",
-  "/images/thumb6.png",
-];
 
 interface ActivityData {
   id: number;
@@ -43,8 +35,6 @@ interface ActivityData {
 
 
 function HobbyContactDetailsPageContent() {
-  const [selectedImage, setSelectedImage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
@@ -52,7 +42,6 @@ function HobbyContactDetailsPageContent() {
   useEffect(() => {
     const fetchActivityData = async () => {
       if (!activityId) {
-        setIsLoading(false);
         return;
       }
 
@@ -70,12 +59,9 @@ function HobbyContactDetailsPageContent() {
         const specificActivity = data.find((activity: ActivityData) => activity.id === parseInt(activityId));
         if (specificActivity) {
           setActivityData(specificActivity);
-          setSelectedImage(`https://api.hobyhub.com${specificActivity.thumbnailImage.replace(/\\/g, '/')}`);
         }
-        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
-        setIsLoading(false);
       }
     };
 
@@ -87,7 +73,7 @@ function HobbyContactDetailsPageContent() {
     return <div className="p-6 text-center">No Contact details available</div>;
   }
 
-  const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
+  // const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
   const containerStyle = {
     width: "100%",
