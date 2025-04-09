@@ -7,10 +7,11 @@ import HobbyGrid from "./hobbygrid";
 import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import Loader from "../components/Loader";
+import { useSortFilter } from "@/contexts/SortFilterContext";
 
 export default function Homepage() {
     const [distance, setDistance] = useState("10");
-    const [filter, setFilter] = useState("2");
+    const { sortFilter, setSortFilter } = useSortFilter();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -43,8 +44,7 @@ export default function Homepage() {
                         <SelectItem value="10">10 KM</SelectItem>
                     </SelectContent>
                 </Select>
-
-                <Select value={filter} onValueChange={setFilter}>
+                <Select value={sortFilter} onValueChange={setSortFilter}>
                     <SelectTrigger className="self-stretch pl-[10px] pr-[5px] bg-white rounded-[5px] border-2 border-[#bfbebe] justify-between min-w-[144px] md:min-w-[149px] items-center inline-flex max-h-[30px] text-black text-[13.12px] font-semibold font-['Inter'] leading-[14px] [&_svg:last-child]:hidden">
                         <div className="flex-1 text-center">
                             <SelectValue placeholder="Select Filter" />
@@ -52,9 +52,11 @@ export default function Homepage() {
                         <ChevronDown className="w-4 h-4 text-black peer-focus:text-black" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="2">Near Me</SelectItem>
-                        <SelectItem value="5">Popular</SelectItem>
-                        <SelectItem value="10">Whats New</SelectItem>
+                        <SelectItem value="NearMe">Near Me</SelectItem>
+                        <SelectItem value="Popular">Popular</SelectItem>
+                        <SelectItem value="WhatsNew">Whats New</SelectItem>
+                        <SelectItem value="HighToLow">Price (High to Low)</SelectItem>
+                        <SelectItem value="LowToHigh">Price (Low to High)</SelectItem>                      
                     </SelectContent>
                 </Select>
             </div>

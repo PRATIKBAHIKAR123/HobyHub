@@ -1,10 +1,12 @@
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider } from "./sidebar/sidebarContext";
 import ClientLayout from "./ClientLayout";
 import { Toaster } from "sonner";
+import { ModeProvider } from "@/contexts/ModeContext";
+import { SortFilterProvider } from "@/contexts/SortFilterContext";
+import { FilterProvider } from "@/contexts/FilterContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,10 +34,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-            <SidebarProvider>  {/* ✅ Ensure this wraps all components */}
-      <ClientLayout>{children}</ClientLayout>
-    </SidebarProvider>
-    <Toaster richColors position="top-right"/>
+        <ModeProvider>
+          <SortFilterProvider>
+            <FilterProvider>
+              <SidebarProvider>  {/* ✅ Ensure this wraps all components */}
+                <ClientLayout>{children}</ClientLayout>
+              </SidebarProvider>
+            </FilterProvider>
+          </SortFilterProvider>
+        </ModeProvider>
+        <Toaster richColors position="top-right"/>
       </body>
     </html>
   );

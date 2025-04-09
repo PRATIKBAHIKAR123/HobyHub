@@ -44,6 +44,20 @@ interface ErrorResponse {
   error?: string;
 }
 
+interface ActivityFilters {
+  catId: number;
+  subCatId: number;
+  mode: string;
+  sortFilter: string;
+  location: string;
+  age: number;
+  type: string;
+  time: string;
+  gender: string;
+  priceFrom: number;
+  priceTo: number;
+}
+
 /**
  * Get authentication token from local storage
  * Safely handles server-side rendering by checking for window object
@@ -86,15 +100,28 @@ export const getAllSubCategories = async (): Promise<SubCategory[]> => {
 };
 
 /**
- * Get all activities
- * @returns List of all activities
+ * Get all activities with optional filters
+ * @param filters Optional filters to apply to the activities
+ * @returns List of filtered activities
  */
-export const getAllActivities = async (): Promise<Activity[]> => {
+export const getAllActivities = async (filters: Partial<ActivityFilters> = {}): Promise<Activity[]> => {
     try {
         const token = getAuthToken();
         const response = await axios.post<Activity[]>(
             `${API_BASE_URL}/activities`,
-            {}, // empty body
+            {
+                catId: filters.catId || null,
+                subCatId: filters.subCatId || null,
+                mode: filters.mode || "offline",
+                sortFilter: filters.sortFilter || "NearMe",
+                location: filters.location || null,
+                age: filters.age || null,
+                type: filters.type || null,
+                time: filters.time || null,
+                gender: filters.gender || null,
+                priceFrom: filters.priceFrom || null,
+                priceTo: filters.priceTo || null
+            },
             {
                 headers: {
                     'accept': '*/*',

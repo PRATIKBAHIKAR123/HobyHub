@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getAllSubCategories } from "@/services/hobbyService";
+import { useMode } from "@/contexts/ModeContext";
 
 interface SubCategory {
   categoryId: number;
@@ -32,8 +33,7 @@ export default function HomeNavbar() {
     const [filteredOptions, setFilteredOptions] = useState<SubCategory[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
-
-    const [isOnline, setIsOnline] = useState(false);
+    const { isOnline, setIsOnline } = useMode();
 
     // Fetch all subcategories when component mounts
     useEffect(() => {
@@ -122,8 +122,11 @@ export default function HomeNavbar() {
                         <div className="px-3 w-full">
                             <div className="flex-col float-right items-center gap-2 cursor-pointer">
                                 <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-8 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
-                                    onCheckedChange={(checked) => setIsOnline(checked)} />
-                                <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]"> {isOnline ? "Online Classes" : "Offline Classes"}</Label>
+                                    checked={isOnline}
+                                    onCheckedChange={setIsOnline} />
+                                <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]">
+                                    {isOnline ? "Online Classes" : "Offline Classes"}
+                                </Label>
                             </div>
                         </div>
                     </div>
@@ -206,7 +209,7 @@ export default function HomeNavbar() {
                             </Label>
                             <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-8 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
                                 checked={isOnline}
-                                onCheckedChange={(checked) => setIsOnline(checked)} />
+                                onCheckedChange={setIsOnline} />
                         </div>
                     </div>
                 </div>

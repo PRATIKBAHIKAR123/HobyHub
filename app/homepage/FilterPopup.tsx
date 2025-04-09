@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Search } from "lucide-react";
+import { useFilter } from "@/contexts/FilterContext";
 
 interface SearchPopupProps {
   open: boolean;
@@ -14,17 +15,29 @@ interface SearchPopupProps {
 }
 
 export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
-  const [priceRange, setPriceRange] = useState([0, 100000]);
-  const [gender, setGender] = useState("Male");
-  const [age, setAge] = useState('18');
-  const times = ['Morning', 'Afternoon', 'Evening', 'Night']
-  const [time, setTime] = useState("Morning");
+  const { 
+    priceRange, setPriceRange,
+    gender, setGender,
+    age, setAge,
+    time, setTime,
+    setAreFiltersApplied,
+    triggerFilterUpdate
+  } = useFilter();
+
+  const times = ['Morning', 'Afternoon', 'Evening', 'Night'];
 
   const clearFilter: () => void = () => {
-     setGender("Male");
-      setPriceRange([0, 100000]);
-      setTime("Morning");
-      setAge('18');
+    setGender("");
+    setPriceRange([0, 100000]);
+    setTime("");
+    setAge('');
+    setAreFiltersApplied(false);
+  };
+
+  const handleSearch = () => {
+    setAreFiltersApplied(true);
+    triggerFilterUpdate();
+    setOpen(false);
   };
 
   return (
@@ -39,77 +52,77 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
         {/* Age Input */}
         <Card className="px-3">
-        <div className="space-y-2">
-          <Label className="font-semibold">Whats Your Age?</Label>
-          <Select value={age.toString()} onValueChange={(value) => setAge(value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Search By Age" />
-                  </SelectTrigger>
-                      <SelectContent>
-                          {Array.from({ length: 69 }, (_, i) => i + 1).map((age) => (
-                              <SelectItem key={age} value={age.toString()}>
-                                  {age}
-                              </SelectItem>
-                          ))}
-                      </SelectContent>
-                </Select>
-        </div>
+          <div className="space-y-2">
+            <Label className="font-semibold">Whats Your Age?</Label>
+            <Select value={age} onValueChange={setAge}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Search By Age" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 69 }, (_, i) => i + 1).map((age) => (
+                  <SelectItem key={age} value={age.toString()}>
+                    {age}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </Card>
+
         {/* Gender Selection */}
         <Card className="px-3">
-        <div className="space-y-2">
-          <Label className="font-semibold">Select Gender: {gender}</Label>
-          <RadioGroup value={gender} onValueChange={setGender} className="flex space-x-4">
-            <Label className="flex items-center space-x-2">
-              <RadioGroupItem value="Male" />
-              <span>Male</span>
-            </Label>
-            <Label className="flex items-center space-x-2">
-              <RadioGroupItem value="Female" />
-              <span>Female</span>
-            </Label>
-          </RadioGroup>
-        </div>
+          <div className="space-y-2">
+            <Label className="font-semibold">Select Gender</Label>
+            <RadioGroup value={gender} onValueChange={setGender} className="flex space-x-4">
+              <Label className="flex items-center space-x-2">
+                <RadioGroupItem value="male" />
+                <span>Male</span>
+              </Label>
+              <Label className="flex items-center space-x-2">
+                <RadioGroupItem value="female" />
+                <span>Female</span>
+              </Label>
+            </RadioGroup>
+          </div>
         </Card>
 
         {/* Time Input */}
         <Card className="px-3">
-        <div className="space-y-2">
-          <Label className="font-semibold">Select Time</Label>
-          <Select value={time} onValueChange={setTime}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Search By Time" />
-                  </SelectTrigger>
-                      <SelectContent>
-                          {times.map((time) => (
-                              <SelectItem key={time} value={time.toString()}>
-                                  {time}
-                              </SelectItem>
-                          ))}
-                      </SelectContent>
-                </Select>
-        </div>
+          <div className="space-y-2">
+            <Label className="font-semibold">Select Time</Label>
+            <Select value={time} onValueChange={setTime}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Search By Time" />
+              </SelectTrigger>
+              <SelectContent>
+                {times.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </Card>
 
         {/* Price Range Slider */}
         <Card className="px-3">
-        <div className="space-y-2">
-          <Label className="font-semibold">Select Price Range: {priceRange[0]} - {priceRange[1]}</Label>
-          <Slider
-            min={0}
-            max={100000}
-            step={100}
-            defaultValue={priceRange}
-            value={priceRange}
-            onValueChange={setPriceRange}
-          />
-        </div>
+          <div className="space-y-2">
+            <Label className="font-semibold">Select Price Range: {priceRange[0]} - {priceRange[1]}</Label>
+            <Slider
+              min={0}
+              max={100000}
+              step={100}
+              value={priceRange}
+              onValueChange={setPriceRange}
+            />
+          </div>
         </Card>
 
         {/* Action Buttons */}
         <div className="flex justify-center space-x-4">
           <Button variant="destructive" className="rounded-2xl" onClick={clearFilter}>Clear All</Button>
-          <Button variant="destructive" className="rounded-2xl">
+          <Button variant="destructive" className="rounded-2xl" onClick={handleSearch}>
             <Search />Search
           </Button>
         </div>

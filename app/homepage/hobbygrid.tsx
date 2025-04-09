@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAllActivities } from "@/services/hobbyService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMode } from "@/contexts/ModeContext";
+import { useSortFilter } from "@/contexts/SortFilterContext";
+import { useFilter } from "@/contexts/FilterContext";
 
 interface Activity {
   id: number;
@@ -29,6 +32,21 @@ interface Activity {
   country: string;
   longitude: string;
   latitute: string;
+  viewCount: number;
+}
+
+interface ActivityFilters {
+  catId: number;
+  subCatId: number;
+  mode: string;
+  sortFilter: string;
+  location: string;
+  age: number;
+  type: string;
+  time: string;
+  gender: string;
+  priceFrom: number;
+  priceTo: number;
 }
 
 function HobbyCardSkeleton() {
@@ -64,11 +82,27 @@ export default function HobbyGrid() {
   const router = useRouter();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isOnline } = useMode();
+  const { sortFilter } = useSortFilter();
+  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger } = useFilter();
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const data = await getAllActivities();
+        setIsLoading(true);
+        const data = await getAllActivities({
+          catId: 0,
+          subCatId: 0,
+          mode: isOnline ? "online" : "offline",
+          sortFilter: sortFilter,
+          location: "",
+          age: areFiltersApplied ? parseInt(age) : 0,
+          type: "",
+          time: areFiltersApplied ? time : "",
+          gender: areFiltersApplied ? gender : "",
+          priceFrom: areFiltersApplied ? priceRange[0] : 0,
+          priceTo: areFiltersApplied ? priceRange[1] : 0
+        });
         setActivities(data);
       } catch (error) {
         console.error("Failed to fetch activities:", error);
@@ -78,7 +112,7 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, []);
+  }, [isOnline, sortFilter, filterUpdateTrigger]);
 
   if (isLoading) {
     return (
@@ -109,7 +143,7 @@ export default function HobbyGrid() {
             />
             <div className="absolute top-2 left-2 bg-[#c8daeb] bg-opacity-70 rounded-full px-[11px] py-[5px] flex items-center">
               <Eye size={16} className="mr-1" />
-              <span className="text-[9px]">88</span>
+              <span className="text-[9px]">{activity.viewCount}</span>
             </div>
           </div>
 
