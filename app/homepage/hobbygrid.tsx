@@ -110,6 +110,19 @@ export default function HobbyGrid() {
     );
   }
 
+  if (activities.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
+        <div className="col-span-full flex items-center justify-center h-[360px]">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Activities Found</h3>
+            <p className="text-gray-500">Try adjusting your filters or search criteria</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
       {activities.map((activity) => (
