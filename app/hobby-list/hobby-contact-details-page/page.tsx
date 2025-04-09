@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import withAuth from "@/app/auth/withAuth";
 import dynamic from 'next/dynamic';
 
+
 // Dynamically import MapComponent with SSR disabled
 const MapComponent = dynamic(() => import('@/app/components/MapComponent'), {
   ssr: false,
