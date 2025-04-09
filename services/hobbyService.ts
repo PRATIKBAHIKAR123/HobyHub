@@ -28,6 +28,8 @@ interface Activity {
   sessionCountTo: number;
   ageRestrictionFrom: number;
   ageRestrictionTo: number;
+  rate: number;
+  currency: string;
   address: string;
   road: string;
   area: string;
@@ -37,6 +39,26 @@ interface Activity {
   country: string;
   longitude: string;
   latitute: string;
+  purchaseMaterialIds: string;
+  itemCarryText: string;
+  companyName: string;
+  tutorFirstName: string;
+  tutorLastName: string;
+  tutorEmailID: string;
+  tutorCountryCode: string;
+  tutorPhoneNo: string;
+  whatsappCountryCode: string;
+  whatsappNo: string;
+  tutorIntro: string;
+  website: string | null;
+  profileImage: string | null;
+  sinceYear: string | null;
+  iconActivityType: string;
+  approved: string;
+  approvedDateTime: string;
+  isCreatedByAdmin: string;
+  createdDate: string;
+  viewCount: number;
 }
 
 interface ErrorResponse {
@@ -161,11 +183,37 @@ export const getAllCategories = async (): Promise<Category[]> => {
     }
 };
 
+/**
+ * Get activity details by ID
+ * @param activityId The ID of the activity to fetch
+ * @returns Activity details
+ */
+export const getActivityById = async (activityId: number): Promise<Activity> => {
+    try {
+        const token = getAuthToken();
+        const response = await axios.get<Activity>(
+            `${API_BASE_URL}/activity/get?id=${activityId}`,
+            {
+                headers: {
+                    'accept': '*/*',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        const err = error as { response?: { data: ErrorResponse } };
+        throw err.response?.data?.message || "Failed to fetch activity details";
+    }
+};
+
 // Export all functions as named exports
 export const hobbyService = {
     getAllSubCategories,
     getAllActivities,
-    getAllCategories
+    getAllCategories,
+    getActivityById
 };
 
 export default hobbyService;

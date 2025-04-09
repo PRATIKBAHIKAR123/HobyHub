@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
+import { getActivityById } from "@/services/hobbyService";
 
 const thumbnails = [
   // "/images/thumb2.png",
@@ -27,6 +28,8 @@ interface ActivityData {
   sessionCountTo: number;
   ageRestrictionFrom: number;
   ageRestrictionTo: number;
+  rate: number;
+  currency: string;
   address: string;
   road: string;
   area: string;
@@ -36,6 +39,26 @@ interface ActivityData {
   country: string;
   longitude: string;
   latitute: string;
+  purchaseMaterialIds: string;
+  itemCarryText: string;
+  companyName: string;
+  tutorFirstName: string;
+  tutorLastName: string;
+  tutorEmailID: string;
+  tutorCountryCode: string;
+  tutorPhoneNo: string;
+  whatsappCountryCode: string;
+  whatsappNo: string;
+  tutorIntro: string;
+  website: string | null;
+  profileImage: string | null;
+  sinceYear: string | null;
+  iconActivityType: string;
+  approved: string;
+  approvedDateTime: string;
+  isCreatedByAdmin: string;
+  createdDate: string;
+  viewCount: number;
 }
 
 function HobbyDetailsPageSkeleton() {
@@ -100,23 +123,11 @@ function HobbyDetailsPageContent() {
       }
 
       try {
-        const response = await fetch('https://api.hobyhub.com/api/1/activities', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: activityId
-          })
-        });
-        const data = await response.json();
-        const specificActivity = data.find((activity: ActivityData) => activity.id === parseInt(activityId));
-        if (specificActivity) {
-          setActivityData(specificActivity);
-          const imageUrl = `https://api.hobyhub.com${specificActivity.thumbnailImage.replace(/\\/g, '/')}`;
-          setApiImage(imageUrl);
-          setSelectedImage(imageUrl);
-        }
+        const activity = await getActivityById(parseInt(activityId));
+        setActivityData(activity);
+        const imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
+        setApiImage(imageUrl);
+        setSelectedImage(imageUrl);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
@@ -218,7 +229,48 @@ function HobbyDetailsPageContent() {
             {activityData.city}
           </p>
         </Card>
+        {/* <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Rate</h3>
+          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
+            {activityData.currency} {activityData.rate}
+          </p>
+        </Card>
+        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Tutor</h3>
+          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
+            {activityData.tutorFirstName} {activityData.tutorLastName}
+          </p>
+        </Card>
+        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Contact</h3>
+          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
+            {activityData.tutorCountryCode} {activityData.tutorPhoneNo}
+          </p>
+        </Card> */}
       </div>
+
+      {/* Additional Information Section */}
+      {/* <div className="mt-8 p-6 bg-white rounded-2xl border-[1px] border-black/20">
+        <h2 className="text-black text-xl font-bold mb-4">Additional Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="text-black font-semibold mb-2">Items to Carry</h3>
+            <p className="text-gray-600">{activityData.itemCarryText}</p>
+          </div>
+          <div>
+            <h3 className="text-black font-semibold mb-2">Tutor Introduction</h3>
+            <p className="text-gray-600">{activityData.tutorIntro}</p>
+          </div>
+          <div>
+            <h3 className="text-black font-semibold mb-2">Company Name</h3>
+            <p className="text-gray-600">{activityData.companyName}</p>
+          </div>
+          <div>
+            <h3 className="text-black font-semibold mb-2">Activity Type</h3>
+            <p className="text-gray-600">{activityData.iconActivityType}</p>
+          </div>
+        </div>
+      </div> */}
     </div>
   );
 }
