@@ -12,15 +12,68 @@ import withAuth from "../auth/withAuth";
 import InquiryPopupScreen from "../components/InquiryPopupScreen";
 import DeletePopupScreen from "../components/DeletePopupScreen";
 
-const classes = Array(6).fill({
-  title: "Yoga Classes",
-  weekDay: "All day of week",
-  time: "6:30-21:30",
-  age: "10-70",
-  session: 25,
-  gender: "Male,Female",
-  price: "$239 - $499",
-});
+const classes = [
+  {
+    sno: 1,
+    name: "Yoga for Beginners",
+    schedule: "Monday, Wednesday, Friday",
+    scheduletime: "09:00 - 10:00",
+    agegroup: "18-45",
+    gender: "Mixed",
+    stratdate: "2024-04-01",
+    enddate: "2024-06-30",
+    sessions: 12,
+    cost: "$299"
+  },
+  {
+    sno: 2,
+    name: "Advanced Pilates",
+    schedule: "Tuesday, Thursday",
+    scheduletime: "18:00 - 19:30",
+    agegroup: "25-50",
+    gender: "Female",
+    stratdate: "2024-04-02",
+    enddate: "2024-07-02",
+    sessions: 8,
+    cost: "$399"
+  },
+  {
+    sno: 3,
+    name: "Kids Dance Class",
+    schedule: "Saturday",
+    scheduletime: "10:00 - 11:30",
+    agegroup: "5-12",
+    gender: "Mixed",
+    stratdate: "2024-04-06",
+    enddate: "2024-06-29",
+    sessions: 6,
+    cost: "$199"
+  },
+  {
+    sno: 4,
+    name: "Zumba Fitness",
+    schedule: "Monday, Wednesday",
+    scheduletime: "19:00 - 20:00",
+    agegroup: "16-60",
+    gender: "Mixed",
+    stratdate: "2024-04-01",
+    enddate: "2024-06-30",
+    sessions: 10,
+    cost: "$249"
+  },
+  {
+    sno: 5,
+    name: "Meditation Workshop",
+    schedule: "Sunday",
+    scheduletime: "15:00 - 16:30",
+    agegroup: "18+",
+    gender: "Mixed",
+    stratdate: "2024-04-07",
+    enddate: "2024-06-30",
+    sessions: 4,
+    cost: "$179"
+  }
+];
 
 function NavigationSkeleton() {
   return (
@@ -182,14 +235,14 @@ function ClassGridList() {
       <Card key={index} className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
         <CardContent className="px-6">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
+            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.name}</span> 
           </h3>
-          <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.weekDay}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.time}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.age}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.session}</p></p>
+          <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.schedule}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.scheduletime}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.agegroup}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.sessions}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.cost}</p></p>
           <div className="flex justify-between gap-2 mt-4">
             <Button 
               variant="outline"
