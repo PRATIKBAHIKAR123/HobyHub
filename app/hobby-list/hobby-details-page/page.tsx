@@ -123,22 +123,37 @@ function HobbyDetailsPageContent() {
       }
 
       try {
-        const activity = await getActivityById(parseInt(activityId));
+        // Check if user is logged in by checking for token
+        const token = localStorage.getItem('token');
+        let activity: ActivityData;
+
+        if (token) {
+          // If logged in, fetch fresh data from API
+          activity = await getActivityById(parseInt(activityId));
+          // Save the activity data in sessionStorage
+          sessionStorage.setItem('activityData', JSON.stringify(activity));
+          
+          // Increase view count for logged-in users
+          try {
+            await increaseActivityViewCount(parseInt(activityId));
+          } catch (error) {
+            console.error('Error increasing view count:', error);
+          }
+        } else {
+          // If not logged in, try to get data from sessionStorage
+          const storedData = sessionStorage.getItem('activityData');
+          if (storedData) {
+            activity = JSON.parse(storedData);
+          } else {
+            throw new Error('No activity data available');
+          }
+        }
+
         setActivityData(activity);
-        // Save the activity data in sessionStorage
-        sessionStorage.setItem('activityData', JSON.stringify(activity));
         const imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);
         setIsLoading(false);
-        
-        // Increase view count
-        try {
-          await increaseActivityViewCount(parseInt(activityId));
-        } catch (error) {
-          console.error('Error increasing view count:', error);
-          // Don't show error to user as this is not critical functionality
-        }
       } catch (error) {
         console.error('Error fetching activity data:', error);
         setIsLoading(false);
