@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
-  const isOtpComplete = otp.length === 4;
+  const isOtpComplete = otp.length >= 4 && /^\d+$/.test(otp);
   const [timer, setTimer] = useState(53);
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [otpFailed, setotpFailed] = useState(false);
@@ -54,19 +54,40 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const data = await loginWithOtp(username, otp) as { AccessToken: string };
+      const data = await loginWithOtp(username, otp.slice(0, 4)) as { AccessToken: string };
       localStorage.setItem("userData", JSON.stringify(data)); // Save token
       localStorage.setItem("token", data.AccessToken);
       setMessage("Login successful!");
       console.log("Login successful:", message);
       setotpFailed(false);
       toast.success('Login successful');
-      router.push("/");
+      
+      // Clear browser history and prevent back navigation
+      window.history.pushState(null, '', '/');
+      window.history.pushState(null, '', '/');
+      window.onpopstate = function() {
+        window.history.pushState(null, '', '/');
+        router.push('/');
+      };
+      
+      // Force navigation to home page
+      router.replace('/');
     } catch (err) {
       setotpFailed(true);
       toast.error(String(err));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOtpChange = (value: string) => {
+    setOtp(value.slice(0, 4));
+  };
+
+  const handleSlotClick = (index: number) => {
+    const input = document.querySelector(`[data-slot="input-otp-slot"][data-index="${index}"]`) as HTMLInputElement;
+    if (input) {
+      input.focus();
     }
   };
 
@@ -99,28 +120,32 @@ export default function LoginPage() {
               <label className="text-[#9d9d9d] text-[12px] md:text-[12.80px] font-bold trajan-pro">Enter OTP</label>
               <div className="flex flex-row mt-1 gap-2 md:gap-4">
                 <InputOTP 
-                  maxLength={6} 
+                  maxLength={4} 
                   value={otp} 
-                  onChange={(value) => setOtp(value)} 
+                  onChange={handleOtpChange} 
                   required
                   autoFocus
                 >
                   <InputOTPGroup className="flex flex-wrap gap-2 md:gap-4">
                     <InputOTPSlot
-                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15"
+                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15 cursor-pointer"
                       index={0}
+                      onClick={() => handleSlotClick(0)}
                     />
                     <InputOTPSlot
-                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15"
+                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15 cursor-pointer"
                       index={1}
+                      onClick={() => handleSlotClick(1)}
                     />
                     <InputOTPSlot
-                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15"
+                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15 cursor-pointer"
                       index={2}
+                      onClick={() => handleSlotClick(2)}
                     />
                     <InputOTPSlot
-                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15"
+                      className="text-black text-2xl font-bold font-['Trajan_Pro'] items-center border border-gray-300 rounded-md outline-none flex-1 w-28 h-15 cursor-pointer"
                       index={3}
+                      onClick={() => handleSlotClick(3)}
                     />
                   </InputOTPGroup>
                 </InputOTP>
