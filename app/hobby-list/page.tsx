@@ -18,7 +18,7 @@ const classes = Array(6).fill({
   time: "6:30-21:30",
   age: "10-70",
   session: 25,
-  gender: "Male, Female",
+  gender: "Male,Female",
   price: "$239 - $499",
 });
 
