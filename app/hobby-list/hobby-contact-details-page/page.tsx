@@ -7,7 +7,6 @@ import withAuth from "@/app/auth/withAuth";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 
-
 interface ActivityData {
   id: number;
   vendorId: number;
@@ -21,6 +20,8 @@ interface ActivityData {
   sessionCountTo: number;
   ageRestrictionFrom: number;
   ageRestrictionTo: number;
+  rate: number;
+  currency: string;
   address: string;
   road: string;
   area: string;
@@ -30,9 +31,27 @@ interface ActivityData {
   country: string;
   longitude: string;
   latitute: string;
+  purchaseMaterialIds: string;
+  itemCarryText: string;
+  companyName: string;
+  tutorFirstName: string;
+  tutorLastName: string;
+  tutorEmailID: string;
+  tutorCountryCode: string;
+  tutorPhoneNo: string;
+  whatsappCountryCode: string;
+  whatsappNo: string;
+  tutorIntro: string;
+  website: string | null;
+  profileImage: string | null;
+  sinceYear: string | null;
+  iconActivityType: string;
+  approved: string;
+  approvedDateTime: string;
+  isCreatedByAdmin: string;
+  createdDate: string;
+  viewCount: number;
 }
-
-
 
 function HobbyContactDetailsPageContent() {
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
@@ -40,40 +59,19 @@ function HobbyContactDetailsPageContent() {
   const activityId = searchParams.get('id');
 
   useEffect(() => {
-    const fetchActivityData = async () => {
-      if (!activityId) {
-        return;
+    // Get the data from sessionStorage which was saved in hobby details page
+    const savedData = sessionStorage.getItem('activityData');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      if (data.id === parseInt(activityId || '')) {
+        setActivityData(data);
       }
-
-      try {
-        const response = await fetch('https://api.hobyhub.com/api/1/activities', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: activityId
-          })
-        });
-        const data = await response.json();
-        const specificActivity = data.find((activity: ActivityData) => activity.id === parseInt(activityId));
-        if (specificActivity) {
-          setActivityData(specificActivity);
-        }
-      } catch (error) {
-        console.error('Error fetching activity data:', error);
-      }
-    };
-
-    fetchActivityData();
+    }
   }, [activityId]);
-
 
   if (!activityData) {
     return <div className="p-6 text-center">No Contact details available</div>;
   }
-
-  // const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
   const containerStyle = {
     width: "100%",
@@ -86,64 +84,60 @@ function HobbyContactDetailsPageContent() {
 
   return (
     <div className="p-6">
-    
-     <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2">Contact Information</div>
+      <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2">Contact Information</div>
       <Card className="trajan-pro rounded-2xl border-4 border-[#d2dae4] p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-center justify-between">
-
           <div>
-            <h4 className="text-black text-[12px] font-bold  ">Institute</h4>
-            <div className="text-sm">Federation of Kangleicha Martial Arts Head Branch</div>
+            <h4 className="text-black text-[12px] font-bold">Institute</h4>
+            <div className="text-sm">{activityData.companyName}</div>
           </div>
           <div>
-            <h4 className="text-black text-[12px] font-bold  ">HH ID</h4>
-            <div className="text-sm">HH124</div>
-          </div>
-          <div>
-            <h4 className="text-black text-[12px] font-bold  ">Contact</h4>
-            <div className="text-sm">Dr. Sameer Shaikh</div>
+            <h4 className="text-black text-[12px] font-bold">Contact</h4>
+            <div className="text-sm">{activityData.tutorFirstName} {activityData.tutorLastName}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Intro</h4>
-            <div className="text-sm">Dr. Sameer Ismail Shaikh, a 7th-degree black belt and MA in Physical Education, leads the academy with 40 teachers, 5 senior instructors, and several junior instructors. Under his expert guidance, students receive top-tier martial arts training</div>
+            <div className="text-sm">{activityData.tutorIntro}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Website</h4>
-            <div className="text-sm">https://www.fkmaindia.com/</div>
+            <div className="text-sm">{activityData.website || 'Not available'}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Email</h4>
-            <div className="text-sm">samsunshooters.lucky@yahoo.co.in</div>
+            <div className="text-sm">{activityData.tutorEmailID}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Phone</h4>
-            <div className="text-sm">+91 9823186187</div>
+            <div className="text-sm">{activityData.tutorCountryCode} {activityData.tutorPhoneNo}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Whatsapp</h4>
-            <div className="text-sm">+91 9823186187</div>
+            <div className="text-sm">{activityData.whatsappCountryCode} {activityData.whatsappNo}</div>
           </div>
           <div>
             <h4 className="text-black text-[12px] font-bold">Address</h4>
-            <div className="text-sm">Tilak ayurvedic college hostel campus, Rasta Peth, Rasta Peth, Pune - 411001, Maharashtra, India</div>
+            <div className="text-sm">
+              {activityData.address}, {activityData.road}, {activityData.area}, {activityData.city}, {activityData.state} - {activityData.pincode}, {activityData.country}
+            </div>
           </div>
         </div>
       </Card>
 
-     <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2">Map Direction</div>
-     <div>
-     <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY!}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={15}
-      >
-        <Marker position={center} />
-      </GoogleMap>
-    </LoadScript>
-</div>
+      <div className="justify-start text-[#1e1e1e] text-xl font-bold leading-[34px] mb-2">Map Direction</div>
+      <div>
+        <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY!}>
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={15}
+          >
+            <Marker position={center} />
+          </GoogleMap>
+        </LoadScript>
+      </div>
     </div>
   );
 }
 
-export default  withAuth(HobbyContactDetailsPageContent);
+export default withAuth(HobbyContactDetailsPageContent);

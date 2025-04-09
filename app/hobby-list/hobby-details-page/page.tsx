@@ -125,6 +125,8 @@ function HobbyDetailsPageContent() {
       try {
         const activity = await getActivityById(parseInt(activityId));
         setActivityData(activity);
+        // Save the activity data in sessionStorage
+        sessionStorage.setItem('activityData', JSON.stringify(activity));
         const imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);

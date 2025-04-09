@@ -15,7 +15,11 @@ export default function PagesNavbar() {
     const activityId = searchParams.get('id');
 
   const routeTo = (link: string) => {
-    router.push(link);
+    if (activityId && (link.includes('hobby-details-page') || link.includes('hobby-list') || link.includes('hobby-contact-details-page'))) {
+      router.push(`${link}?id=${activityId}`);
+    } else {
+      router.push(link);
+    }
     setIsMenuOpen(!isMenuOpen);
   };
   return (
@@ -62,7 +66,7 @@ export default function PagesNavbar() {
             "w-full md:w-auto",
             pathname === "/hobby-list/hobby-contact-details-page" && "bg-yellow-400 text-black"
           )}
-          onClick={() => routeTo(`/hobby-list/hobby-contact-details-page?id=${activityId}`)}>Contact Details</Button>
+          onClick={() => routeTo("/hobby-list/hobby-contact-details-page")}>Contact Details</Button>
         {/* <Button variant="ghost" className="w-full md:w-auto">Location</Button> */}
         <Button variant="ghost" className="w-full md:w-auto">Excellence Score</Button>
       </div>
