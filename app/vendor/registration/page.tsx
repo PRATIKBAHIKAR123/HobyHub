@@ -22,6 +22,8 @@ import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
 import SuccessPopupScreen from "./SuccessPopupScreen";
+import { Category } from "@/app/homepage/categories";
+import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -103,6 +105,7 @@ export default function RegistrationForm() {
   const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
   const [vendorId, setVendorId] = useState("");
   const [activeAccordion, setActiveAccordion] = useState("item-0");
+    const [categories, setCategories] = useState<Category[]>([]);
   const [completedSections, setCompletedSections] = useState({
     personalDetails: false,
     instituteDetails: false,
@@ -114,21 +117,54 @@ export default function RegistrationForm() {
   const [course, setCourses] = useState<any[]>([]);
 
   useEffect(() => {
-    if(showClassFields){
-      setActiveAccordion("item-4");
+    if (showClassFields) {
+      setActiveAccordion("item-4"); // Open the class accordion
+      setShowCourseFields(false); // Close the course form
     }
   }, [showClassFields]);
-
+  
   useEffect(() => {
-    if(!completedSections.personalDetails){
-      setActiveAccordion("item-0");
+    if (showCourseFields) {
+      setActiveAccordion("item-5"); // Open the course accordion
+      setShowClassFields(false); // Close the class form
     }
-    else if(!completedSections.instituteDetails){
-      setActiveAccordion("item-1");
-    }else if(!completedSections.additionalInfo){
-      setActiveAccordion("item-2");
-    }
-  }, [activeAccordion, completedSections]);
+  }, [showCourseFields]);
+
+    useEffect(() => {
+      const fetchCategories = async () => {
+        try {
+          const [categoriesData, subCategoriesData] = await Promise.all([
+            getAllCategories(),
+            getAllSubCategories()
+          ]);
+  
+          // Combine categories with their subcategories
+          const categoriesWithSubs = categoriesData.map(cat => ({
+            ...cat,
+            subcategories: subCategoriesData.filter(sub => sub.categoryId === cat.id)
+          }));
+  
+          setCategories(categoriesWithSubs);
+        } catch (error) {
+          console.error("Failed to fetch categories:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+  
+      fetchCategories();
+    }, []);
+
+  // useEffect(() => {
+  //   if(!completedSections.personalDetails){
+  //     setActiveAccordion("item-0");
+  //   }
+  //   else if(!completedSections.instituteDetails){
+  //     setActiveAccordion("item-1");
+  //   }else if(!completedSections.additionalInfo){
+  //     setActiveAccordion("item-2");
+  //   }
+  // }, [activeAccordion, completedSections]);
 
   useEffect(() => {
     if(showCourseFields){
@@ -436,6 +472,34 @@ const saveClassDetails = (data: any) => {
     setShowCourseFields(true); // Show the class form
   };
 
+  useEffect(() => {
+    const selectedCategory = categories.find(
+      (category) => category.title.toString() === watchCourse("category")
+    );
+  
+    if (selectedCategory && selectedCategory.subcategories.length > 0) {
+      // Automatically set the first subcategory as the default
+      setValueCourse("subCategory", selectedCategory.subcategories[0].id.toString());
+    } else {
+      // Clear the subCategory if no subcategories are available
+      setValueCourse("subCategory", "");
+    }
+  }, [watchCourse("category"), categories, setValueCourse]);
+
+  useEffect(() => {
+    const selectedCategory = categories.find(
+      (category) => category.title.toString() === watchClass("category")
+    );
+  
+    if (selectedCategory && selectedCategory.subcategories.length > 0) {
+      // Automatically set the first subcategory as the default
+      setValueClass("subCategory", selectedCategory.subcategories[0].id.toString());
+    } else {
+      // Clear the subCategory if no subcategories are available
+      setValueClass("subCategory", "");
+    }
+  }, [watchClass("category"), categories, setValueClass]);
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -448,7 +512,20 @@ const saveClassDetails = (data: any) => {
         <Accordion 
           type="single" 
           value={activeAccordion} 
-          onValueChange={setActiveAccordion} 
+          onValueChange={(value) => {
+            // Check if the section is completed before allowing it to open
+            if (
+              (value === "item-0") || // Personal Details can always be opened
+              (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
+              (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
+              (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
+              (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
+            ) {
+              setActiveAccordion(value); // Allow opening the accordion
+            } else {
+              toast.error("Please complete the previous sections first!"); // Show an error message
+            }
+          }}
           collapsible
         >
           {/* Personal Details Section */}
@@ -674,14 +751,14 @@ const saveClassDetails = (data: any) => {
                   </div>
 
                   <div className="flex justify-end mt-4">
-                    {/* <Button 
+                  <Button 
                       type="button" 
                       onClick={() => setActiveAccordion("item-0")} 
-                      className="border-[#05244f] text-[#05244f]"
+                      className="border-[#05244f] text-[#05244f] mr-2"
                       variant="outline"
                     >
-                      Clear
-                    </Button> */}
+                      Previous
+                    </Button>
                     <Button 
                       type="submit" 
                       className="app-bg-color text-white"
@@ -699,7 +776,7 @@ const saveClassDetails = (data: any) => {
         {/* Additional Information Section */}
         <AccordionItem value="item-2">
         <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-        <AccordionTrigger onClick={(e) => e.preventDefault()}>
+        <AccordionTrigger  onClick={(e) => { if (!completedSections.instituteDetails) { e.preventDefault(); } }}>
           <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.additionalInfo ||activeAccordion=='item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"} `}>
             Additional information
             {completedSections.additionalInfo && <CircleCheckBig className="text-[#46a758] ml-2"/>}
@@ -742,13 +819,23 @@ const saveClassDetails = (data: any) => {
               </div>
               
             </div>
+            <div className="flex justify-end mt-4">
+            <Button 
+                      type="button" 
+                      onClick={() => setActiveAccordion("item-1")} 
+                      className="border-[#05244f] text-[#05244f] mr-2"
+                      variant="outline"
+                    >
+                      Previous
+                    </Button>
             <Button 
               type="submit" 
-              className="my-4 app-bg-color text-white float-right"
+              className="app-bg-color text-white"
               disabled={isLoading}
             >
               {isLoading ? "Saving..." : "Save Additional Info"}
             </Button>
+            </div>
           </form>
           </AccordionContent>
         </div>
@@ -773,9 +860,9 @@ const saveClassDetails = (data: any) => {
         
         {/* Class Details Section */}
         {showClassFields && (
-          <AccordionItem value="item-4">
+          <AccordionItem value="item-4" >
           <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
-          <AccordionTrigger>
+          <AccordionTrigger onClick={() => setActiveAccordion('item-4')}>
             <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
               Class Details
               {completedSections.classDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
@@ -801,28 +888,37 @@ const saveClassDetails = (data: any) => {
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                     Category<span className="text-red-500">*</span>
                   </Label>
-                  <Input 
-                    placeholder="Category" 
-                    {...registerClass("category")} 
-                    className="h-[52px] border-[#05244f]" 
-                  />
+                  <Select onValueChange={(value) => setValueClass("category", value)} value={watchClass("category") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {categories!.map((item) => (<SelectItem key={item.id} value={item.title.toString()}>{item.title}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
                   {errorsClass.category && (
                     <p className="text-red-500 text-xs">{errorsClass.category.message}</p>
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
-                  <Select onValueChange={(value) => setValueClass("subCategory", value)} value={watchClass("subCategory") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Sub Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="subCategory1">Sub Category 1</SelectItem>
-                      <SelectItem value="subCategory2">Sub Category 2</SelectItem>
-                      <SelectItem value="subCategory3">Sub Category 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
+  <Select
+    onValueChange={(value) => setValueClass("subCategory", value)}
+    value={watchClass("subCategory") || ""}
+  >
+    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+      <SelectValue placeholder="Sub Category" />
+    </SelectTrigger>
+    <SelectContent>
+      {categories
+        .find((category) => category.title.toString() === watchClass("category"))?.subcategories.map((subCategory) => (
+          <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
+            {subCategory.title}
+          </SelectItem>
+        ))}
+    </SelectContent>
+  </Select>
+</div>
               </div>
               
               <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
@@ -1055,28 +1151,37 @@ const saveClassDetails = (data: any) => {
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                     Category<span className="text-red-500">*</span>
                   </Label>
-                  <Input 
-                    placeholder="Category" 
-                    {...registerCourse("category")} 
-                    className="h-[52px] border-[#05244f]" 
-                  />
+                  <Select onValueChange={(value) => setValueCourse("category", value)} value={watchCourse("category") || ""}>
+                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {categories!.map((item) => (<SelectItem key={item.id} value={item.title.toString()}>{item.title}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
                   {errorsCourse.category && (
                     <p className="text-red-500 text-xs">{errorsCourse.category.message}</p>
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
-                  <Select onValueChange={(value) => setValueCourse("subCategory", value)} value={watchCourse("subCategory") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Sub Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="subCategory1">Sub Category 1</SelectItem>
-                      <SelectItem value="subCategory2">Sub Category 2</SelectItem>
-                      <SelectItem value="subCategory3">Sub Category 3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
+  <Select
+    onValueChange={(value) => setValueCourse("subCategory", value)}
+    value={watchCourse("subCategory") || ""}
+  >
+    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+      <SelectValue placeholder="Sub Category" />
+    </SelectTrigger>
+    <SelectContent>
+      {categories
+        .find((category) => category.title.toString() === watchCourse("category"))?.subcategories.map((subCategory) => (
+          <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
+            {subCategory.title}
+          </SelectItem>
+        ))}
+    </SelectContent>
+  </Select>
+</div>
               </div>
               
               <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">

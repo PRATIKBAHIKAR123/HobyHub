@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 
 export default function PagesNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const activityId = searchParams.get('id');
 
   const routeTo = (link: string) => {
     router.push(link);
@@ -56,8 +58,12 @@ export default function PagesNavbar() {
         >
           Class Details
         </Button>
-        <Button variant="ghost" className="w-full md:w-auto">Contact Details</Button>
-        <Button variant="ghost" className="w-full md:w-auto">Location</Button>
+        <Button variant="ghost" className={clsx(
+            "w-full md:w-auto",
+            pathname === "/hobby-list/hobby-contact-details-page" && "bg-yellow-400 text-black"
+          )}
+          onClick={() => routeTo(`/hobby-list/hobby-contact-details-page?id=${activityId}`)}>Contact Details</Button>
+        {/* <Button variant="ghost" className="w-full md:w-auto">Location</Button> */}
         <Button variant="ghost" className="w-full md:w-auto">Excellence Score</Button>
       </div>
     </nav>

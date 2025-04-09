@@ -21,7 +21,7 @@ interface SubCategory {
   id: number;
 }
 
-interface Category {
+export interface Category {
   title: string;
   imagePath: string | null;
   sort: number;

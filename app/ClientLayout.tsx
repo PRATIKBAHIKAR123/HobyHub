@@ -9,7 +9,7 @@ import { AppSidebar } from "./sidebar/sidebar";
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    const hideHomeNavbarRoutes = ["/auth/login","/auth/otp","/auth/sign-up","/auth/reset-password", "/vendor/registration", "/hobby-list", "/hobby-list/hobby-details-page","/vendor/progress-summary","/vendor/dashboard","/vendor/music-class","/vendor/programs-registered","/vendor/profile"];
+    const hideHomeNavbarRoutes = ["/auth/login","/auth/otp","/auth/sign-up","/auth/reset-password", "/vendor/registration", "/hobby-list", "/hobby-list/hobby-details-page","/hobby-list/hobby-contact-details-page","/vendor/progress-summary","/vendor/dashboard","/vendor/music-class","/vendor/programs-registered","/vendor/profile"];
   return (
     <>
       {!hideHomeNavbarRoutes.includes(pathname) && <HomeNavbar />}

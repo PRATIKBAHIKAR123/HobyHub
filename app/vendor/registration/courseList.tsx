@@ -63,7 +63,7 @@ import { Edit, Trash } from "lucide-react";
               <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro" width={1}>
               <div className="flex items-center justify-center gap-2">
                     <div className="justify-center text-black text-[10px] font-normal trajan-pro" onClick={() => handleEdit(index)} ><Edit/></div>
-                    <div className="justify-center text-black text-[10px] font-normal trajan-pro" onClick={() => handleDelete(index)}><Trash/></div>
+                    <div className="justify-center text-black text-[10px] font-normal trajan-pro" onClick={() => handleDelete(index)}><Trash color="red"/></div>
               </div>
               </TableCell>
             </TableRow>
