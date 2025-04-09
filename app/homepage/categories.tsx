@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
+import { useFilter } from "@/contexts/FilterContext";
 
 interface SubCategory {
   categoryId: number;
@@ -35,6 +36,7 @@ export function Categories() {
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { setCategoryFilter, triggerFilterUpdate } = useFilter();
 
   // Fetch all categories and subcategories when component mounts
   useEffect(() => {
@@ -97,6 +99,12 @@ export function Categories() {
     setActiveCategory(null);
   };
 
+  const handleSubCategoryClick = (categoryId: number, subCategoryId: number) => {
+    setActiveCategory(null);
+    setCategoryFilter({ catId: categoryId, subCatId: subCategoryId });
+    triggerFilterUpdate();
+  };
+
   if (isLoading) {
     return <div className="bg-white md:px-4 sm:px-2 w-full sticky top-32 md:top-16 z-9 border-b-1 border-gray">Loading...</div>;
   }
@@ -145,7 +153,7 @@ export function Categories() {
                       cat.subcategories.map((subcat) => (
                         <DropdownMenuItem
                           key={subcat.id}
-                          onClick={() => setActiveCategory(null)}
+                          onClick={() => handleSubCategoryClick(cat.id, subcat.id)}
                           className="py-5 px-2 text-base text-[16px] hover:bg-gray-100"
                         >
                           {subcat.title}

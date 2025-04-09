@@ -70,15 +70,15 @@ export default function HobbyGrid() {
   const [isLoading, setIsLoading] = useState(true);
   const { isOnline } = useMode();
   const { sortFilter } = useSortFilter();
-  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger } = useFilter();
+  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter } = useFilter();
 
   useEffect(() => {
     const fetchActivities = async () => {
       try {
         setIsLoading(true);
         const data = await getAllActivities({
-          catId: 0,
-          subCatId: 0,
+          catId: categoryFilter.catId,
+          subCatId: categoryFilter.subCatId,
           mode: isOnline ? "online" : "offline",
           sortFilter: sortFilter,
           location: "",
@@ -98,7 +98,7 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [isOnline, sortFilter, filterUpdateTrigger]);
+  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter]);
 
   if (isLoading) {
     return (

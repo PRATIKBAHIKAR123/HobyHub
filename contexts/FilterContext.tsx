@@ -15,6 +15,11 @@ interface FilterContextType {
   setAreFiltersApplied: (value: boolean) => void;
   triggerFilterUpdate: () => void;
   filterUpdateTrigger: number;
+  categoryFilter: {
+    catId: number;
+    subCatId: number;
+  };
+  setCategoryFilter: (filter: { catId: number; subCatId: number }) => void;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -26,6 +31,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [time, setTime] = useState("");
   const [areFiltersApplied, setAreFiltersApplied] = useState(false);
   const [filterUpdateTrigger, setFilterUpdateTrigger] = useState(0);
+  const [categoryFilter, setCategoryFilter] = useState<{ catId: number; subCatId: number }>({ catId: 0, subCatId: 0 });
 
   const triggerFilterUpdate = () => {
     setFilterUpdateTrigger(prev => prev + 1);
@@ -44,7 +50,9 @@ export function FilterProvider({ children }: { children: ReactNode }) {
       areFiltersApplied,
       setAreFiltersApplied,
       triggerFilterUpdate,
-      filterUpdateTrigger
+      filterUpdateTrigger,
+      categoryFilter,
+      setCategoryFilter
     }}>
       {children}
     </FilterContext.Provider>
@@ -54,7 +62,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
 export function useFilter() {
   const context = useContext(FilterContext);
   if (context === undefined) {
-    throw new Error('useFilter must be used within a FilterProvider');
+    throw new Error("useFilter must be used within a FilterProvider");
   }
   return context;
 } 
