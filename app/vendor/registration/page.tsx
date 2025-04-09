@@ -24,6 +24,9 @@ import { ClassTable } from "./classList";
 import SuccessPopupScreen from "./SuccessPopupScreen";
 import { Category } from "@/app/homepage/categories";
 import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
+import { ContactData } from "./contactSelection";
+import { LocationData } from "./locationSelection";
+import { DirectoryItem } from "./directoryList";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -116,6 +119,10 @@ export default function RegistrationForm() {
   const [classes, setClasses] = useState<any[]>([]);
   const [course, setCourses] = useState<any[]>([]);
 
+  const [contacts, setContacts] = useState<ContactData[]>([]);
+  const [locations, setLocations] = useState<LocationData[]>([]);
+  const [directory, setDirectory] = useState<DirectoryItem[]>([]);
+
   useEffect(() => {
     if (showClassFields) {
       setActiveAccordion("item-4"); // Open the class accordion
@@ -155,16 +162,19 @@ export default function RegistrationForm() {
       fetchCategories();
     }, []);
 
-  // useEffect(() => {
-  //   if(!completedSections.personalDetails){
-  //     setActiveAccordion("item-0");
-  //   }
-  //   else if(!completedSections.instituteDetails){
-  //     setActiveAccordion("item-1");
-  //   }else if(!completedSections.additionalInfo){
-  //     setActiveAccordion("item-2");
-  //   }
-  // }, [activeAccordion, completedSections]);
+    useEffect(() => {
+      if (!completedSections.personalDetails) {
+        setActiveAccordion("item-0");
+      } else if (!completedSections.instituteDetails) {
+        setActiveAccordion("item-1");
+      } else if (!completedSections.additionalInfo) {
+        setActiveAccordion("item-2");
+      } else if (!completedSections.classDetails) {
+        setActiveAccordion("item-4");
+      } else {
+        setActiveAccordion(""); // No default open if all sections are completed
+      }
+    }, [completedSections]);
 
   useEffect(() => {
     if(showCourseFields){
@@ -305,7 +315,97 @@ export default function RegistrationForm() {
   useEffect(() => {
     localStorage.setItem("corseDetails", JSON.stringify(course));
   }, [course]);
+
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
+
+
+  // Save contacts to localStorage whenever they change
+  useEffect(() => {
+    try {
+      
+      localStorage.setItem('contacts', JSON.stringify(contacts));
+    } catch (error) {
+      console.error('Error saving contacts to localStorage:', error);
+    }
+  }, [contacts]);
   
+  // Function to handle new contact submission
+  const handleContactSubmit = (contactData: ContactData) => {
+    setContacts(prev => [...prev, contactData]);
+  };
+  
+  // Function to handle contact deletion
+  // const handleDeleteContact = (id: string) => {
+  //   setContacts(prev => prev.filter(contact => contact.id !== id));
+  // };
+
+    // Load locations from localStorage on initial render
+    useEffect(() => {
+      const loadLocations = () => {
+        try {
+          const storedLocations = localStorage.getItem('locations');
+          if (storedLocations) {
+            setLocations(JSON.parse(storedLocations));
+          }
+        } catch (error) {
+          console.error('Error loading locations from localStorage:', error);
+        }
+      };
+
+      const loadContacts = () => {
+        try {
+          const storedContacts = localStorage.getItem('contacts');
+          if (storedContacts) {
+            setContacts(JSON.parse(storedContacts));
+          }
+        } catch (error) {
+          console.error('Error loading contacts from localStorage:', error);
+        }
+      };
+      
+      // Load locations immediately when the component mounts
+      loadLocations();
+      loadContacts();
+      
+      // Set up event listener for storage changes from other tabs/windows
+      const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'locations') {
+          loadLocations();
+        }
+        if (event.key === 'contacts') {
+          loadContacts();        }
+      };
+      
+      window.addEventListener('storage', handleStorageChange);
+      
+      // Clean up event listener
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+      };
+    }, []);
+    
+    // Save locations to localStorage whenever they change
+    useEffect(() => {
+      try {
+        localStorage.setItem('locations', JSON.stringify(locations));
+      } catch (error) {
+        console.error('Error saving locations to localStorage:', error);
+      }
+    }, [locations]);
+    
+    // Function to handle new location submission
+    const handleLocationSubmit = (locationData: LocationData) => {
+      setLocations(prev => [...prev, locationData]);
+    };
+    
+    // // Function to handle location deletion
+    // const handleDeleteLocation = (id: string) => {
+    //   setLocations(prev => prev.filter(location => location.id !== id));
+    // };
+    
+
   const handleDeleteClass = (index: number) => {
     // Remove the class at the specified index
     const updatedClasses = classes.filter((_, i) => i !== index);
@@ -359,7 +459,36 @@ export default function RegistrationForm() {
   // Save class details to localStorage
 const saveClassDetails = (data: any) => {
   // Create a new array with the existing classes plus the new one
-  const updatedClasses = [...classes, {...data}];
+  const selectedAddress = locations.find((item) => item.area === data.location);
+  const selectedContact = contacts.find(
+    (item) => item.firstName + " " + item.lastName === data.contact
+  );
+
+  const newDirectoryItem: DirectoryItem = {
+    address: selectedAddress?.area || "",
+    isPrimary: selectedContact?.contactType.primary?'Yes':'No', // Example value, update as needed
+    firstName: selectedContact?.firstName || "",
+    lastName: selectedContact?.lastName || "",
+    phoneNumber: selectedContact?.phoneNumber || "",
+    whatsappNumber: selectedContact?.whatsappNumber || "",
+    email: selectedContact?.email || "",
+    contactType: {
+      primary: false,
+      secondary: false,
+      billing: false,
+    },
+  };
+
+  // Update the directory state
+  setDirectory((prev) => [...prev, newDirectoryItem]);
+
+  // Save the directory to localStorage
+  localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
+
+
+  const updatedClasses = [
+    ...classes,{...data},
+  ];
   
   // Update the state
   setClasses(updatedClasses);
@@ -377,6 +506,31 @@ const saveClassDetails = (data: any) => {
 
 
   const saveCourseDetails = (data: any) => {
+    const selectedAddress = locations.find((item) => item.area === data.location);
+    const selectedContact = contacts.find(
+      (item) => item.firstName + " " + item.lastName === data.contact
+    );
+  
+    const newDirectoryItem: DirectoryItem = {
+      address: selectedAddress?.area || "",
+      isPrimary: selectedContact?.contactType.primary?'Yes':'No', // Example value, update as needed
+      firstName: selectedContact?.firstName || "",
+      lastName: selectedContact?.lastName || "",
+      phoneNumber: selectedContact?.phoneNumber || "",
+      whatsappNumber: selectedContact?.whatsappNumber || "",
+      email: selectedContact?.email || "",
+      contactType: {
+        primary: false,
+        secondary: false,
+        billing: false,
+      },
+    };
+  
+    // Update the directory state
+    setDirectory((prev) => [...prev, newDirectoryItem]);
+  
+    // Save the directory to localStorage
+    localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
     const updatedClasses = [...course, {...data}];
     localStorage.setItem('corseDetails', JSON.stringify(updatedClasses));
     setCourses(updatedClasses);
@@ -500,6 +654,32 @@ const saveClassDetails = (data: any) => {
     }
   }, [watchClass("category"), categories, setValueClass]);
 
+  const onAccordianClick = (value: string) => {
+    console.log("Accordion value changed:", value);
+    if (value === activeAccordion && !completedSections[value as keyof typeof completedSections]) {
+      toast.error("Complete the form first!");
+      return;
+    }
+            // Allow opening only completed sections
+            if (value === activeAccordion) {
+              setActiveAccordion(""); // Close the accordion
+              return;
+            }
+        
+            if (
+              (value === "item-0") || // Personal Details can always be opened
+              (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
+              (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
+              (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
+              (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
+            ) {
+              setActiveAccordion(value); // Allow opening the accordion
+            } else {
+              toast.error("Please complete the previous sections first!"); // Show an error message
+            }
+          
+  }
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -512,26 +692,32 @@ const saveClassDetails = (data: any) => {
         <Accordion 
           type="single" 
           value={activeAccordion} 
-          onValueChange={(value) => {
-            // Check if the section is completed before allowing it to open
-            if (
-              (value === "item-0") || // Personal Details can always be opened
-              (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
-              (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
-              (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
-              (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
-            ) {
-              setActiveAccordion(value); // Allow opening the accordion
-            } else {
-              toast.error("Please complete the previous sections first!"); // Show an error message
-            }
-          }}
+          // onValueChange={(value) => {
+          //   console.log("Accordion value changed:", value);
+          //   // Allow opening only completed sections
+          //   if (value === activeAccordion) {
+          //     setActiveAccordion(""); // Close the accordion
+          //     return;
+          //   }
+        
+          //   if (
+          //     (value === "item-0") || // Personal Details can always be opened
+          //     (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
+          //     (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
+          //     (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
+          //     (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
+          //   ) {
+          //     setActiveAccordion(value); // Allow opening the accordion
+          //   } else {
+          //     toast.error("Please complete the previous sections first!"); // Show an error message
+          //   }
+          // }}
           collapsible
         >
           {/* Personal Details Section */}
           <AccordionItem value="item-0">
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-              <AccordionTrigger onClick={(e) => e.preventDefault()}>
+              <AccordionTrigger onClick={() => onAccordianClick("item-0")}>
                 <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.personalDetails || activeAccordion=='item-0' ? "accordian-trigger-active" : "accordian-trigger-inactive"}`}>
                   Personal Details
                   {completedSections.personalDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
@@ -645,7 +831,7 @@ const saveClassDetails = (data: any) => {
           {/* Institute Details Section */}
           <AccordionItem value="item-1">
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-              <AccordionTrigger onClick={(e) => e.preventDefault()}>
+              <AccordionTrigger onClick={() => onAccordianClick("item-1")}>
               <div className={` text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.instituteDetails ||activeAccordion=='item-1' ? "accordian-trigger-active" : "accordian-trigger-inactive"} "`}>
                   Institute Details
                   {completedSections.instituteDetails && <CircleCheckBig className="text-[#46a758] ml-2"/>}
@@ -776,7 +962,7 @@ const saveClassDetails = (data: any) => {
         {/* Additional Information Section */}
         <AccordionItem value="item-2">
         <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-        <AccordionTrigger  onClick={(e) => { if (!completedSections.instituteDetails) { e.preventDefault(); } }}>
+        <AccordionTrigger  onClick={() => onAccordianClick("item-2")}>
           <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.additionalInfo ||activeAccordion=='item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"} `}>
             Additional information
             {completedSections.additionalInfo && <CircleCheckBig className="text-[#46a758] ml-2"/>}
@@ -842,13 +1028,13 @@ const saveClassDetails = (data: any) => {
         </AccordionItem>
         
         {/* Class Details Button */}
-        <Button 
+       {completedSections.additionalInfo && <Button 
           variant="outline" 
           className="border-[#05244f] mt-4" 
           onClick={() => setIsOpen(true)}
         >
           + Add Class Details
-        </Button>
+        </Button>}
         
         <PopupScreen 
           open={isOpen} 
@@ -931,9 +1117,8 @@ const saveClassDetails = (data: any) => {
                       <SelectValue placeholder="Location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pune">Pune</SelectItem>
-                      <SelectItem value="Nashik">Nashik</SelectItem>
-                      <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    {locations!.map((item) => (<SelectItem key={item.id} value={item.area}>{item.area}</SelectItem>))}
+                      
                       <div className="p-2 border-t border-gray-200">
                         <Button 
                           className="w-full" 
@@ -961,9 +1146,7 @@ const saveClassDetails = (data: any) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="contact1">Contact 1</SelectItem>
-                        <SelectItem value="contact2">Contact 2</SelectItem>
-                        <SelectItem value="contact3">Contact 3</SelectItem>
+                      {contacts!.map((item) => (<SelectItem key={item.id} value={item.firstName+' '+item.lastName}>{item.firstName} {item.lastName}</SelectItem>))}
                       </SelectGroup>
                       <div className="p-2 border-t border-gray-200">
                         <Button 
@@ -981,9 +1164,7 @@ const saveClassDetails = (data: any) => {
                   )}
                 </div>
                 
-                <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} />
-                <ContactPopupScreen open={isContactPopupOpen} setOpen={setIsContactPopupOpen} />
-
+                
                 
               
               <div className="flex flex-col gap-2">
@@ -1194,9 +1375,7 @@ const saveClassDetails = (data: any) => {
                       <SelectValue placeholder="Location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Pune">Pune</SelectItem>
-                      <SelectItem value="Nashik">Nashik</SelectItem>
-                      <SelectItem value="Mumbai">Mumbai</SelectItem>
+                    {locations!.map((item) => (<SelectItem key={item.id} value={item.area}>{item.area}</SelectItem>))}
                       <div className="p-2 border-t border-gray-200">
                         <Button 
                           className="w-full" 
@@ -1224,9 +1403,7 @@ const saveClassDetails = (data: any) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="contact1">Contact 1</SelectItem>
-                        <SelectItem value="contact2">Contact 2</SelectItem>
-                        <SelectItem value="contact3">Contact 3</SelectItem>
+                      {contacts!.map((item) => (<SelectItem key={item.id} value={item.firstName+' '+item.lastName}>{item.firstName} {item.lastName}</SelectItem>))}
                       </SelectGroup>
                       <div className="p-2 border-t border-gray-200">
                         <Button 
@@ -1244,8 +1421,10 @@ const saveClassDetails = (data: any) => {
                   )}
                 </div>
                 
-                <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} />
-                <ContactPopupScreen open={isContactPopupOpen} setOpen={setIsContactPopupOpen} />
+                <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} 
+                onLocationSubmit={handleLocationSubmit} />
+                <ContactPopupScreen open={isContactPopupOpen} setOpen={setIsContactPopupOpen} 
+                onContactSubmit={handleContactSubmit} />
 
                 
               
@@ -1402,13 +1581,30 @@ const saveClassDetails = (data: any) => {
         </div>
 }
         {/* Directory Section */}
-        <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
+       {directory.length>0&& <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Directory</div>
           <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
-            <DirectoryTable />
+            <DirectoryTable 
+              directory={directory}
+              handleDelete={(index) => {
+                const updatedDirectory = directory.filter((_, i) => i !== index);
+                setDirectory(updatedDirectory);
+              }}
+              // handleEditAddress={(index) => {
+              //   // Handle address editing logic here
+              // }}
+              // handleEditContact={(index) => {
+              //   // Handle contact editing logic here
+              // }}
+              />
+              <div className="flex justify-between w-[50%]">
+          <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsLocationPopupOpen(true)}>+ Add Address</Button>
+          <Button variant="outline" className="border-[#05244f] mt-4"  onClick={() => setIsContactPopupOpen(true)}>+ Add Contact</Button>
+            </div>
           </div>
+          
         </div>
-
+      }
         {/* Success Popup */}
         <SuccessPopupScreen 
           open={isSuccessPopupOpen} 
@@ -1425,9 +1621,18 @@ const saveClassDetails = (data: any) => {
           {isLoading ? "Submitting..." : "Submit"}
         </Button>
       </div>
+      <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} 
+                onLocationSubmit={handleLocationSubmit}/>
+                <ContactPopupScreen 
+                  open={isContactPopupOpen} 
+                  setOpen={setIsContactPopupOpen} 
+                  onContactSubmit={handleContactSubmit}
+                />
+
     </>
   );
 }
+
 
 // Types
 // interface FormData {

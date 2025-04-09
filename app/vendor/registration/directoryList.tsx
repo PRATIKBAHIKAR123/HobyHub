@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+
 import {
     Table,
     TableBody,
@@ -10,22 +10,29 @@ import {
   } from "@/components/ui/table"
   import Image from "next/image";
   
-  const invoices = [
-    {
-      sno: "01",
-      text: "Some Line is gonna come here Need to figure out",
-      image: "/images/table.png",
-      extra: "Something",
-    },
-    {
-        sno: "02",
-        text: "Some Line is gonna come here Need to figure out",
-        image: "/images/table.png",
-        extra: "Something",
-      },
-  ]
+  export interface DirectoryItem {
+    address: string;
+    isPrimary: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    whatsappNumber: string;
+    email: string;
+    contactType: {
+      primary: boolean;
+      secondary: boolean;
+      billing: boolean;
+    };
+  }
+
+  interface directoryTableProps {
+    directory: DirectoryItem[];
+    handleDelete: (index: number) => void;
+    // handleEditAddress: (index: number) => void;
+    // handleEditContact: (index: number) => void;
+  }
   
-  export function DirectoryTable() {
+  export function DirectoryTable({  directory }: directoryTableProps) {
     return (
       <Table>
         <TableHeader>
@@ -33,31 +40,40 @@ import {
             <TableHead className="w-[100px] justify-center text-black text-[12px] font-normal trajan-pro">S No.</TableHead>
             <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Address</TableHead>
             <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Contact Info</TableHead>
-            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Primary Contact</TableHead>
+            <TableHead className="justify-center text-black text-[12px] font-normal trajan-pro">Primary</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.sno}>
-              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro" width={1}>{invoice.sno}</TableCell>
-              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro">{invoice.text}</TableCell>
-              <TableCell width={2}>
+          {directory.map((invoice , index) => (
+            <TableRow key={index}>
+              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro" width={1}>{index + 1}</TableCell>
+              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro" width={462}>{invoice.address}</TableCell>
+              <TableCell>
                 <div className="flex items-center gap-2">
-                    <Image src={invoice.image} height={70} width={70} alt="invoice.sno"/>
-                    <div className="justify-center text-black text-[12px] font-normal trajan-pro">{invoice.text}</div>
+                    <Image src='/images/mobile-encryption.jpg' height={70} width={70} alt="invoice.sno"/>
+                    <div className="flex-col gap-2">
+                    <div className="justify-center text-black text-[12px] font-normal trajan-pro">{invoice.firstName} {invoice.lastName}</div>
+                    <div className="justify-center text-black text-[12px] font-normal trajan-pro">Email: {invoice.email}</div>
+                    <div className="justify-center text-black text-[12px] font-normal trajan-pro">Phone No: {invoice.phoneNumber}</div>
+                    <div className="justify-center text-black text-[12px] font-normal trajan-pro">Whatsapp: {invoice.whatsappNumber}</div>
+                    </div>
               </div>
               </TableCell>
               
-              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro">{invoice.extra}</TableCell>
+              <TableCell className="justify-center text-black text-[12px] font-normal trajan-pro">{invoice.isPrimary}</TableCell>
             </TableRow>
           ))}
         </TableBody>
         <TableFooter>
           <TableRow>
-          <TableCell ></TableCell>
-            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Address</Button></TableCell>
-            <TableCell ><Button variant="outline" className="border-[#05244f] mt-4" >+ Add Contact</Button></TableCell>
-            <TableCell ></TableCell>
+          {/* <TableCell ></TableCell>
+            <TableCell >
+              <Button variant="outline" className="border-[#05244f] mt-4" >+ Add Address</Button>
+              </TableCell>
+            <TableCell >
+              <Button variant="outline" className="border-[#05244f] mt-4" >+ Add Contact</Button>
+              </TableCell>
+            <TableCell ></TableCell> */}
           </TableRow>
         </TableFooter>
       </Table>
