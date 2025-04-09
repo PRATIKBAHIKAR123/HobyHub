@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
-import { getActivityById } from "@/services/hobbyService";
+import { getActivityById, increaseActivityViewCount } from "@/services/hobbyService";
 
 const thumbnails = [
   // "/images/thumb2.png",
@@ -129,6 +129,14 @@ function HobbyDetailsPageContent() {
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);
         setIsLoading(false);
+        
+        // Increase view count
+        try {
+          await increaseActivityViewCount(parseInt(activityId));
+        } catch (error) {
+          console.error('Error increasing view count:', error);
+          // Don't show error to user as this is not critical functionality
+        }
       } catch (error) {
         console.error('Error fetching activity data:', error);
         setIsLoading(false);

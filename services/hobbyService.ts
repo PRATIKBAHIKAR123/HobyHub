@@ -208,12 +208,37 @@ export const getActivityById = async (activityId: number): Promise<Activity> => 
     }
 };
 
+/**
+ * Increase view count for an activity
+ * @param activityId The ID of the activity to increase view count for
+ */
+export const increaseActivityViewCount = async (activityId: number): Promise<void> => {
+    try {
+        const token = getAuthToken();
+        await axios.post(
+            `${API_BASE_URL}/increase-view`,
+            activityId,
+            {
+                headers: {
+                    'accept': '*/*',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+    } catch (error) {
+        const err = error as { response?: { data: ErrorResponse } };
+        throw err.response?.data?.message || "Failed to increase view count";
+    }
+};
+
 // Export all functions as named exports
 export const hobbyService = {
     getAllSubCategories,
     getAllActivities,
     getAllCategories,
-    getActivityById
+    getActivityById,
+    increaseActivityViewCount
 };
 
 export default hobbyService;
