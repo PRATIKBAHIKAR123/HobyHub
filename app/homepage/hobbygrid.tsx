@@ -35,20 +35,6 @@ interface Activity {
   viewCount: number;
 }
 
-interface ActivityFilters {
-  catId: number;
-  subCatId: number;
-  mode: string;
-  sortFilter: string;
-  location: string;
-  age: number;
-  type: string;
-  time: string;
-  gender: string;
-  priceFrom: number;
-  priceTo: number;
-}
-
 function HobbyCardSkeleton() {
   return (
     <div className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative">
@@ -103,7 +89,7 @@ export default function HobbyGrid() {
           priceFrom: areFiltersApplied ? priceRange[0] : 0,
           priceTo: areFiltersApplied ? priceRange[1] : 0
         });
-        setActivities(data);
+        setActivities(data as Activity[]);
       } catch (error) {
         console.error("Failed to fetch activities:", error);
       } finally {
