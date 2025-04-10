@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Image from "next/image";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 
 interface PopupScreenProps {
@@ -43,6 +42,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
     longitude: undefined,
   });
 
+  // Form validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Track if form was submitted
+  const [wasSubmitted, setWasSubmitted] = useState(false);
+
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(false);
@@ -54,6 +58,9 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         ...prev,
         id: Date.now().toString()
       }));
+      // Reset form state when reopened
+      setErrors({});
+      setWasSubmitted(false);
     }
   }, [open]);
 
@@ -220,6 +227,40 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       country: country || prev.country,
       pincode: pincode || prev.pincode,
     }));
+
+    // Clear any errors for fields that are now filled
+    setErrors(prev => {
+      const newErrors = {...prev};
+      if (address) delete newErrors.address;
+      if (area) delete newErrors.area;
+      if (city) delete newErrors.city;
+      return newErrors;
+    });
+  };
+
+  // Validate the form
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    // Check required fields
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    
+    if (!formData.landmark.trim()) {
+      newErrors.landmark = "Landmark is required";
+    }
+    
+    if (!formData.area.trim()) {
+      newErrors.area = "Area is required";
+    }
+    
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Handle input changes
@@ -229,10 +270,25 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       ...prev,
       [name]: value
     }));
+    
+    // Clear error for this field if it exists
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   // Handle form submission
   const handleSubmit = () => {
+    setWasSubmitted(true);
+    
+    if (!validateForm()) {
+      return; // Don't submit if validation fails
+    }
+    
     if (onLocationSubmit) {
       onLocationSubmit(formData);
     }
@@ -267,20 +323,12 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         <div className="grid grid-cols-1 gap-6 items-center">
           {/* Map Container */}
           <div className="flex justify-center w-full">
-            {useGoogleMaps ? (
+            {useGoogleMaps && (
               <div 
                 ref={mapRef} 
                 className="w-full h-[420px] rounded-lg shadow-md"
                 style={{ minWidth: "300px" }}
               ></div>
-            ) : (
-              <Image
-                src="/images/map.png"
-                height={420}
-                width={1450}
-                className="max-w-full w-auto sm:w-[80%] object-contain mx-auto rounded-lg"
-                alt="Map"
-              />
             )}
           </div>
           
@@ -288,44 +336,64 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
           <div className="bg-white rounded-[15px] border border-[#05244f] p-4 w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Address</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Address <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
                   placeholder="Address" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.address ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.address && (
+                  <p className="text-red-500 text-sm">{errors.address}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Near by landmark</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Near by landmark <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="landmark"
                   value={formData.landmark}
                   onChange={handleInputChange}
                   placeholder="Near by landmark" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.landmark ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.landmark && (
+                  <p className="text-red-500 text-sm">{errors.landmark}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Area</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Area <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="area"
                   value={formData.area}
                   onChange={handleInputChange}
                   placeholder="Area" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.area ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.area && (
+                  <p className="text-red-500 text-sm">{errors.area}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">City</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  City <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
                   placeholder="City" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.city ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.city && (
+                  <p className="text-red-500 text-sm">{errors.city}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">State</Label>
@@ -357,23 +425,6 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                   className="h-[52px] border-[#05244f]" 
                 />
               </div>
-              {/* <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Coordinates</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={formData.latitude !== undefined ? formData.latitude.toFixed(6) : ''}
-                    readOnly
-                    placeholder="Latitude" 
-                    className="h-[52px] border-[#05244f]" 
-                  />
-                  <Input 
-                    value={formData.longitude !== undefined ? formData.longitude.toFixed(6) : ''}
-                    readOnly
-                    placeholder="Longitude" 
-                    className="h-[52px] border-[#05244f]" 
-                  />
-                </div>
-              </div> */}
             </div>
           </div>
         </div>

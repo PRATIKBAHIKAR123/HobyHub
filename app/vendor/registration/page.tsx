@@ -27,6 +27,8 @@ import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
 import { ContactData } from "./contactSelection";
 import { LocationData } from "./locationSelection";
 import { DirectoryItem } from "./directoryList";
+import CostRangeInput from "./costRangeInput";
+import AgeRangeInput from "./ageRangeInput";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -69,7 +71,27 @@ const classDetailsSchema = yup.object().shape({
   contact: yup.string().required("Contact is required"),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
+  fromage: yup.string(),
+  toage: yup.string().test(
+    'is-greater-than-fromage',
+    'The age must be greater than or equal to From Age',
+    function(value) {
+      const { fromage } = this.parent;
+      if (!fromage || !value) return true; // Skip validation if either field is empty
+      return Number(value) >= Number(fromage);
+    }
+  ),
   age: yup.string(),
+  fromcost: yup.string(),
+  tocost: yup.string().test(
+    'is-greater-than-fromcost',
+    'To cost must be greater than or equal to From cost',
+    function(value) {
+      const { fromcost } = this.parent;
+      if (!fromcost || !value) return true; // Skip validation if either field is empty
+      return Number(value) >= Number(fromcost);
+    }
+  ),
   cost: yup.string(),
   classSize: yup.string(), // Added classSize to the schema
   weekdays: yup.array(), // Added instituteName to the schema
@@ -86,7 +108,27 @@ const courseDetailsSchema = yup.object().shape({
   contact: yup.string().required("Contact is required"),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
+  fromage: yup.string(),
+  toage: yup.string().test(
+    'is-greater-than-fromage',
+    'The age must be greater than or equal to From Age',
+    function(value) {
+      const { fromage } = this.parent;
+      if (!fromage || !value) return true; // Skip validation if either field is empty
+      return Number(value) >= Number(fromage);
+    }
+  ),
   age: yup.string(),
+  fromcost: yup.string(),
+  tocost: yup.string().test(
+    'is-greater-than-fromcost',
+    'To cost must be greater than or equal to From cost',
+    function(value) {
+      const { fromcost } = this.parent;
+      if (!fromcost || !value) return true; // Skip validation if either field is empty
+      return Number(value) >= Number(fromcost);
+    }
+  ),
   cost: yup.string(),
   classSize: yup.string(), // Added classSize to the schema
   weekdays: yup.array(), // Added instituteName to the schema
@@ -96,6 +138,7 @@ const courseDetailsSchema = yup.object().shape({
 
 export default function RegistrationForm() {
   const [images, setImages] = useState<string[]>([]);
+  const [isInstDetailsSubmitted, setisInstDetailsSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
   const [showCourseFields, setShowCourseFields] = useState(false);
@@ -227,6 +270,7 @@ export default function RegistrationForm() {
     formState: { errors: errorsClass },
     watch: watchClass,
     reset: resetClass,
+    control: controlClass,
   } = useForm({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
@@ -237,6 +281,7 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitCourse,
     setValue: setValueCourse,
     formState: { errors: errorsCourse },
+    control: controlCourse,
     watch: watchCourse,
     reset: resetCourse,
   } = useForm({
@@ -438,6 +483,10 @@ export default function RegistrationForm() {
 
   // Save institute details to localStorage and proceed to the next section
   const saveInstituteDetails = (data: unknown) => {
+    setisInstDetailsSubmitted(true);
+    if (images.length === 0) {
+      return;
+    }
     // Save images data with institute details
     const instituteData = {
       ...(typeof data === 'object' && data !== null ? data : {}),
@@ -447,6 +496,7 @@ export default function RegistrationForm() {
     setCompletedSections(prev => ({...prev, instituteDetails: true}));
     setActiveAccordion("item-2");
     toast.success("Institute details saved successfully!");
+    setisInstDetailsSubmitted(false);
   };
 
   // Save additional info to localStorage
@@ -887,19 +937,49 @@ const saveClassDetails = (data: any) => {
                   <div className="mb-6 mt-[50px]">
                     <h3 className="text-[#05244f] trajan-pro text-md font-semibold">Photos</h3>
                     {images.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
-                        {images.map((src, index) => (
-                          <Image 
-                            key={index} 
-                            src={src} 
-                            alt="Uploaded" 
-                            width={158} 
-                            height={158} 
-                            className="rounded-md h-[158px] w-[158px]" 
-                          />
-                        ))}
-                      </div>
-                    )}
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
+  {images.map((src, index) => (
+    <div key={index} className="relative w-[158px] h-[158px]">
+      <Image
+        src={src}
+        alt="Uploaded"
+        width={158}
+        height={158}
+        className="rounded-md w-full h-full object-cover"
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          // Create a new array without the image at this index
+          const updatedImages = images.filter((_, i) => i !== index);
+          setImages(updatedImages);
+          // Update localStorage
+          localStorage.setItem('images', JSON.stringify(updatedImages));
+        }}
+        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  ))}
+</div>
+)}
+                    
+                   {(isInstDetailsSubmitted && images.length==0) && <div className="text-red-500 text-sm mb-2">At least one image is required</div> }
                     <div
                       className="h-[180px] flex flex-col gap-3 justify-center items-center py-4 my-3 rounded-[15px] border border-dashed border-[#05244f] cursor-pointer p-4"
                       onClick={() => fileInputRef.current?.click()}
@@ -1171,22 +1251,12 @@ const saveClassDetails = (data: any) => {
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                 <Input type="number" {...registerClass("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
               </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Cost Range</Label>
-                <Select value={watchClass("cost") || ""} onValueChange={(value) => setValueClass("cost", value)}>
-                  <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                    <SelectValue placeholder="Select Cost Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
-                    <SelectItem value="1000-2000">₹1,000 - ₹2,000</SelectItem>
-                    <SelectItem value="2000-3000">₹2,000 - ₹3,000</SelectItem>
-                    <SelectItem value="3000-4000">₹3,000 - ₹4,000</SelectItem>
-                    <SelectItem value="4000-5000">₹4,000 - ₹5,000</SelectItem>
-                    <SelectItem value="5000+">₹5,000+</SelectItem>
-                    </SelectContent>
-                    </Select>
-                    </div>
+              <CostRangeInput 
+      register={registerClass} 
+      control={controlClass} 
+      setValue={setValueClass} 
+      errors={errorsClass} 
+    />
 
                 
                 <div className="flex flex-col gap-2">
@@ -1225,19 +1295,7 @@ const saveClassDetails = (data: any) => {
           </div>
         ))}
       </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Size</Label>
-                  <Select onValueChange={(value) => setValueClass("classSize", value)} value={watchClass("classSize") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Class Size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small (1-5)</SelectItem>
-                      <SelectItem value="medium">Medium (6-15)</SelectItem>
-                      <SelectItem value="large">Large (16+)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                
               </div>
               <div className="grid grid-cols-1 gap-2 p-2 border border-[#05244f] rounded-md">
               <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
@@ -1258,19 +1316,12 @@ const saveClassDetails = (data: any) => {
                   </Select>
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Age</Label>
-                  <Select onValueChange={(value) => setValueClass("age", value)} value={watchClass("age") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Age" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="12">12 Years</SelectItem>
-                      <SelectItem value="15">15 Years</SelectItem>
-                      <SelectItem value="18">18+ Years</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <AgeRangeInput 
+      register={registerClass} 
+      control={controlClass} 
+      setValue={setValueClass} 
+      errors={errorsClass} 
+    />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
@@ -1432,23 +1483,12 @@ const saveClassDetails = (data: any) => {
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                 <Input type="number" {...registerCourse("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
               </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Cost Range</Label>
-                <Select value={watchCourse("cost") || ""} onValueChange={(value) => setValueCourse("cost", value)}>
-                  <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                    <SelectValue placeholder="Select Cost Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
-                    <SelectItem value="1000-2000">₹1,000 - ₹2,000</SelectItem>
-                    <SelectItem value="2000-3000">₹2,000 - ₹3,000</SelectItem>
-                    <SelectItem value="3000-4000">₹3,000 - ₹4,000</SelectItem>
-                    <SelectItem value="4000-5000">₹4,000 - ₹5,000</SelectItem>
-                    <SelectItem value="5000+">₹5,000+</SelectItem>
-                    </SelectContent>
-                    </Select>
-                    </div>
-
+              <CostRangeInput 
+      register={registerCourse} 
+      control={controlCourse} 
+      setValue={setValueCourse} 
+      errors={errorsCourse} 
+    />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -1486,19 +1526,7 @@ const saveClassDetails = (data: any) => {
           </div>
         ))}
       </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Size</Label>
-                  <Select onValueChange={(value) => setValueCourse("classSize", value)} value={watchCourse("classSize") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Class Size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small (1-5)</SelectItem>
-                      <SelectItem value="medium">Medium (6-15)</SelectItem>
-                      <SelectItem value="large">Large (16+)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+               
               </div>
               <div className="grid grid-cols-1 gap-2 p-2 border border-[#05244f] rounded-md">
               <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
@@ -1519,19 +1547,12 @@ const saveClassDetails = (data: any) => {
                   </Select>
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold">Age</Label>
-                  <Select onValueChange={(value) => setValueCourse("age", value)} value={watchCourse("age") || ""}>
-                    <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                      <SelectValue placeholder="Age" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="12">12 Years</SelectItem>
-                      <SelectItem value="15">15 Years</SelectItem>
-                      <SelectItem value="18">18+ Years</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <AgeRangeInput 
+      register={registerClass} 
+      control={controlClass} 
+      setValue={setValueClass} 
+      errors={errorsClass} 
+    />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>

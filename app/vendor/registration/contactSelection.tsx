@@ -52,6 +52,10 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
     profilePhoto: null,
   });
 
+  // State for validation
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [wasSubmitted, setWasSubmitted] = useState(false);
+
   // State for images
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,8 +68,40 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
         ...prev,
         id: Date.now().toString()
       }));
+      // Reset form validation state when reopened
+      setErrors({});
+      setWasSubmitted(false);
     }
   }, [open]);
+
+  // Validate the form
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    // Check required fields
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+    
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
+      newErrors.phoneNumber = "Please enter a valid phone number";
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Handle regular input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -74,6 +110,15 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
       ...prev,
       [name]: value
     }));
+
+    // Clear error for this field if it exists
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   // Handle checkbox changes
@@ -113,7 +158,13 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
 
   // Handle form submission
   const handleSubmit = () => {
-    // Here you would typically validate the form data before submission
+    setWasSubmitted(true);
+    
+    if (!validateForm()) {
+      return; // Don't submit if validation fails
+    }
+    
+    // Proceed with form submission
     onContactSubmit(formData);
     
     // Reset form and close dialog
@@ -151,34 +202,49 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
             </div>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">First Name</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  First Name <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
                   placeholder="First Name" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.firstName ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.firstName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Last Name</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Last Name <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
                   placeholder="Last Name" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.lastName ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.lastName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Phone Number</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Phone Number <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
                   placeholder="Enter Phone No." 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.phoneNumber ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.phoneNumber && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">Whatsapp Number</Label>
@@ -244,14 +310,19 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Email Address</Label>
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Email Address <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Email Address" 
-                  className="h-[52px] border-[#05244f]" 
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                 />
+                {wasSubmitted && errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -309,7 +380,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
           </div>
         </div>
 
-        {/* Close Button */}
+        {/* Action Buttons */}
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setOpen(false)} className="mt-4">
             Cancel
