@@ -145,10 +145,10 @@ export default function HobbyGrid() {
               width={300}
               height={200}
               className="w-full h-48 object-cover rounded-t-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
-              }}
+              // onError={(e) => {
+              //   const target = e.target as HTMLImageElement;
+              //   target.src = '/images/noimg.png';
+              // }}
             />
             <div className="absolute top-2 left-2 bg-[#c8daeb] bg-opacity-70 rounded-full px-[11px] py-[5px] flex items-center">
               <Eye size={16} className="mr-1" />

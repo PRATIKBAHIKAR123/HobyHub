@@ -16,6 +16,7 @@ import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getAllSubCategories } from "@/services/hobbyService";
 import { useMode } from "@/contexts/ModeContext";
+import { useFilter } from "@/contexts/FilterContext";
 
 interface SubCategory {
   categoryId: number;
@@ -34,6 +35,17 @@ export default function HomeNavbar() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
     const { isOnline, setIsOnline } = useMode();
+    const { setGender, setPriceRange, setTime, setAge, setAreFiltersApplied, setCategoryFilter } = useFilter();
+
+    const clearAllFilters = () => {
+        setGender("");
+        setPriceRange([0, 100000]);
+        setTime("");
+        setAge('');
+        setAreFiltersApplied(false);
+        setCategoryFilter({ catId: 0, subCatId: 0 });
+        setSearchText("");
+    };
 
     // Fetch all subcategories when component mounts
     useEffect(() => {
@@ -75,7 +87,9 @@ export default function HomeNavbar() {
             <div className="hidden md:block sticky top-0 z-50">
                 <div className="w-full py-2 h-[67.88px] bg-[#003161] border-b border-[#dee2e6] justify-between flex">
                     <div className="min-w-[220px] pl-[2rem]">
-                        <Image src="/images/HobyHub.ai.png" alt="Logo" width={200} height={50} priority />
+                        <Link href="/" onClick={clearAllFilters}>
+                            <Image src="/images/HobyHub.ai.png" alt="Logo" width={200} height={50} priority />
+                        </Link>
                     </div>
                     <div className="bg-white/10 items-center rounded-lg px-4 gap-4 py-2 flex ">
                         <div className="min-w-[100px]">
