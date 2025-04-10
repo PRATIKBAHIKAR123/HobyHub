@@ -119,7 +119,7 @@ export function Categories() {
           containScroll: "trimSnaps",
           skipSnaps: false
         }} 
-        className="w-[90%] mx-auto mb-3 relative px-4"
+        className="w-[90%] mx-auto mb-3 relative px-4 [&_.embla__container]:touch-none"
       >
         <CarouselContent className="items-center text-center gap-2 md:gap-4">
           {categories.map((cat) => (
