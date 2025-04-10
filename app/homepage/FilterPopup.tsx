@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search, Filter, Clock, Users, Sparkle } from "lucide-react";
 import { useFilter } from "@/contexts/FilterContext";
 
 interface SearchPopupProps {
@@ -41,23 +41,32 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg md:max-w-xl p-6 rounded-lg shadow-lg bg-white [&>button:last-child]:hidden">
-        <DialogHeader className="flex-row justify-between items-center">
-          <DialogTitle className="text-lg font-bold text-left">Search</DialogTitle>
-          <DialogClose className="text-red-500 hover:bg-red-100 p-1 rounded-full">
-            ✖
-          </DialogClose>
-        </DialogHeader>
+      <DialogContent className="max-w-lg md:max-w-xl p-0 rounded-2xl shadow-lg bg-white overflow-hidden border border-gray-100 [&>button]:hidden">
+        <div className="px-6 pt-5 pb-2">
+          <DialogHeader className="flex-row justify-between items-center mb-2">
+            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <Filter size={20} className="text-[#013161]" />
+              <span>Search</span>
+            </DialogTitle>
+            <DialogClose className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all">
+              <span aria-hidden="true">&times;</span>
+            </DialogClose>
+          </DialogHeader>
+          <p className="text-gray-500 text-sm">Find the perfect hobby for you</p>
+        </div>
 
-        {/* Age Input */}
-        <Card className="px-3">
-          <div className="space-y-2">
-            <Label className="font-semibold">Whats Your Age?</Label>
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* Age Input */}
+          <div className="space-y-2.5">
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Users size={16} className="text-[#013161]" />
+              <span>What's Your Age?</span>
+            </Label>
             <Select value={age} onValueChange={setAge}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full border-gray-200 hover:border-blue-200 rounded-xl focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A] transition-all">
                 <SelectValue placeholder="Search By Age" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-72 rounded-xl">
                 {Array.from({ length: 69 }, (_, i) => i + 1).map((age) => (
                   <SelectItem key={age} value={age.toString()}>
                     {age}
@@ -66,34 +75,40 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
               </SelectContent>
             </Select>
           </div>
-        </Card>
 
-        {/* Gender Selection */}
-        <Card className="px-3">
-          <div className="space-y-2">
-            <Label className="font-semibold">Select Gender</Label>
-            <RadioGroup value={gender} onValueChange={setGender} className="flex space-x-4">
-              <Label className="flex items-center space-x-2">
-                <RadioGroupItem value="male" />
-                <span>Male</span>
-              </Label>
-              <Label className="flex items-center space-x-2">
-                <RadioGroupItem value="female" />
-                <span>Female</span>
-              </Label>
+          {/* Gender Selection */}
+          <div className="space-y-2.5">
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Users size={16} className="text-[#013161]" />
+              <span>Select Gender</span>
+            </Label>
+            <RadioGroup value={gender} onValueChange={setGender} className="flex gap-4">
+              <div className="flex-1">
+                <Label className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl p-3 cursor-pointer transition-all hover:bg-blue-50 hover:border-blue-200 w-full h-full data-[state=checked]:bg-blue-50 data-[state=checked]:border-[#1E3A8A]">
+                  <RadioGroupItem value="male" id="male" className="text-[#013161]" />
+                  <span>Male</span>
+                </Label>
+              </div>
+              <div className="flex-1">
+                <Label className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl p-3 cursor-pointer transition-all hover:bg-blue-50 hover:border-blue-200 w-full h-full data-[state=checked]:bg-blue-50 data-[state=checked]:border-[#1E3A8A]">
+                  <RadioGroupItem value="female" id="female" className="text-[#013161]" />
+                  <span>Female</span>
+                </Label>
+              </div>
             </RadioGroup>
           </div>
-        </Card>
 
-        {/* Time Input */}
-        <Card className="px-3">
-          <div className="space-y-2">
-            <Label className="font-semibold">Select Time</Label>
+          {/* Time Input */}
+          <div className="space-y-2.5">
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Clock size={16} className="text-[#013161]" />
+              <span>Select Time</span>
+            </Label>
             <Select value={time} onValueChange={setTime}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full border-gray-200 hover:border-blue-200 rounded-xl focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A] transition-all">
                 <SelectValue placeholder="Search By Time" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {times.map((time) => (
                   <SelectItem key={time} value={time}>
                     {time}
@@ -102,27 +117,44 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
               </SelectContent>
             </Select>
           </div>
-        </Card>
 
-        {/* Price Range Slider */}
-        <Card className="px-3">
-          <div className="space-y-2">
-            <Label className="font-semibold">Select Price Range: {priceRange[0]} - {priceRange[1]}</Label>
-            <Slider
-              min={0}
-              max={100000}
-              step={100}
-              value={priceRange}
-              onValueChange={setPriceRange}
-            />
+          {/* Price Range Slider */}
+          <div className="space-y-2.5">
+            <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Sparkle size={16} className="text-[#013161]" />
+              <span>Price Range</span>
+            </Label>
+            <div className="px-2 pt-2">
+              <div className="text-sm text-gray-500 mb-3 flex justify-between">
+                <span>₹{priceRange[0].toLocaleString()}</span>
+                <span>₹{priceRange[1].toLocaleString()}</span>
+              </div>
+              <Slider
+                min={0}
+                max={100000}
+                step={100}
+                value={priceRange}
+                onValueChange={setPriceRange}
+                className="[&>span]:bg-[#1E3A8A]"
+              />
+            </div>
           </div>
-        </Card>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center space-x-4">
-          <Button variant="destructive" className="rounded-2xl" onClick={clearFilter}>Clear All</Button>
-          <Button variant="destructive" className="rounded-2xl" onClick={handleSearch}>
-            <Search />Search
+        <div className="px-6 py-5 border-t border-gray-100 flex gap-3 justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={clearFilter}
+            className="rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-5"
+          >
+            Clear All
+          </Button>
+          <Button 
+            onClick={handleSearch}
+            className="rounded-xl bg-[#013161] hover:bg-[#1E3A8A] text-white border-0 px-6 transition-colors"
+          >
+            Apply
           </Button>
         </div>
       </DialogContent>
