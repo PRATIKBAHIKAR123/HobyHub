@@ -175,7 +175,9 @@ export default function HomeNavbar() {
                     {/* Top Row: Logo and Icons */}
                     <div className="flex justify-between">
                         <div className="p-1">
-                            <Image src="/images/HobyHub.ai.png" alt="Logo" width={152} height={36} />
+                            <Link href="/" onClick={clearAllFilters}>
+                                <Image src="/images/HobyHub.ai.png" alt="Logo" width={152} height={36} />
+                            </Link>
                         </div>
                         <div className="flex gap-2 p-1 items-center">
                             <Link onClick={() => setShowAuthModal(true)} href={""}>
