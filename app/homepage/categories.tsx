@@ -117,9 +117,10 @@ export function Categories() {
           align: "start",
           dragFree: false,
           containScroll: "trimSnaps",
-          skipSnaps: false
+          skipSnaps: false,
+          watchDrag: false
         }} 
-        className="w-[90%] mx-auto mb-3 relative px-4 [&_.embla__container]:touch-none"
+        className="w-[90%] mx-auto mb-3 relative px-4 [&_.embla__container]:touch-none [&_.embla__viewport]:touch-none [&_.embla__container]:pointer-events-none [&_.embla__viewport]:pointer-events-none [&_.embla__container]:select-none [&_.embla__viewport]:select-none"
       >
         <CarouselContent className="items-center text-center gap-2 md:gap-4">
           {categories.map((cat) => (
