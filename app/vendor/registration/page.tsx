@@ -171,14 +171,14 @@ export default function RegistrationForm() {
       setActiveAccordion("item-4"); // Open the class accordion
       setShowCourseFields(false); // Close the course form
     }
-  }, [showClassFields]);
+  }, [showClassFields, setShowCourseFields]);
   
   useEffect(() => {
     if (showCourseFields) {
       setActiveAccordion("item-5"); // Open the course accordion
       setShowClassFields(false); // Close the class form
     }
-  }, [showCourseFields]);
+  }, [showCourseFields, setShowClassFields]);
 
     useEffect(() => {
       const fetchCategories = async () => {
@@ -203,7 +203,7 @@ export default function RegistrationForm() {
       };
   
       fetchCategories();
-    }, []);
+    }, [setIsLoading]);
 
     useEffect(() => {
       if (!completedSections.personalDetails) {
@@ -217,13 +217,13 @@ export default function RegistrationForm() {
       } else {
         setActiveAccordion(""); // No default open if all sections are completed
       }
-    }, [completedSections]);
+    }, [completedSections, setActiveAccordion]);
 
   useEffect(() => {
     if(showCourseFields){
       setActiveAccordion("item-5");
     }
-  }, [activeAccordion]);
+  }, [showCourseFields, setActiveAccordion]);
 
   // Form for personal details
   const {

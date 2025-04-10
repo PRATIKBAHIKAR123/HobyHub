@@ -87,7 +87,7 @@ const useLocation = () => {
   // Auto-detect location on startup
   useEffect(() => {
     detectLocation();
-  }, []); // Empty dependency array to run only once on mount
+  }, [detectLocation]); // Add detectLocation to dependencies
 
   return { 
     location, 

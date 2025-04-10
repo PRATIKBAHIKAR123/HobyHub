@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -21,23 +21,23 @@ export function ImageCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
 
+  const handleNextSlide = useCallback(() => {
+    setDirection('right');
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+  }, [images.length]);
+
+  const handlePrevSlide = () => {
+    setDirection('left');
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       handleNextSlide();
     }, autoSlideInterval);
 
     return () => clearInterval(timer);
-  }, [currentIndex, autoSlideInterval]);
-
-  const handleNextSlide = () => {
-    setDirection('right');
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-  };
-
-  const handlePrevSlide = () => {
-    setDirection('left');
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-  };
+  }, [currentIndex, autoSlideInterval, handleNextSlide]);
 
   return (
     <div className="w-full flex flex-col">

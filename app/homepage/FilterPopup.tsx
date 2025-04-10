@@ -4,8 +4,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
-import { Search, Filter, Clock, Users, Sparkle } from "lucide-react";
+import { Filter, Clock, Users, Sparkle } from "lucide-react";
 import { useFilter } from "@/contexts/FilterContext";
 
 interface SearchPopupProps {
@@ -60,7 +59,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
           <div className="space-y-2.5">
             <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
               <Users size={16} className="text-[#013161]" />
-              <span>What's Your Age?</span>
+              <span>What&apos;s Your Age?</span>
             </Label>
             <Select value={age} onValueChange={setAge}>
               <SelectTrigger className="w-full border-gray-200 hover:border-blue-200 rounded-xl focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A] transition-all">

@@ -98,7 +98,7 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter]);
+  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time]);
 
   if (isLoading) {
     return (

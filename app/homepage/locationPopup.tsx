@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PopoverContent } from "@/components/ui/popover";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
 import useLocation from "../hooks/useLocation";
 import { Loader } from "lucide-react";
@@ -131,53 +131,6 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
     }
   }, [location, value, setValue]);
   
-  // Function to directly initialize places autocomplete without the hook
-  // as a fallback mechanism
-  const initializePlacesDirectly = () => {
-    if (!ready && scriptLoaded && searchInputRef.current && window.google?.maps?.places) {
-      try {
-        const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
-          componentRestrictions: { country: 'in' },
-          
-        });
-        
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (place && place.formatted_address) {
-            handleSelect(place.formatted_address);
-          }
-        });
-        
-        console.log("Direct Places Autocomplete initialization successful");
-      } catch (error) {
-        console.error("Failed to initialize Places directly:", error);
-      }
-    }
-  };
-  
-  // Initialize direct autocomplete as a backup
-  useEffect(() => {
-    if (scriptLoaded && !ready && searchInputRef.current) {
-      const timer = setTimeout(() => {
-        initializePlacesDirectly();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [scriptLoaded, ready]);
-
-  useEffect(() => {
-    initializePlacesDirectly();
-  }, [initializePlacesDirectly]);
-
-  const handleInputFocus = () => {
-    setInputFocused(true);
-    if (value && value.length > 0 && ready) {
-      // Force refresh suggestions
-      setValue(value);
-    }
-  };
-
   const handleSelect = async (description: string, placeObject: google.maps.places.PlaceResult | null = null) => {
     if (ready) {
       setValue(description, false);
@@ -200,57 +153,72 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
                         placeObject.formatted_address ||
                         description;
       } else {
-        // Otherwise use geocoding
+        // If we don't have a place object, use the Places API to get coordinates
         const results = await getGeocode({ address: description });
-        const latLng = await getLatLng(results[0]);
-        lat = latLng.lat;
-        lng = latLng.lng;
-        console.log("positions:", lat, lng,latLng);
-        // Get the most specific name from address components
-        const addressComponents = results[0].address_components;
-        
-        // Try to extract the specific place or location name
-        const premiseComponent = addressComponents.find(
-          component => component.types.includes("premise")
-        );
-        
-        const poiComponent = addressComponents.find(
-          component => component.types.includes("point_of_interest")
-        );
-        
-        const establishmentComponent = addressComponents.find(
-          component => component.types.includes("establishment")
-        );
-        
-        const sublocalityComponent = addressComponents.find(
-          component => component.types.includes("sublocality") || 
-                       component.types.includes("sublocality_level_1")
-        );
-        
-        const localityComponent = addressComponents.find(
-          component => component.types.includes("locality")
-        );
-        
-        // Prioritize specific place names over general areas
-        exactLocation = premiseComponent?.long_name || 
-                        poiComponent?.long_name || 
-                        establishmentComponent?.long_name || 
-                        sublocalityComponent?.long_name || 
-                        localityComponent?.long_name || 
-                        description;
+        const { lat: newLat, lng: newLng } = await getLatLng(results[0]);
+        lat = newLat;
+        lng = newLng;
       }
-      
-      // Update location and notify parent
-      setLocation(exactLocation);
-      onLocationChange(exactLocation);
+
+      if (lat && lng) {
+        // Store the location in localStorage
+        localStorage.setItem('userLocation', exactLocation);
+        localStorage.setItem('userLatLng', JSON.stringify({ lat, lng }));
+        
+        // Update the location state
+        setLocation(exactLocation);
+        onLocationChange(exactLocation);
+      }
     } catch (error) {
-      console.log("Error fetching location details:", error);
-      // Set default location if there's an error
-      setLocation("Pune");
-      onLocationChange("Pune");
+      console.error("Error getting location details:", error);
     }
-    };
+  };
+
+  // Function to directly initialize places autocomplete without the hook
+  // as a fallback mechanism
+  const initializePlacesDirectly = useCallback(() => {
+    if (!ready && scriptLoaded && searchInputRef.current && window.google?.maps?.places) {
+      try {
+        const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+          componentRestrictions: { country: 'in' },
+        });
+        
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (place && place.formatted_address) {
+            handleSelect(place.formatted_address);
+          }
+        });
+        
+        console.log("Direct Places Autocomplete initialization successful");
+      } catch (error) {
+        console.error("Failed to initialize Places directly:", error);
+      }
+    }
+  }, [ready, scriptLoaded, handleSelect]);
   
+  // Initialize direct autocomplete as a backup
+  useEffect(() => {
+    if (scriptLoaded && !ready && searchInputRef.current) {
+      const timer = setTimeout(() => {
+        initializePlacesDirectly();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [scriptLoaded, ready, initializePlacesDirectly]);
+
+  useEffect(() => {
+    initializePlacesDirectly();
+  }, [initializePlacesDirectly]);
+
+  const handleInputFocus = () => {
+    setInputFocused(true);
+    if (value && value.length > 0 && ready) {
+      // Force refresh suggestions
+      setValue(value);
+    }
+  };
 
   const handleChange = (e: { target: { value: string; }; }) => {
     const newValue = e.target.value;

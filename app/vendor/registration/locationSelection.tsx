@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,52 +51,8 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   const [mapLoaded, setMapLoaded] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(false);
 
-  // Generate unique ID when form opens
-  useEffect(() => {
-    if (open) {
-      setFormData(prev => ({
-        ...prev,
-        id: Date.now().toString()
-      }));
-      // Reset form state when reopened
-      setErrors({});
-      setWasSubmitted(false);
-    }
-  }, [open]);
-
-  // Load Google Maps script if it's not already loaded
-  useEffect(() => {
-    // Check if we're in a browser environment
-    if (typeof window !== 'undefined' && open) {
-      // Check if the Google Maps script is already loaded
-      if (!window.google?.maps) {
-        setUseGoogleMaps(false);
-        
-        // In a real implementation, you would add the Google Maps API script like this:
-        
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAP_API_KEY}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          setMapLoaded(true);
-          initializeMap();
-        };
-        document.head.appendChild(script);
-        
-        
-        // For now, we'll just use the placeholder image
-        console.log("Google Maps API would be loaded here in production");
-      } else {
-        setMapLoaded(true);
-        setUseGoogleMaps(true);
-        initializeMap();
-      }
-    }
-  }, [open]);
-
   // Initialize map
-  const initializeMap = () => {
+  const initializeMap = useCallback(() => {
     if (mapLoaded && mapRef.current && window.google?.maps) {
       const mapOptions = {
         center: { lat: 19.0760, lng: 72.8777 }, // Default to Mumbai
@@ -177,8 +133,52 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         }
       });
     }
-  };
-  
+  }, [mapLoaded]);
+
+  // Generate unique ID when form opens
+  useEffect(() => {
+    if (open) {
+      setFormData(prev => ({
+        ...prev,
+        id: Date.now().toString()
+      }));
+      // Reset form state when reopened
+      setErrors({});
+      setWasSubmitted(false);
+    }
+  }, [open]);
+
+  // Load Google Maps script if it's not already loaded
+  useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && open) {
+      // Check if the Google Maps script is already loaded
+      if (!window.google?.maps) {
+        setUseGoogleMaps(false);
+        
+        // In a real implementation, you would add the Google Maps API script like this:
+        
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAP_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          setMapLoaded(true);
+          initializeMap();
+        };
+        document.head.appendChild(script);
+        
+        
+        // For now, we'll just use the placeholder image
+        console.log("Google Maps API would be loaded here in production");
+      } else {
+        setMapLoaded(true);
+        setUseGoogleMaps(true);
+        initializeMap();
+      }
+    }
+  }, [open, initializeMap]);
+
   // Update address fields from geocode result
   const updateAddressFromGeocode = (place: google.maps.GeocoderResult | google.maps.places.PlaceResult) => {
     if (!place.address_components) return;
