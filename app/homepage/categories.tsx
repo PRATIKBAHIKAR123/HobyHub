@@ -111,7 +111,7 @@ export function Categories() {
 
   return (
     <div className="bg-white md:px-4 sm:px-2 w-full sticky top-32 md:top-16 z-9 border-b-1 border-gray">
-      <Carousel setApi={setCarouselApi} opts={{ align: "start" }} className="w-[90%] mx-auto mb-3">
+      <Carousel setApi={setCarouselApi} opts={{ align: "start" }} className="w-[90%] mx-auto mb-3 relative px-2">
         <CarouselContent className="items-center text-center gap-2 md:gap-4">
           {categories.map((cat) => (
             <CarouselItem key={cat.id} className="basis-1/5 sm:basis-1/4 lg:basis-1/11 md:basis-1/12 hover:-translate-y-1 hover:bg-gray-100">
@@ -170,6 +170,7 @@ export function Categories() {
         </CarouselContent>
       </Carousel>
 
+      {/* Desktop Navigation Arrows */}
       <Button
         onClick={() => scrollToIndex(currentIndex - 1)}
         className="hidden md:block absolute left-[40px] top-1/2 transform justify-items-center -translate-y-1/2 rounded-full w-8 h-8 p-0 bg-white shadow-lg shadow-[0px_6px_20px_0px_rgba(0,0,0,0.19)] shadow-[0px_4px_8px_0px_rgba(0,0,0,0.20)] hover:bg-gray-100"
@@ -183,6 +184,22 @@ export function Categories() {
       >
         <ChevronRight className="w-8 h-8 text-[#121111]" strokeWidth={3.0} />
       </Button>
+
+      {/* Mobile Navigation Arrows */}
+      <Button
+        onClick={() => scrollToIndex(currentIndex - 1)}
+        className="md:hidden block absolute left-1 top-1/2 transform justify-items-center -translate-y-1/2 rounded-full w-6 h-6 p-0 bg-white shadow-lg shadow-[0px_6px_20px_0px_rgba(0,0,0,0.19)] shadow-[0px_4px_8px_0px_rgba(0,0,0,0.20)] hover:bg-gray-100"
+      >
+        <ChevronLeft className="w-6 h-6 text-[#121111]" strokeWidth={3.0} />
+      </Button>
+
+      <Button
+        onClick={() => scrollToIndex(currentIndex + 1)}
+        className="md:hidden block absolute right-1 top-1/2 transform justify-items-center -translate-y-1/2 rounded-full w-6 h-6 p-0 bg-white shadow-lg shadow-[0px_6px_20px_0px_rgba(0,0,0,0.19)] shadow-[0px_4px_8px_0px_rgba(0,0,0,0.20)] hover:bg-gray-100"
+      >
+        <ChevronRight className="w-6 h-6 text-[#121111]" strokeWidth={3.0} />
+      </Button>
+
       <div className="absolute left-0 right-0 bottom-0 mb-3">
         <div className="w-full border-b border-[#DEE2E6]"></div>
       </div>
