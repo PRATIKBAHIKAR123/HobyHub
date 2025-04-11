@@ -73,7 +73,7 @@ const classDetailsSchema = yup.object().shape({
     'The age must be greater than or equal to From Age',
     function(value) {
       const { fromage } = this.parent;
-      if (!fromage || !value) return true; // Skip validation if either field is empty
+      if (!fromage || !value) return true;
       return Number(value) >= Number(fromage);
     }
   ),
@@ -84,18 +84,18 @@ const classDetailsSchema = yup.object().shape({
     'To cost must be greater than or equal to From cost',
     function(value) {
       const { fromcost } = this.parent;
-      if (!fromcost || !value) return true; // Skip validation if either field is empty
+      if (!fromcost || !value) return true;
       return Number(value) >= Number(fromcost);
     }
   ),
   cost: yup.string(),
-  classSize: yup.string(), // Added classSize to the schema
-  weekdays: yup.array(), // Added instituteName to the schema
-  experienceLevel: yup.string(), // Added experienceLevel to the schema
-  noOfSessions: yup.string(), // Added noOfSessions to the schema
+  classSize: yup.string(),
+  weekdays: yup.array().of(yup.string().nullable()),
+  experienceLevel: yup.string(),
+  noOfSessions: yup.string(),
 });
 
-// Class details form schema
+// Course details form schema
 const courseDetailsSchema = yup.object().shape({
   className: yup.string().required("Class name is required"),
   category: yup.string().required("Category is required"),
@@ -110,7 +110,7 @@ const courseDetailsSchema = yup.object().shape({
     'The age must be greater than or equal to From Age',
     function(value) {
       const { fromage } = this.parent;
-      if (!fromage || !value) return true; // Skip validation if either field is empty
+      if (!fromage || !value) return true;
       return Number(value) >= Number(fromage);
     }
   ),
@@ -121,15 +121,15 @@ const courseDetailsSchema = yup.object().shape({
     'To cost must be greater than or equal to From cost',
     function(value) {
       const { fromcost } = this.parent;
-      if (!fromcost || !value) return true; // Skip validation if either field is empty
+      if (!fromcost || !value) return true;
       return Number(value) >= Number(fromcost);
     }
   ),
   cost: yup.string(),
-  classSize: yup.string(), // Added classSize to the schema
-  weekdays: yup.array(), // Added instituteName to the schema
-  experienceLevel: yup.string(), // Added experienceLevel to the schema
-  noOfSessions: yup.string(), // Added noOfSessions to the schema
+  classSize: yup.string(),
+  weekdays: yup.array().of(yup.string().nullable()),
+  experienceLevel: yup.string(),
+  noOfSessions: yup.string(),
 });
 
 export default function RegistrationForm() {
@@ -222,68 +222,75 @@ export default function RegistrationForm() {
   }, [showCourseFields, setActiveAccordion]);
 
   // Form for personal details
+  const personalForm = useForm({
+    resolver: yupResolver(personalDetailsSchema),
+    mode: "onChange",
+  });
+
+  // Form for institute details
+  const instituteForm = useForm({
+    resolver: yupResolver(instituteDetailsSchema),
+    mode: "onChange",
+  });
+
+  // Form for additional info
+  const additionalForm = useForm({
+    resolver: yupResolver(additionalInfoSchema),
+    mode: "onChange",
+  });
+
+  // Form for class details
+  const classForm = useForm({
+    resolver: yupResolver(classDetailsSchema),
+    mode: "onChange",
+  });
+
+  // Form for course details
+  const courseForm = useForm({
+    resolver: yupResolver(courseDetailsSchema),
+    mode: "onChange",
+  });
+
+  // Destructure form methods
   const {
     register: registerPersonal,
     handleSubmit: handleSubmitPersonal,
     setValue: setValuePersonal,
     watch: watchPersonal,
     formState: { errors: errorsPersonal },
-    //reset: resetPersonal,
-  } = useForm({
-    resolver: yupResolver(personalDetailsSchema),
-    mode: "onChange",
-  });
+  } = personalForm;
 
-  // Form for institute details
   const {
     register: registerInstitute,
     handleSubmit: handleSubmitInstitute,
     setValue: setValueInstitute,
+    watch: watchInstitute,
     formState: { errors: errorsInstitute },
-    //reset: resetInstitute,
-  } = useForm({
-    resolver: yupResolver(instituteDetailsSchema),
-    mode: "onChange",
-  });
+  } = instituteForm;
 
-  // Form for additional info
   const {
     register: registerAdditional,
     handleSubmit: handleSubmitAdditional,
     setValue: setValueAdditional,
-    //formState: { errors: errorsAdditional },
-    //reset: resetAdditional,
-  } = useForm({
-    resolver: yupResolver(additionalInfoSchema),
-    mode: "onChange",
-  });
+    watch: watchAdditionalInfo,
+  } = additionalForm;
 
-  // Form for class details
   const {
     register: registerClass,
     handleSubmit: handleSubmitClass,
     setValue: setValueClass,
-    formState: { errors: errorsClass },
     watch: watchClass,
-    reset: resetClass,
-    control: controlClass,
-  } = useForm({
-    resolver: yupResolver(classDetailsSchema),
-    mode: "onChange",
-  });
+    formState: { errors: errorsClass },
+  } = classForm;
 
   const {
     register: registerCourse,
     handleSubmit: handleSubmitCourse,
     setValue: setValueCourse,
-    formState: { errors: errorsCourse },
-    control: controlCourse,
     watch: watchCourse,
-    reset: resetCourse,
-  } = useForm({
-    resolver: yupResolver(courseDetailsSchema),
-    mode: "onChange",
-  });
+    formState: { errors: errorsCourse },
+  } = courseForm;
+
   // Load saved data from localStorage on component mount
   useEffect(() => {
     // Load personal details
@@ -546,7 +553,22 @@ const saveClassDetails = (data: any) => {
   toast.success("Class details saved successfully!");
   
   // Reset the form and hide the class fields
-  resetClass();
+  setValueClass('className', '');
+  setValueClass('category', '');
+  setValueClass('subCategory', '');
+  setValueClass('location', '');
+  setValueClass('contact', '');
+  setValueClass('time', '');
+  setValueClass('gender', '');
+  setValueClass('fromage', '');
+  setValueClass('toage', '');
+  setValueClass('fromcost', '');
+  setValueClass('tocost', '');
+  setValueClass('cost', '');
+  setValueClass('classSize', '');
+  setValueClass('weekdays', []);
+  setValueClass('experienceLevel', '');
+  setValueClass('noOfSessions', '');
   setShowClassFields(false);
 };
 
@@ -582,119 +604,85 @@ const saveClassDetails = (data: any) => {
     setCourses(updatedClasses);
     setCompletedSections(prev => ({...prev, classDetails: true}));
     toast.success("Course details saved successfully!");
-    resetCourse();
+    setValueCourse('className', '');
+    setValueCourse('category', '');
+    setValueCourse('subCategory', '');
+    setValueCourse('location', '');
+    setValueCourse('contact', '');
+    setValueCourse('time', '');
+    setValueCourse('gender', '');
+    setValueCourse('fromage', '');
+    setValueCourse('toage', '');
+    setValueCourse('fromcost', '');
+    setValueCourse('tocost', '');
+    setValueCourse('cost', '');
+    setValueCourse('classSize', '');
+    setValueCourse('weekdays', []);
+    setValueCourse('experienceLevel', '');
+    setValueCourse('noOfSessions', '');
     setShowCourseFields(false);
    // Reset the class form after saving
   };
   // Final form submission - gather all data and submit to API
   const handleFinalSubmit = async () => {
-    setIsLoading(true);
-
     try {
-      // Get all data from localStorage
-      const personalDetails = JSON.parse(localStorage.getItem('personalDetails') || '{}');
-      const instituteDetails = JSON.parse(localStorage.getItem('instituteDetails') || '{}');
-      const additionalInfo = JSON.parse(localStorage.getItem('additionalInfo') || '{}');
-      const classDetails = JSON.parse(localStorage.getItem('classDetails') || '[]');
-      const courseDetails = JSON.parse(localStorage.getItem('corseDetails') || '[]');
-      const directory = JSON.parse(localStorage.getItem('directory') || '[]');
-
-      // Validate required fields
-      if (!personalDetails.name || !personalDetails.emailId || !personalDetails.phoneNumber || !personalDetails.gender) {
-        toast.error("Please complete all required personal details");
-        return;
-      }
-
-      if (!instituteDetails.programTitle || !instituteDetails.instituteName) {
-        toast.error("Please complete all required institute details");
-        return;
-      }
-
-      // Format the data according to the API requirements
+      setIsLoading(true);
+      
+      // Prepare the form data with only required fields
       const formData = {
-        personalDetails: {
-          name: personalDetails.name,
-          emailId: personalDetails.emailId,
-          phoneNumber: personalDetails.phoneNumber,
-          gender: personalDetails.gender
-        },
-        instituteDetails: {
-          programTitle: instituteDetails.programTitle,
-          instituteName: instituteDetails.instituteName,
-          since: instituteDetails.since || "",
-          gstNo: instituteDetails.gstNo || "",
-          introduction: instituteDetails.introduction || "",
-          images: instituteDetails.images || []
-        },
-        additionalInfo: {
-          websiteName: additionalInfo.websiteName || "",
-          classLevel: additionalInfo.classLevel || "",
-          instagramAccount: additionalInfo.instagramAccount || "",
-          youtubeAccount: additionalInfo.youtubeAccount || ""
-        },
-        classDetails: classDetails,
-        courseDetails: courseDetails,
-        directory: directory
+        id: 0,
+        name: watchPersonal("name"),
+        emailId: watchPersonal("emailId"),
+        password: "defaultPassword", // You might want to add a password field to the form
+        phoneNumber: watchPersonal("phoneNumber"),
+        gender: watchPersonal("gender")
       };
 
-      // Log the data being sent for debugging
-      console.log("Sending data to API:", formData);
-
-      // Make the API call
-      const response = await fetch('https://api.hobyhub.com/api/1/vendor/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Set the vendor ID from response and show success popup
-        setVendorId(data.vendorId || "254893");
+      // Call the registerVendor service
+      const response = await registerVendor(formData);
+      console.log('API Response:', response); // Debug log
+      
+      if (response.data && response.data.id) {
+        setVendorId(response.data.id);
         setIsSuccessPopupOpen(true);
-        
-        // Clear localStorage after successful submission
-        localStorage.removeItem('personalDetails');
-        localStorage.removeItem('instituteDetails');
-        localStorage.removeItem('additionalInfo');
-        localStorage.removeItem('classDetails');
-        localStorage.removeItem('corseDetails');
-        localStorage.removeItem('directory');
-        localStorage.removeItem('images');
       } else {
-        // Log the error response for debugging
-        console.error("API Error Response:", data);
-        toast.error(data.message || data.error || "Failed to register vendor. Please check all required fields.");
+        // Show the error message from the API response
+        console.log('Error in response:', response); // Debug log
+        toast.error(response.message || "Failed to register vendor. Please try again.");
       }
-    } catch (err) {
-      console.error("Error during submission:", err);
-      toast.error("An error occurred while submitting the form. Please try again.");
+    } catch (error: any) {
+      console.error("Error submitting form:", error);
+      console.log('Error response:', error.response); // Debug log
+      console.log('Error data:', error.response?.data); // Debug log
+      
+      // Show the error message from the API response
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.message || 
+                          error.message || 
+                          "An error occurred while submitting the form. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleWeekdayChange = (day: any,isCLassfields: boolean) => {
-    const currentWeekdays = isCLassfields?watchClass('weekdays') || []:watchCourse('weekdays') || []; // Get current weekdays value
+  const handleWeekdayChange = (day: any, isCLassfields: boolean) => {
+    const currentWeekdays = isCLassfields ? watchClass('weekdays') || [] : watchCourse('weekdays') || []; // Get current weekdays value
     
     // If day is already selected, remove it; otherwise, add it
-    if(isCLassfields){
+    if (isCLassfields) {
       if (currentWeekdays.includes(day)) {
-        setValueClass('weekdays', currentWeekdays.filter((d: any) => d !== day));
+        setValueClass('weekdays', currentWeekdays.filter((d: any) => d !== null && d !== day));
       } else {
-        setValueClass('weekdays', [...currentWeekdays, day]);
+        setValueClass('weekdays', [...currentWeekdays.filter((d: any) => d !== null), day]);
       }
-    }else{
+    } else {
       if (currentWeekdays.includes(day)) {
-        setValueCourse('weekdays', currentWeekdays.filter((d: any) => d !== day));
+        setValueCourse('weekdays', currentWeekdays.filter((d: any) => d !== null && d !== day));
       } else {
-        setValueCourse('weekdays', [...currentWeekdays, day]);
+        setValueCourse('weekdays', [...currentWeekdays.filter((d: any) => d !== null), day]);
       }
     }
-    
   };
 
   const handleEditClass = (index: number) => {
@@ -725,10 +713,8 @@ const saveClassDetails = (data: any) => {
     );
   
     if (selectedCategory && selectedCategory.subcategories.length > 0) {
-      // Automatically set the first subcategory as the default
       setValueCourse("subCategory", selectedCategory.subcategories[0].id.toString());
     } else {
-      // Clear the subCategory if no subcategories are available
       setValueCourse("subCategory", "");
     }
   }, [watchCourse("category"), categories, setValueCourse]);
@@ -739,10 +725,8 @@ const saveClassDetails = (data: any) => {
     );
   
     if (selectedCategory && selectedCategory.subcategories.length > 0) {
-      // Automatically set the first subcategory as the default
       setValueClass("subCategory", selectedCategory.subcategories[0].id.toString());
     } else {
-      // Clear the subCategory if no subcategories are available
       setValueClass("subCategory", "");
     }
   }, [watchClass("category"), categories, setValueClass]);
@@ -785,26 +769,6 @@ const saveClassDetails = (data: any) => {
         <Accordion 
           type="single" 
           value={activeAccordion} 
-          // onValueChange={(value) => {
-          //   console.log("Accordion value changed:", value);
-          //   // Allow opening only completed sections
-          //   if (value === activeAccordion) {
-          //     setActiveAccordion(""); // Close the accordion
-          //     return;
-          //   }
-        
-          //   if (
-          //     (value === "item-0") || // Personal Details can always be opened
-          //     (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
-          //     (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
-          //     (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
-          //     (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
-          //   ) {
-          //     setActiveAccordion(value); // Allow opening the accordion
-          //   } else {
-          //     toast.error("Please complete the previous sections first!"); // Show an error message
-          //   }
-          // }}
           collapsible
         >
           {/* Personal Details Section */}
@@ -1267,11 +1231,10 @@ const saveClassDetails = (data: any) => {
                 <Input type="number" {...registerClass("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
               </div>
               <CostRangeInput 
-      register={registerClass} 
-      control={controlClass} 
-      setValue={setValueClass} 
-      errors={errorsClass} 
-    />
+        form={classForm}
+        setValue={setValueClass} 
+        errors={errorsClass} 
+      />
 
                 
                 <div className="flex flex-col gap-2">
@@ -1332,11 +1295,10 @@ const saveClassDetails = (data: any) => {
                 </div>
                 
                 <AgeRangeInput 
-      register={registerClass} 
-      control={controlClass} 
-      setValue={setValueClass} 
-      errors={errorsClass} 
-    />
+        form={classForm}
+        setValue={setValueClass} 
+        errors={errorsClass} 
+      />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
@@ -1499,11 +1461,10 @@ const saveClassDetails = (data: any) => {
                 <Input type="number" {...registerCourse("noOfSessions")}  min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
               </div>
               <CostRangeInput 
-      register={registerCourse} 
-      control={controlCourse} 
-      setValue={setValueCourse} 
-      errors={errorsCourse} 
-    />
+        form={courseForm}
+        setValue={setValueCourse} 
+        errors={errorsCourse} 
+      />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -1563,11 +1524,10 @@ const saveClassDetails = (data: any) => {
                 </div>
                 
                 <AgeRangeInput 
-      register={registerClass} 
-      control={controlClass} 
-      setValue={setValueClass} 
-      errors={errorsClass} 
-    />
+        form={classForm}
+        setValue={setValueClass} 
+        errors={errorsClass} 
+      />
                 
                 <div className="flex flex-col gap-2">
                   <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import * as yup from "yup";
 import { useWatch } from "react-hook-form";
+import { FormInputProps } from "./types";
 
 export const costRangeSchema = {
     fromcost: yup.string(),
@@ -19,16 +20,9 @@ export const costRangeSchema = {
     cost: yup.string(),
   };
 
-import { Control, FieldErrors, UseFormRegister, UseFormSetValue } from "react-hook-form";
-
-interface CostRangeInputProps {
-  register: UseFormRegister<any>;
-  control: Control<any>;
-  setValue: UseFormSetValue<any>;
-  errors: FieldErrors<any>;
-}
-
-export default function CostRangeInput({ register, control, setValue, errors }: CostRangeInputProps) {
+export default function CostRangeInput({ form, setValue, errors }: FormInputProps) {
+    const { register, control } = form;
+    
     // Watch fromcost and tocost
     const fromcost = useWatch({
       control,
@@ -56,15 +50,19 @@ export default function CostRangeInput({ register, control, setValue, errors }: 
             {...register("fromcost")}
             className="h-[52px] border-[#05244f]"
           />
-          To
+          <span className="text-gray-500">to</span>
           <Input
             placeholder="e.g. 2000"
             {...register("tocost")}
             className="h-[52px] border-[#05244f]"
           />
         </div>
-        {errors.fromcost && <p className="text-red-500 text-sm">{String(errors.fromcost.message)}</p>}
-        {errors.tocost && <p className="text-red-500 text-sm">{String(errors.tocost.message)}</p>}
+        {errors.fromcost && (
+          <p className="text-red-500 text-xs">{errors.fromcost.message}</p>
+        )}
+        {errors.tocost && (
+          <p className="text-red-500 text-xs">{errors.tocost.message}</p>
+        )}
       </div>
     );
   }
