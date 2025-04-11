@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 
+
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -81,7 +82,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
           
           // Optionally use reverse geocoding to fill address fields
           const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: position }, (results, status) => {
+          geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
             if (status === 'OK' && results![0]) {
               updateAddressFromGeocode(results![0]);
             }
