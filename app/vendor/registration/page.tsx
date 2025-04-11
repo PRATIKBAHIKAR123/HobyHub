@@ -38,10 +38,6 @@ const personalDetailsSchema = yup.object().shape({
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
-  password: yup.string().required("Password is required").min(8, "Password must be at least 8 characters"),
-  confirmPassword: yup.string()
-    .oneOf([yup.ref('password')], 'Passwords must match')
-    .required("Confirm password is required"),
   gender: yup.string().required("Gender is required"),
 });
 
@@ -599,22 +595,65 @@ const saveClassDetails = (data: any) => {
       const personalDetails = JSON.parse(localStorage.getItem('personalDetails') || '{}');
       const instituteDetails = JSON.parse(localStorage.getItem('instituteDetails') || '{}');
       const additionalInfo = JSON.parse(localStorage.getItem('additionalInfo') || '{}');
-      const classDetails = JSON.parse(localStorage.getItem('classDetails') || '{}');
+      const classDetails = JSON.parse(localStorage.getItem('classDetails') || '[]');
+      const courseDetails = JSON.parse(localStorage.getItem('corseDetails') || '[]');
+      const directory = JSON.parse(localStorage.getItem('directory') || '[]');
 
-      // Combine all data
+      // Validate required fields
+      if (!personalDetails.name || !personalDetails.emailId || !personalDetails.phoneNumber || !personalDetails.gender) {
+        toast.error("Please complete all required personal details");
+        return;
+      }
+
+      if (!instituteDetails.programTitle || !instituteDetails.instituteName) {
+        toast.error("Please complete all required institute details");
+        return;
+      }
+
+      // Format the data according to the API requirements
       const formData = {
-        ...personalDetails,
-        ...instituteDetails,
-        ...additionalInfo,
-        ...(showClassFields ? classDetails : {})
+        personalDetails: {
+          name: personalDetails.name,
+          emailId: personalDetails.emailId,
+          phoneNumber: personalDetails.phoneNumber,
+          gender: personalDetails.gender
+        },
+        instituteDetails: {
+          programTitle: instituteDetails.programTitle,
+          instituteName: instituteDetails.instituteName,
+          since: instituteDetails.since || "",
+          gstNo: instituteDetails.gstNo || "",
+          introduction: instituteDetails.introduction || "",
+          images: instituteDetails.images || []
+        },
+        additionalInfo: {
+          websiteName: additionalInfo.websiteName || "",
+          classLevel: additionalInfo.classLevel || "",
+          instagramAccount: additionalInfo.instagramAccount || "",
+          youtubeAccount: additionalInfo.youtubeAccount || ""
+        },
+        classDetails: classDetails,
+        courseDetails: courseDetails,
+        directory: directory
       };
 
-      // Submit to API
-      const response = await registerVendor(formData);
+      // Log the data being sent for debugging
+      console.log("Sending data to API:", formData);
 
-      if (response.status === 200) {
+      // Make the API call
+      const response = await fetch('https://api.hobyhub.com/api/1/vendor/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
         // Set the vendor ID from response and show success popup
-        setVendorId(response.data.vendorId || "254893"); // Using a default ID if not provided
+        setVendorId(data.vendorId || "254893");
         setIsSuccessPopupOpen(true);
         
         // Clear localStorage after successful submission
@@ -622,13 +661,17 @@ const saveClassDetails = (data: any) => {
         localStorage.removeItem('instituteDetails');
         localStorage.removeItem('additionalInfo');
         localStorage.removeItem('classDetails');
+        localStorage.removeItem('corseDetails');
+        localStorage.removeItem('directory');
         localStorage.removeItem('images');
       } else {
-        toast.error(String(response.data));
+        // Log the error response for debugging
+        console.error("API Error Response:", data);
+        toast.error(data.message || data.error || "Failed to register vendor. Please check all required fields.");
       }
     } catch (err) {
       console.error("Error during submission:", err);
-      toast.error(String(err));
+      toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -775,7 +818,7 @@ const saveClassDetails = (data: any) => {
               </AccordionTrigger>
               <AccordionContent>
                 <form onSubmit={handleSubmitPersonal(savePersonalDetails)}>
-                  <div className="grid md:grid-cols-3 sm:grid-cols-1 gap-4 mb-6">
+                  <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                         Full Name<span className="text-red-500">*</span>
@@ -814,34 +857,6 @@ const saveClassDetails = (data: any) => {
                       />
                       {errorsPersonal.emailId && (
                         <p className="text-red-500 text-xs">{errorsPersonal.emailId.message}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                        Password<span className="text-red-500">*</span>
-                      </Label>
-                      <Input 
-                        type="password"
-                        placeholder="Password" 
-                        {...registerPersonal("password")} 
-                        className="h-[52px] border-[#05244f]" 
-                      />
-                      {errorsPersonal.password && (
-                        <p className="text-red-500 text-xs">{errorsPersonal.password.message}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                        Confirm Password<span className="text-red-500">*</span>
-                      </Label>
-                      <Input 
-                        type="password"
-                        placeholder="Confirm Password" 
-                        {...registerPersonal("confirmPassword")} 
-                        className="h-[52px] border-[#05244f]" 
-                      />
-                      {errorsPersonal.confirmPassword && (
-                        <p className="text-red-500 text-xs">{errorsPersonal.confirmPassword.message}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
@@ -935,7 +950,7 @@ const saveClassDetails = (data: any) => {
                   </div>
 
                   <div className="mb-6 mt-[50px]">
-                    <h3 className="text-[#05244f] trajan-pro text-md font-semibold">Photos</h3>
+                    <h3 className="text-[#05244f] trajan-pro text-md font-semibold">Photos<span className="text-red-500 ml-1 text-sm">*</span></h3>
                     {images.length > 0 && (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
   {images.map((src, index) => (

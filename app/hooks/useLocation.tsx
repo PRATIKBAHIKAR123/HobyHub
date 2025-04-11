@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
 const DEFAULT_LOCATION = "Pune";
@@ -61,7 +61,9 @@ const useLocation = () => {
     }
   };
 
-  const detectLocation = () => {
+  const detectLocation = useCallback(() => {
+    if (isDetecting) return; // Prevent multiple simultaneous detection attempts
+    
     setIsDetecting(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -76,18 +78,18 @@ const useLocation = () => {
           setIsDetecting(false);
           setLocation(DEFAULT_LOCATION);
         },
-        { timeout: 10000, enableHighAccuracy: true }
+        { timeout: 5000, enableHighAccuracy: true } // Reduced timeout to 5 seconds
       );
     } else {
       setIsDetecting(false);
       setLocation(DEFAULT_LOCATION);
     }
-  };
+  }, [isDetecting]); // Only recreate when isDetecting changes
 
-  // Auto-detect location on startup
+  // Auto-detect location on startup, but only once
   useEffect(() => {
     detectLocation();
-  }, [detectLocation]); // Add detectLocation to dependencies
+  }, []); // Empty dependency array to run only once on mount
 
   return { 
     location, 
