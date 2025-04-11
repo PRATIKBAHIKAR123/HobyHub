@@ -1,60 +1,17 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PopoverContent } from "@/components/ui/popover";
-import { useEffect, useState, useRef, useCallback } from "react";
-import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
+import { useEffect, useState, useRef } from "react";
 import useLocation from "../hooks/useLocation";
 import { Loader } from "lucide-react";
 
-// Extend the Window interface to include initPlacesAPI
+// Extend the Window interface to include google
 declare global {
   interface Window {
+    google?: any;
     initPlacesAPI?: () => void;
   }
 }
-
-// Global variable to track if script is loading
-let isScriptLoading = false;
-
-// Improved Google Maps API script loader
-const loadGoogleMapsScript = (callback: { (): void; (): void; }) => {
-  // Check if script is already loaded
-  if (window.google && window.google.maps && window.google.maps.places) {
-    if (callback) callback();
-    return;
-  }
-  
-  // Don't load script if it's already loading
-  if (isScriptLoading) {
-    const checkGoogleExists = setInterval(() => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        clearInterval(checkGoogleExists);
-        if (callback) callback();
-      }
-    }, 100);
-    return;
-  }
-
-  const existingScript = document.getElementById('google-maps-script');
-  if (!existingScript) {
-    isScriptLoading = true;
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts&libraries=places&region=IN&loading=async&callback=initPlacesAPI`;
-    script.id = 'google-maps-script';
-    script.async = true;
-    script.defer = true;
-    
-    // Create global callback
-    window.initPlacesAPI = () => {
-      isScriptLoading = false;
-      if (callback) callback();
-    };
-    
-    document.body.appendChild(script);
-  } else if (callback) {
-    callback();
-  }
-};
 
 interface PopupScreenProps {
   onLocationChange: (location: string) => void;
@@ -63,177 +20,145 @@ interface PopupScreenProps {
 export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
   const { location, setLocation, detectLocation, isDetecting } = useLocation();
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
-  const searchInputRef = useRef(null);
-  
+  const [inputValue, setInputValue] = useState(location || "");
+  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+
   // Initialize Google Maps Script
   useEffect(() => {
-    loadGoogleMapsScript(() => {
-      setScriptLoaded(true);
-      console.log("Google Maps script loaded successfully!");
-    });
-    
-    // Clean up function
+    const loadGoogleMapsScript = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        setScriptLoaded(true);
+        initializeServices();
+        return;
+      }
+
+      // Remove any existing script
+      const existingScript = document.getElementById('google-maps-script');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      const script = document.createElement('script');
+      script.id = 'google-maps-script';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts&libraries=places&region=IN`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        if (window.google && window.google.maps) {
+          setScriptLoaded(true);
+          initializeServices();
+        }
+      };
+
+      script.onerror = () => {
+        console.error('Failed to load Google Maps script');
+        setScriptLoaded(false);
+      };
+      
+      document.body.appendChild(script);
+    };
+
+    const initializeServices = () => {
+      if (window.google && window.google.maps) {
+        try {
+          autocompleteService.current = new window.google.maps.places.AutocompleteService();
+          
+          // Create a hidden div for PlacesService
+          if (!mapDivRef.current) {
+            mapDivRef.current = document.createElement('div');
+            mapDivRef.current.style.display = 'none';
+            document.body.appendChild(mapDivRef.current);
+          }
+          
+          placesService.current = new window.google.maps.places.PlacesService(mapDivRef.current);
+        } catch (error) {
+          console.error('Error initializing Google Maps services:', error);
+        }
+      }
+    };
+
+    loadGoogleMapsScript();
+
     return () => {
-      if (window.initPlacesAPI) {
-        window.initPlacesAPI = undefined;
+      if (mapDivRef.current) {
+        mapDivRef.current.remove();
       }
     };
   }, []);
-  
-  // Autocomplete setup
-  const {
-    ready,
-    value,
-    suggestions: { status, data },
-    setValue,
-    clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      componentRestrictions: { country: 'in' },
-    },
-    debounce: 200,
-    defaultValue: location || "",
-    cacheKey: "location-search",
-    initOnMount: scriptLoaded,
-  });
-  
-  // Debug logs
-  useEffect(() => {
-    console.log(`Places API ready: ${ready}, Script loaded: ${scriptLoaded}`);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
     
-    if (scriptLoaded && !ready) {
-      console.log("Script is loaded but Places API is not ready. Re-initializing...");
-      // Force reinitialize if needed
-      const checkPlacesExists = setInterval(() => {
-        if (window.google?.maps?.places) {
-          clearInterval(checkPlacesExists);
-          console.log("Places API exists in window object");
-        }
-      }, 500);
-      
-      return () => clearInterval(checkPlacesExists);
-    }
-  }, [ready, scriptLoaded]);
-  
-  // Update input value when location changes
-  useEffect(() => {
-    if (ready && location && location !== value) {
-      setValue(location, false);
-      console.log(`Updated value from location: ${location}`);
-    }
-  }, [location, setValue, value, ready]);
-  
-  // Initialize input value with location when component mounts
-  useEffect(() => {
-    if (location && !value) {
-      setValue(location, false);
-    }
-  }, [location, value, setValue]);
-  
-  const handleSelect = async (description: string, placeObject: google.maps.places.PlaceResult | null = null) => {
-    if (ready) {
-      setValue(description, false);
-      clearSuggestions();
-    }
-    setInputFocused(false);
-
-    try {
-      let exactLocation = description;
-      let lat, lng;
-
-      if (placeObject && placeObject.geometry) {
-        // If we have a direct place object (from native API)
-        lat = placeObject.geometry?.location?.lat?.();
-        lng = placeObject.geometry?.location?.lng?.();
-        
-        // Try to get the most specific name
-        exactLocation = placeObject.name || 
-                        placeObject.vicinity || 
-                        placeObject.formatted_address ||
-                        description;
-      } else {
-        // If we don't have a place object, use the Places API to get coordinates
-        const results = await getGeocode({ address: description });
-        const { lat: newLat, lng: newLng } = await getLatLng(results[0]);
-        lat = newLat;
-        lng = newLng;
-      }
-
-      if (lat && lng) {
-        // Store the location in localStorage
-        localStorage.setItem('userLocation', exactLocation);
-        localStorage.setItem('userLatLng', JSON.stringify({ lat, lng }));
-        
-        // Update the location state
-        setLocation(exactLocation);
-        onLocationChange(exactLocation);
-      }
-    } catch (error) {
-      console.error("Error getting location details:", error);
-    }
-  };
-
-  // Function to directly initialize places autocomplete without the hook
-  // as a fallback mechanism
-  const initializePlacesDirectly = useCallback(() => {
-    if (!ready && scriptLoaded && searchInputRef.current && window.google?.maps?.places) {
-      try {
-        const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
+    if (value.length > 0 && autocompleteService.current) {
+      setIsLoading(true);
+      autocompleteService.current.getPlacePredictions(
+        {
+          input: value,
           componentRestrictions: { country: 'in' },
-        });
-        
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (place && place.formatted_address) {
-            handleSelect(place.formatted_address);
+          types: ['(cities)'],
+        },
+        (predictions: google.maps.places.AutocompletePrediction[] | null, status: string) => {
+          setIsLoading(false);
+          if (status === 'OK' && predictions) {
+            setSuggestions(predictions);
+            setShowSuggestions(true);
+          } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
           }
-        });
-        
-        console.log("Direct Places Autocomplete initialization successful");
-      } catch (error) {
-        console.error("Failed to initialize Places directly:", error);
-      }
-    }
-  }, [ready, scriptLoaded, handleSelect]);
-  
-  // Initialize direct autocomplete as a backup
-  useEffect(() => {
-    if (scriptLoaded && !ready && searchInputRef.current) {
-      const timer = setTimeout(() => {
-        initializePlacesDirectly();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [scriptLoaded, ready, initializePlacesDirectly]);
-
-  useEffect(() => {
-    initializePlacesDirectly();
-  }, [initializePlacesDirectly]);
-
-  const handleInputFocus = () => {
-    setInputFocused(true);
-    if (value && value.length > 0 && ready) {
-      // Force refresh suggestions
-      setValue(value);
+        }
+      );
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
-  const handleChange = (e: { target: { value: string; }; }) => {
-    const newValue = e.target.value;
-    
-    // Always update the input value regardless of ready state
-    setValue(newValue);
-    
-    if (!newValue) {
-      setLocation("");
+  const handleSelect = async (placeId: string, description: string) => {
+    setInputValue(description);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setIsLoading(true);
+
+    if (placesService.current) {
+      placesService.current.getDetails(
+        { placeId, fields: ['geometry', 'formatted_address'] },
+        (place: google.maps.places.PlaceResult | null, status: string) => {
+          setIsLoading(false);
+          if (status === 'OK' && place?.geometry?.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            
+            localStorage.setItem('userLocation', description);
+            localStorage.setItem('userLatLng', JSON.stringify({ lat, lng }));
+            
+            setLocation(description);
+            onLocationChange(description);
+          }
+        }
+      );
     }
   };
 
   const handleSearch = () => {
-    if (value) {
-      handleSelect(value);
+    if (inputValue) {
+      // Try to find a matching suggestion
+      const matchingSuggestion = suggestions.find(s => s.description === inputValue);
+      if (matchingSuggestion) {
+        handleSelect(matchingSuggestion.place_id, matchingSuggestion.description);
+      } else {
+        // If no matching suggestion, use the input value directly
+        setLocation(inputValue);
+        onLocationChange(inputValue);
+      }
     }
   };
 
@@ -248,9 +173,6 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
     );
   }
 
-  // Show suggestions when ready and has data
-  const shouldShowSuggestions = status === "OK" && inputFocused && data.length > 0;
-
   return (
     <PopoverContent className="w-[300px] shadow-md p-4" onOpenAutoFocus={(e) => e.preventDefault()}>
       <h3 className="text-lg font-semibold">Choose your location</h3>
@@ -262,34 +184,38 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
           type="text"
           placeholder="Enter location"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none"
-          value={value}
+          value={inputValue}
           onChange={handleChange}
-          onFocus={handleInputFocus}
-          onBlur={() => {
-            setTimeout(() => setInputFocused(false), 200);
-          }}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              e.stopPropagation();
               handleSearch();
             }
           }}
         />
 
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <Loader className="w-4 h-4 animate-spin" />
+          </div>
+        )}
+
         {/* Suggestions dropdown */}
-        {shouldShowSuggestions && (
-          <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto">
-            {data.map(({ description, place_id }) => (
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200">
+            {suggestions.map((suggestion) => (
               <div
-                key={place_id}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                key={suggestion.place_id}
+                className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  handleSelect(description);
+                  handleSelect(suggestion.place_id, suggestion.description);
                 }}
               >
-                {description}
+                {suggestion.description}
               </div>
             ))}
           </div>
