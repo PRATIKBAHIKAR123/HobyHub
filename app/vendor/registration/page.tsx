@@ -628,14 +628,17 @@ const saveClassDetails = (data: any) => {
     try {
       setIsLoading(true);
       
-      // Prepare the form data with only required fields
+      // Prepare the form data
       const formData = {
-        id: 0,
-        name: watchPersonal("name"),
-        emailId: watchPersonal("emailId"),
-        password: "defaultPassword", // You might want to add a password field to the form
-        phoneNumber: watchPersonal("phoneNumber"),
-        gender: watchPersonal("gender")
+        personalDetails: watchPersonal(),
+        instituteDetails: watchInstitute(),
+        additionalInfo: watchAdditionalInfo(),
+        classes,
+        course,
+        contacts,
+        locations,
+        directory,
+        images
       };
 
       // Call the registerVendor service
