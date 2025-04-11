@@ -640,27 +640,16 @@ const saveClassDetails = (data: any) => {
 
       // Call the registerVendor service
       const response = await registerVendor(formData);
-      console.log('API Response:', response); // Debug log
       
       if (response.data && response.data.id) {
         setVendorId(response.data.id);
         setIsSuccessPopupOpen(true);
       } else {
-        // Show the error message from the API response
-        console.log('Error in response:', response); // Debug log
-        toast.error(response.message || "Failed to register vendor. Please try again.");
+        toast.error("Failed to register vendor. Please try again.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error submitting form:", error);
-      console.log('Error response:', error.response); // Debug log
-      console.log('Error data:', error.response?.data); // Debug log
-      
-      // Show the error message from the API response
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.message || 
-                          error.message || 
-                          "An error occurred while submitting the form. Please try again.";
-      toast.error(errorMessage);
+      toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
     }
