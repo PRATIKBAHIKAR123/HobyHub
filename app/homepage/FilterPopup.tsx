@@ -94,6 +94,12 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
                   <span>Female</span>
                 </Label>
               </div>
+              <div className="flex-1">
+                <Label className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl p-3 cursor-pointer transition-all hover:bg-blue-50 hover:border-blue-200 w-full h-full data-[state=checked]:bg-blue-50 data-[state=checked]:border-[#1E3A8A]">
+                  <RadioGroupItem value="trans" id="trans" className="text-[#013161]" />
+                  <span>Trans</span>
+                </Label>
+              </div>
             </RadioGroup>
           </div>
 

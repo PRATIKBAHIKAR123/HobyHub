@@ -17,9 +17,9 @@ interface FilterContextType {
   filterUpdateTrigger: number;
   categoryFilter: {
     catId: number;
-    subCatId: number;
+    subCatId: number | null;
   };
-  setCategoryFilter: (filter: { catId: number; subCatId: number }) => void;
+  setCategoryFilter: (filter: { catId: number; subCatId: number | null }) => void;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -31,7 +31,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [time, setTime] = useState("");
   const [areFiltersApplied, setAreFiltersApplied] = useState(false);
   const [filterUpdateTrigger, setFilterUpdateTrigger] = useState(0);
-  const [categoryFilter, setCategoryFilter] = useState<{ catId: number; subCatId: number }>({ catId: 0, subCatId: 0 });
+  const [categoryFilter, setCategoryFilter] = useState<{ catId: number; subCatId: number | null }>({ catId: 0, subCatId: null });
 
   const triggerFilterUpdate = () => {
     setFilterUpdateTrigger(prev => prev + 1);

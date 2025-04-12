@@ -1038,7 +1038,8 @@ const saveClassDetails = async (data: any) => {
                         <SelectContent>
                           <SelectItem value="Male">Male</SelectItem>
                           <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="Trans">Trans</SelectItem>
+                          <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                         </SelectContent>
                       </Select>
                       {errorsPersonal.gender && (
@@ -1490,6 +1491,7 @@ const saveClassDetails = async (data: any) => {
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="Trans">Trans</SelectItem>
                       <SelectItem value="both">Both</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1719,6 +1721,7 @@ const saveClassDetails = async (data: any) => {
                     <SelectContent>
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="Trans">Trans</SelectItem>
                       <SelectItem value="both">Both</SelectItem>
                     </SelectContent>
                   </Select>

@@ -99,10 +99,13 @@ export function Categories() {
     setActiveCategory(null);
   };
 
-  const handleSubCategoryClick = (categoryId: number, subCategoryId: number) => {
+  const handleSubCategoryClick = (categoryId: number, subCategoryId: number | null) => {
     setActiveCategory(null);
     setCategoryFilter({ catId: categoryId, subCatId: subCategoryId });
-    triggerFilterUpdate();
+    // Only trigger filter update if a specific subcategory is selected
+    if (subCategoryId !== null) {
+      triggerFilterUpdate();
+    }
   };
 
   if (isLoading) {
@@ -159,6 +162,12 @@ export function Categories() {
                   onMouseLeave={handleMouseLeave}
                 >
                   <div className="grid grid-cols-1 gap-2 p-2">
+                    <DropdownMenuItem
+                      onClick={() => handleSubCategoryClick(cat.id, null)}
+                      className="py-5 px-2 text-base text-[16px] hover:bg-gray-100 font-bold"
+                    >
+                      All
+                    </DropdownMenuItem>
                     {cat.subcategories.length > 0 ? (
                       cat.subcategories.map((subcat) => (
                         <DropdownMenuItem

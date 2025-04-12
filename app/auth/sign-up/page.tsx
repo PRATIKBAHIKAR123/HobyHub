@@ -188,6 +188,12 @@ export default function LoginPage() {
                     <SelectItem value="Female">
                       Female
                     </SelectItem>
+                    <SelectItem value="Trans">
+                      Trans
+                      </SelectItem>
+                    <SelectItem value="Prefer not to say">
+                      Prefer not to say
+                      </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-red-500 text-md">{errors.gender?.message}</p>
