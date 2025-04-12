@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogOverlay, DialogTitle } from "@/components/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../../lib/googleMaps";
 
 

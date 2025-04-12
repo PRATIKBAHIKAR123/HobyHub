@@ -356,9 +356,37 @@ export default function RegistrationForm() {
     }
   }, [setValuePersonal, setValueInstitute, setValueAdditional, setClasses, setValueClass, setCourses, setValueCourse]);
 
+  // Extract complex expressions
+  const courseCategory = watchCourse("category");
+  const classCategory = watchClass("category");
+
   useEffect(() => {
     localStorage.setItem("classDetails", JSON.stringify(classes));
   }, [classes]);
+
+  useEffect(() => {
+    const selectedCategory = categories.find(
+      (category) => category.title.toString() === courseCategory
+    );
+  
+    if (selectedCategory && selectedCategory.subcategories.length > 0) {
+      setValueCourse("subCategory", selectedCategory.subcategories[0].id.toString());
+    } else {
+      setValueCourse("subCategory", "");
+    }
+  }, [courseCategory, categories, setValueCourse]);
+
+  useEffect(() => {
+    const selectedCategory = categories.find(
+      (category) => category.title.toString() === classCategory
+    );
+  
+    if (selectedCategory && selectedCategory.subcategories.length > 0) {
+      setValueClass("subCategory", selectedCategory.subcategories[0].id.toString());
+    } else {
+      setValueClass("subCategory", "");
+    }
+  }, [classCategory, categories, setValueClass]);
 
   useEffect(() => {
     localStorage.setItem("corseDetails", JSON.stringify(course));
@@ -918,7 +946,7 @@ const saveClassDetails = async (data: any) => {
     } else {
       setValueCourse("subCategory", "");
     }
-  }, [watchCourse("category"), categories, setValueCourse]);
+  }, [watchCourse, categories, setValueCourse]);
 
   useEffect(() => {
     const selectedCategory = categories.find(
@@ -930,7 +958,7 @@ const saveClassDetails = async (data: any) => {
     } else {
       setValueClass("subCategory", "");
     }
-  }, [watchClass("category"), categories, setValueClass]);
+  }, [watchClass, categories, setValueClass]);
 
   const onAccordianClick = (value: string) => {
     console.log("Accordion value changed:", value);

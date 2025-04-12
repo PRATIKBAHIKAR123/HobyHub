@@ -78,7 +78,7 @@ export default function HobbyGrid() {
         setIsLoading(true);
         const data = await getAllActivities({
           catId: categoryFilter.catId,
-          subCatId: categoryFilter.subCatId,
+          subCatId: categoryFilter.subCatId || undefined,
           mode: isOnline ? "online" : "offline",
           sortFilter: sortFilter,
           location: "",
