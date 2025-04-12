@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
 // import { useRouter } from "next/navigation";
-import { registerVendor } from "@/services/vendorService";
+import { registerVendor, generateLoginOtp, login, createVendorActivity, createVendorClass } from "@/app/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
@@ -134,7 +134,7 @@ const courseDetailsSchema = yup.object().shape({
 
 export default function RegistrationForm() {
   const [images, setImages] = useState<string[]>([]);
-  const [isInstDetailsSubmitted, setisInstDetailsSubmitted] = useState(false);
+  const [isInstDetailsSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
   const [showCourseFields, setShowCourseFields] = useState(false);
@@ -476,30 +476,91 @@ export default function RegistrationForm() {
     localStorage.setItem('images', JSON.stringify(updatedImages));
   };
 
+  // const savePersonalDetails = (data: unknown) => {
+  //   localStorage.setItem('personalDetails', JSON.stringify(data));
+  //   setCompletedSections(prev => ({...prev, personalDetails: true}));
+  //   setActiveAccordion("item-1");
+  //   toast.success("Personal details saved successfully!");
+  // };
+
+  // Save institute details to localStorage and proceed to the next section
+  // const saveInstituteDetails = (data: unknown) => {
+  //   setisInstDetailsSubmitted(true);
+  //   if (images.length === 0) {
+  //     return;
+  //   }
+  //   // Save images data with institute details
+  //   const instituteData = {
+  //     ...(typeof data === 'object' && data !== null ? data : {}),
+  //     images: images
+  //   };
+  //   localStorage.setItem('instituteDetails', JSON.stringify(instituteData));
+  //   setCompletedSections(prev => ({...prev, instituteDetails: true}));
+  //   setActiveAccordion("item-2");
+  //   toast.success("Institute details saved successfully!");
+  //   setisInstDetailsSubmitted(false);
+  // };
+
   // Save personal details to localStorage and proceed to the next section
-  const savePersonalDetails = (data: unknown) => {
-    localStorage.setItem('personalDetails', JSON.stringify(data));
-    setCompletedSections(prev => ({...prev, personalDetails: true}));
-    setActiveAccordion("item-1");
-    toast.success("Personal details saved successfully!");
+  const savePersonalDetails = async (data: any) => {
+    try {
+      setIsLoading(true);
+      
+      // Prepare vendor registration data
+      const vendorData = {
+        id: 0,
+        name: data.name,
+        emailId: data.emailId,
+        phoneNumber: data.phoneNumber,
+        gender: data.gender
+      };
+
+      // Call vendor registration API
+      const response = await registerVendor(vendorData);
+      
+      if (response) {
+        // Store the vendor ID in state and localStorage
+        setVendorId(response.vendorId.toString());
+        localStorage.setItem('vendorId', response.vendorId.toString());
+        
+        // Generate OTP for login
+        await generateLoginOtp(response.username);
+        
+        // Login with OTP
+        await login(response.username, '1234');
+        
+        // Store personal details
+        localStorage.setItem('personalDetails', JSON.stringify(data));
+        setCompletedSections(prev => ({...prev, personalDetails: true}));
+        setActiveAccordion("item-1");
+        toast.success(`Personal details saved successfully!`);
+      } else {
+        toast.error("Failed to register vendor. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving personal details:", error);
+      toast.error("An error occurred while saving personal details. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Save institute details to localStorage and proceed to the next section
-  const saveInstituteDetails = (data: unknown) => {
-    setisInstDetailsSubmitted(true);
-    if (images.length === 0) {
-      return;
+  const saveInstituteDetails = async (data: any) => {
+    try {
+      setIsLoading(true);
+      
+      // Store institute details in localStorage
+      localStorage.setItem('instituteDetails', JSON.stringify(data));
+      setCompletedSections(prev => ({...prev, instituteDetails: true}));
+      setActiveAccordion("item-2");
+      toast.success("Institute details saved successfully!");
+    } catch (error) {
+      console.error("Error saving institute details:", error);
+      toast.error("An error occurred while saving institute details. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    // Save images data with institute details
-    const instituteData = {
-      ...(typeof data === 'object' && data !== null ? data : {}),
-      images: images
-    };
-    localStorage.setItem('instituteDetails', JSON.stringify(instituteData));
-    setCompletedSections(prev => ({...prev, instituteDetails: true}));
-    setActiveAccordion("item-2");
-    toast.success("Institute details saved successfully!");
-    setisInstDetailsSubmitted(false);
   };
 
   // Save additional info to localStorage
@@ -509,67 +570,130 @@ export default function RegistrationForm() {
     toast.success("Additional information saved successfully!");
   };
 
+   // Save class details to localStorage
+// const saveClassDetails = (data: any) => {
+//   // Create a new array with the existing classes plus the new one
+//   const selectedAddress = locations.find((item) => item.area === data.location);
+//   const selectedContact = contacts.find(
+//     (item) => item.firstName + " " + item.lastName === data.contact
+//   );
+
+//   const newDirectoryItem: DirectoryItem = {
+//     address: selectedAddress?.area || "",
+//     isPrimary: selectedContact?.contactType.primary?'Yes':'No', // Example value, update as needed
+//     firstName: selectedContact?.firstName || "",
+//     lastName: selectedContact?.lastName || "",
+//     phoneNumber: selectedContact?.phoneNumber || "",
+//     whatsappNumber: selectedContact?.whatsappNumber || "",
+//     email: selectedContact?.email || "",
+//     contactType: {
+//       primary: false,
+//       secondary: false,
+//       billing: false,
+//     },
+//   };
+
+//   // Update the directory state
+//   setDirectory((prev) => [...prev, newDirectoryItem]);
+
+//   // Save the directory to localStorage
+//   localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
+
+
+//   const updatedClasses = [
+//     ...classes,{...data},
+//   ];
+  
+//   // Update the state
+//   setClasses(updatedClasses);
+  
+//   // Save to localStorage
+//   localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
+  
+//   setCompletedSections(prev => ({...prev, classDetails: true}));
+//   toast.success("Class details saved successfully!");
+  
+//   // Reset the form and hide the class fields
+//   setValueClass('className', '');
+//   setValueClass('category', '');
+//   setValueClass('subCategory', '');
+//   setValueClass('location', '');
+//   setValueClass('contact', '');
+//   setValueClass('time', '');
+//   setValueClass('gender', '');
+//   setValueClass('fromage', '');
+//   setValueClass('toage', '');
+//   setValueClass('fromcost', '');
+//   setValueClass('tocost', '');
+//   setValueClass('cost', '');
+//   setValueClass('classSize', '');
+//   setValueClass('weekdays', []);
+//   setValueClass('experienceLevel', '');
+//   setValueClass('noOfSessions', '');
+//   setShowClassFields(false);
+// };
+
   // Save class details to localStorage
-const saveClassDetails = (data: any) => {
-  // Create a new array with the existing classes plus the new one
-  const selectedAddress = locations.find((item) => item.area === data.location);
-  const selectedContact = contacts.find(
-    (item) => item.firstName + " " + item.lastName === data.contact
-  );
+const saveClassDetails = async (data: any) => {
+  try {
+    setIsLoading(true);
+    
+    // Prepare vendor class data
+    const classData = {
+      id: 0,
+      vendorId: parseInt(vendorId),
+      activityId: 0, // This should be the activity ID from the previous API call
+      subCategoryID: data.subCategory,
+      title: data.className,
+      timingsFrom: data.time.split('-')[0].trim(),
+      timingsTo: data.time.split('-')[1].trim(),
+      day: data.weekdays.join(','),
+      type: "REGULAR",
+      ageFrom: parseInt(data.fromage),
+      ageTo: parseInt(data.toage),
+      sessionFrom: 1,
+      sessionTo: parseInt(data.noOfSessions),
+      gender: data.gender,
+      price: parseInt(data.cost)
+    };
 
-  const newDirectoryItem: DirectoryItem = {
-    address: selectedAddress?.area || "",
-    isPrimary: selectedContact?.contactType.primary?'Yes':'No', // Example value, update as needed
-    firstName: selectedContact?.firstName || "",
-    lastName: selectedContact?.lastName || "",
-    phoneNumber: selectedContact?.phoneNumber || "",
-    whatsappNumber: selectedContact?.whatsappNumber || "",
-    email: selectedContact?.email || "",
-    contactType: {
-      primary: false,
-      secondary: false,
-      billing: false,
-    },
-  };
-
-  // Update the directory state
-  setDirectory((prev) => [...prev, newDirectoryItem]);
-
-  // Save the directory to localStorage
-  localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
-
-
-  const updatedClasses = [
-    ...classes,{...data},
-  ];
-  
-  // Update the state
-  setClasses(updatedClasses);
-  
-  // Save to localStorage
-  localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
-  
-  setCompletedSections(prev => ({...prev, classDetails: true}));
-  toast.success("Class details saved successfully!");
-  
-  // Reset the form and hide the class fields
-  setValueClass('className', '');
-  setValueClass('category', '');
-  setValueClass('subCategory', '');
-  setValueClass('location', '');
-  setValueClass('contact', '');
-  setValueClass('time', '');
-  setValueClass('gender', '');
-  setValueClass('fromage', '');
-  setValueClass('toage', '');
-  setValueClass('fromcost', '');
-  setValueClass('tocost', '');
-  setValueClass('cost', '');
-  setValueClass('classSize', '');
-  setValueClass('weekdays', []);
-  setValueClass('experienceLevel', '');
-  setValueClass('noOfSessions', '');
-  setShowClassFields(false);
+    // Call vendor class creation API
+    const response = await createVendorClass([classData]);
+    
+    if (response) {
+      const updatedClasses = [...classes, {...data}];
+      setClasses(updatedClasses);
+      localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
+      setCompletedSections(prev => ({...prev, classDetails: true}));
+      toast.success("Class details saved successfully!");
+      
+      // Reset form fields
+      setValueClass('className', '');
+      setValueClass('category', '');
+      setValueClass('subCategory', '');
+      setValueClass('location', '');
+      setValueClass('contact', '');
+      setValueClass('time', '');
+      setValueClass('gender', '');
+      setValueClass('fromage', '');
+      setValueClass('toage', '');
+      setValueClass('fromcost', '');
+      setValueClass('tocost', '');
+      setValueClass('cost', '');
+      setValueClass('classSize', '');
+      setValueClass('weekdays', []);
+      setValueClass('experienceLevel', '');
+      setValueClass('noOfSessions', '');
+      setShowClassFields(false);
+    } else {
+      toast.error("Failed to create vendor class. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error saving class details:", error);
+    toast.error("An error occurred while saving class details. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
 };
 
 
@@ -624,31 +748,116 @@ const saveClassDetails = (data: any) => {
    // Reset the class form after saving
   };
   // Final form submission - gather all data and submit to API
+//  const handleFinalSubmit = async () => {
+//     try {
+//       setIsLoading(true);
+      
+//       // Prepare the form data
+//       const formData = {
+//         personalDetails: watchPersonal(),
+//         instituteDetails: watchInstitute(),
+//         additionalInfo: watchAdditionalInfo(),
+//         classes,
+//         course,
+//         contacts,
+//         locations,
+//         directory,
+//         images
+//       };
+
+//       // Call the registerVendor service
+//       const response = await registerVendor(formData);
+      
+//       if (response.data && response.data.id) {
+//         setVendorId(response.data.id);
+//         setIsSuccessPopupOpen(true);
+//       } else {
+//         toast.error("Failed to register vendor. Please try again.");
+//       }
+//     } catch (error) {
+//       console.error("Error submitting form:", error);
+//       toast.error("An error occurred while submitting the form. Please try again.");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
   const handleFinalSubmit = async () => {
     try {
       setIsLoading(true);
       
-      // Prepare the form data
-      const formData = {
-        personalDetails: watchPersonal(),
-        instituteDetails: watchInstitute(),
-        additionalInfo: watchAdditionalInfo(),
-        classes,
-        course,
-        contacts,
-        locations,
-        directory,
-        images
+      // Get all form data
+      const personalDetails = watchPersonal();
+      const instituteDetails = watchInstitute();
+      const additionalInfo = watchAdditionalInfo();
+      
+      // Prepare vendor activity data
+      const activityData = {
+        vendorId: parseInt(vendorId),
+        type: "INSTITUTE",
+        categoryId: 0, // You'll need to map this from your category selection
+        title: instituteDetails.programTitle,
+        companyName: instituteDetails.instituteName,
+        description: instituteDetails.introduction || "",
+        sinceYear: instituteDetails.since || "",
+        gstNo: instituteDetails.gstNo || "",
+        address: "", // These fields should be populated from your location data
+        road: "",
+        area: "",
+        state: "",
+        city: "",
+        pincode: "",
+        country: "",
+        longitude: "",
+        latitute: "",
+        purchaseMaterialIds: "",
+        itemCarryText: "",
+        tutorFirstName: personalDetails.name.split(' ')[0] || "",
+        tutorLastName: personalDetails.name.split(' ').slice(1).join(' ') || "",
+        tutorEmailID: personalDetails.emailId,
+        tutorCountryCode: "+91",
+        tutorPhoneNo: personalDetails.phoneNumber,
+        whatsappCountryCode: "+91",
+        whatsappNo: personalDetails.phoneNumber,
+        tutorIntro: instituteDetails.introduction || "",
+        website: additionalInfo.websiteName || "",
+        classLevel: additionalInfo.classLevel || "",
+        instagramAcc: additionalInfo.instagramAccount || "",
+        youtubeAcc: additionalInfo.youtubeAccount || ""
       };
 
-      // Call the registerVendor service
-      const response = await registerVendor(formData);
+      // Create vendor activity
+      const activityResponse = await createVendorActivity(activityData);
       
-      if (response.data && response.data.id) {
-        setVendorId(response.data.id);
+      if (activityResponse) {
+        // Create vendor classes
+        const classPromises = classes.map(classData => {
+          const vendorClassData = {
+            id: 0,
+            vendorId: parseInt(vendorId),
+            activityId: activityResponse.id, // Use the activity ID from the response
+            subCategoryID: classData.subCategory,
+            title: classData.className,
+            timingsFrom: classData.time.split('-')[0].trim(),
+            timingsTo: classData.time.split('-')[1].trim(),
+            day: classData.weekdays.join(','),
+            type: "REGULAR",
+            ageFrom: parseInt(classData.fromage),
+            ageTo: parseInt(classData.toage),
+            sessionFrom: 1,
+            sessionTo: parseInt(classData.noOfSessions),
+            gender: classData.gender,
+            price: parseInt(classData.cost)
+          };
+          return createVendorClass([vendorClassData]);
+        });
+
+        await Promise.all(classPromises);
+        
         setIsSuccessPopupOpen(true);
+        toast.success("Registration completed successfully!");
       } else {
-        toast.error("Failed to register vendor. Please try again.");
+        toast.error("Failed to create vendor activity. Please try again.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
