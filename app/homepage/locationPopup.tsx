@@ -4,12 +4,12 @@ import { PopoverContent } from "@/components/ui/popover";
 import { useEffect, useState, useRef } from "react";
 import useLocation from "../hooks/useLocation";
 import { Loader } from "lucide-react";
+import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../lib/googleMaps";
 
 // Extend the Window interface to include google
 declare global {
   interface Window {
     google?: any;
-    initPlacesAPI?: () => void;
   }
 }
 
@@ -31,60 +31,16 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
 
   // Initialize Google Maps Script
   useEffect(() => {
-    const loadGoogleMapsScript = () => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        setScriptLoaded(true);
-        initializeServices();
-        return;
-      }
+    if (isGoogleMapsLoaded()) {
+      setScriptLoaded(true);
+      initializeServices();
+      return;
+    }
 
-      // Remove any existing script
-      const existingScript = document.getElementById('google-maps-script');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      const script = document.createElement('script');
-      script.id = 'google-maps-script';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts&libraries=places&region=IN`;
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        if (window.google && window.google.maps) {
-          setScriptLoaded(true);
-          initializeServices();
-        }
-      };
-
-      script.onerror = () => {
-        console.error('Failed to load Google Maps script');
-        setScriptLoaded(false);
-      };
-      
-      document.body.appendChild(script);
-    };
-
-    const initializeServices = () => {
-      if (window.google && window.google.maps) {
-        try {
-          autocompleteService.current = new window.google.maps.places.AutocompleteService();
-          
-          // Create a hidden div for PlacesService
-          if (!mapDivRef.current) {
-            mapDivRef.current = document.createElement('div');
-            mapDivRef.current.style.display = 'none';
-            document.body.appendChild(mapDivRef.current);
-          }
-          
-          placesService.current = new window.google.maps.places.PlacesService(mapDivRef.current);
-        } catch (error) {
-          console.error('Error initializing Google Maps services:', error);
-        }
-      }
-    };
-
-    loadGoogleMapsScript();
+    loadGoogleMapsScript(() => {
+      setScriptLoaded(true);
+      initializeServices();
+    });
 
     return () => {
       if (mapDivRef.current) {
@@ -92,6 +48,25 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
       }
     };
   }, []);
+
+  const initializeServices = () => {
+    if (window.google && window.google.maps) {
+      try {
+        autocompleteService.current = new window.google.maps.places.AutocompleteService();
+        
+        // Create a hidden div for PlacesService
+        if (!mapDivRef.current) {
+          mapDivRef.current = document.createElement('div');
+          mapDivRef.current.style.display = 'none';
+          document.body.appendChild(mapDivRef.current);
+        }
+        
+        placesService.current = new window.google.maps.places.PlacesService(mapDivRef.current);
+      } catch (error) {
+        console.error('Error initializing Google Maps services:', error);
+      }
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

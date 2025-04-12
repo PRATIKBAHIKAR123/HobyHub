@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
+import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../../lib/googleMaps";
 
 
 interface PopupScreenProps {
@@ -151,31 +152,17 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
 
   // Load Google Maps script if it's not already loaded
   useEffect(() => {
-    // Check if we're in a browser environment
     if (typeof window !== 'undefined' && open) {
-      // Check if the Google Maps script is already loaded
-      if (!window.google?.maps) {
-        setUseGoogleMaps(false);
-        
-        // In a real implementation, you would add the Google Maps API script like this:
-        
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAP_API_KEY}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          setMapLoaded(true);
-          initializeMap();
-        };
-        document.head.appendChild(script);
-        
-        
-        // For now, we'll just use the placeholder image
-        console.log("Google Maps API would be loaded here in production");
-      } else {
+      if (isGoogleMapsLoaded()) {
         setMapLoaded(true);
         setUseGoogleMaps(true);
         initializeMap();
+      } else {
+        loadGoogleMapsScript(() => {
+          setMapLoaded(true);
+          setUseGoogleMaps(true);
+          initializeMap();
+        });
       }
     }
   }, [open, initializeMap]);
@@ -321,6 +308,8 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       <DialogOverlay className="bg-[#003161] opacity-50 fixed inset-0" />
       
       <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-scroll max-h-screen mx-auto text-center">
+        <DialogTitle className="text-xl font-semibold mb-4">Add Location</DialogTitle>
+        
         <div className="grid grid-cols-1 gap-6 items-center">
           {/* Map Container */}
           <div className="flex justify-center w-full">
@@ -329,6 +318,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                 ref={mapRef} 
                 className="w-full h-[420px] rounded-lg shadow-md"
                 style={{ minWidth: "300px" }}
+                aria-label="Location map"
               ></div>
             )}
           </div>
@@ -346,9 +336,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                   onChange={handleInputChange}
                   placeholder="Address" 
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.address ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  aria-required="true"
+                  aria-invalid={!!errors.address}
                 />
                 {wasSubmitted && errors.address && (
-                  <p className="text-red-500 text-sm">{errors.address}</p>
+                  <p className="text-red-500 text-sm" role="alert">{errors.address}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -361,9 +353,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                   onChange={handleInputChange}
                   placeholder="Near by landmark" 
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.landmark ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  aria-required="true"
+                  aria-invalid={!!errors.landmark}
                 />
                 {wasSubmitted && errors.landmark && (
-                  <p className="text-red-500 text-sm">{errors.landmark}</p>
+                  <p className="text-red-500 text-sm" role="alert">{errors.landmark}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -376,9 +370,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                   onChange={handleInputChange}
                   placeholder="Area" 
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.area ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  aria-required="true"
+                  aria-invalid={!!errors.area}
                 />
                 {wasSubmitted && errors.area && (
-                  <p className="text-red-500 text-sm">{errors.area}</p>
+                  <p className="text-red-500 text-sm" role="alert">{errors.area}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -391,9 +387,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                   onChange={handleInputChange}
                   placeholder="City" 
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.city ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  aria-required="true"
+                  aria-invalid={!!errors.city}
                 />
                 {wasSubmitted && errors.city && (
-                  <p className="text-red-500 text-sm">{errors.city}</p>
+                  <p className="text-red-500 text-sm" role="alert">{errors.city}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -439,6 +437,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
             variant="outline" 
             onClick={handleSubmit} 
             className="bg-[#05244F] text-white"
+            aria-label="Save location"
           >
             Save Location
           </Button>
