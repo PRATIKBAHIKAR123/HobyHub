@@ -291,15 +291,13 @@ const LocationSelector = () => {
 
     useEffect(() => {
         if (!choosedLocation) {
-            detectLocation();  // ✅ Fetch location when component mounts
+            detectLocation();  // Fetch location when component mounts
         }
     }, [choosedLocation, detectLocation]);
 
     const handleLocationChange = (newLocation: string) => {
         setChoosedLocation(newLocation);
-        setTimeout(() => {
-            setIsPopoverOpen(false);
-        }, 200); // ✅ Close Popover after selection
+        // Don't close the popover here, let the LocationPopup handle it
     };
 
     return (
@@ -314,7 +312,7 @@ const LocationSelector = () => {
                             <div className="flex-shrink-0 justify-center gap-[3px] items-center inline-flex hover:cursor-pointer">
                                 <Image src="/Icons/location.svg" alt="Logo" width={12} height={14} className="flex-shrink-0" />
                                 <div className="text-center text-[#f8f9fa] text-[9.5px] font-normal font-['Inter'] truncate max-w-[85px] leading-[16px]">
-                                    {choosedLocation || ""}
+                                    {choosedLocation || "Select Location"}
                                 </div>
                             </div>
                         </TooltipTrigger>
@@ -326,7 +324,12 @@ const LocationSelector = () => {
                     </Tooltip>
                 </TooltipProvider>
             </PopoverTrigger>
-            <LocationPopup onLocationChange={handleLocationChange} />
+            <LocationPopup 
+                onLocationChange={(location) => {
+                    handleLocationChange(location);
+                    setIsPopoverOpen(false); // Close popover only after location is set
+                }} 
+            />
         </Popover>
     );
 };

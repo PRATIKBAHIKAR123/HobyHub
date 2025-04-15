@@ -1,224 +1,100 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PopoverContent } from "@/components/ui/popover";
-import { useEffect, useState, useRef } from "react";
+import { useRef, useState } from "react";
+import { Libraries, LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
 import useLocation from "../hooks/useLocation";
-import { Loader } from "lucide-react";
-import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../lib/googleMaps";
+import { useFilter } from "@/contexts/FilterContext";
 
-// Extend the Window interface to include google
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
+const libraries: Libraries = ["places"];
+const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
 
 interface PopupScreenProps {
   onLocationChange: (location: string) => void;
+  defaultLocation?: string;
 }
 
 export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
-  const { location, setLocation, detectLocation, isDetecting } = useLocation();
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [inputValue, setInputValue] = useState(location || "");
-  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const mapDivRef = useRef<HTMLDivElement | null>(null);
+  const { location, setLocation, detectLocation } = useLocation();
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const { triggerFilterUpdate } = useFilter();
+  const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
 
-  // Initialize Google Maps Script
-  useEffect(() => {
-    if (isGoogleMapsLoaded()) {
-      setScriptLoaded(true);
-      initializeServices();
-      return;
-    }
-
-    loadGoogleMapsScript(() => {
-      setScriptLoaded(true);
-      initializeServices();
-    });
-
-    return () => {
-      if (mapDivRef.current) {
-        mapDivRef.current.remove();
-      }
-    };
-  }, []);
-
-  const initializeServices = () => {
-    if (window.google && window.google.maps) {
-      try {
-        autocompleteService.current = new window.google.maps.places.AutocompleteService();
-        
-        // Create a hidden div for PlacesService
-        if (!mapDivRef.current) {
-          mapDivRef.current = document.createElement('div');
-          mapDivRef.current.style.display = 'none';
-          document.body.appendChild(mapDivRef.current);
-        }
-        
-        placesService.current = new window.google.maps.places.PlacesService(mapDivRef.current);
-      } catch (error) {
-        console.error('Error initializing Google Maps services:', error);
-      }
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-    
-    if (value.length > 0 && autocompleteService.current) {
-      setIsLoading(true);
-      autocompleteService.current.getPlacePredictions(
-        {
-          input: value,
-          componentRestrictions: { country: 'in' },
-          types: ['(cities)'],
-        },
-        (predictions: google.maps.places.AutocompletePrediction[] | null, status: string) => {
-          setIsLoading(false);
-          if (status === 'OK' && predictions) {
-            setSuggestions(predictions);
-            setShowSuggestions(true);
-          } else {
-            setSuggestions([]);
-            setShowSuggestions(false);
-          }
-        }
-      );
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSelect = async (placeId: string, description: string) => {
-    setInputValue(description);
-    setShowSuggestions(false);
-    setSuggestions([]);
-    setIsLoading(true);
-
-    if (placesService.current) {
-      placesService.current.getDetails(
-        { placeId, fields: ['geometry', 'formatted_address'] },
-        (place: google.maps.places.PlaceResult | null, status: string) => {
-          setIsLoading(false);
-          if (status === 'OK' && place?.geometry?.location) {
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            
-            localStorage.setItem('userLocation', description);
-            localStorage.setItem('userLatLng', JSON.stringify({ lat, lng }));
-            
-            setLocation(description);
-            onLocationChange(description);
-          }
-        }
-      );
+  const handlePlacesChanged = () => {
+    const places = searchBoxRef.current?.getPlaces();
+    if (places && places.length > 0) {
+      const place = places[0];
+      setSelectedPlace(place);
+      
+      // Get the most specific location name available
+      const locationName = place.formatted_address || place.name || "";
+      setLocation(locationName);
     }
   };
 
   const handleSearch = () => {
-    if (inputValue) {
-      // Try to find a matching suggestion
-      const matchingSuggestion = suggestions.find(s => s.description === inputValue);
-      if (matchingSuggestion) {
-        handleSelect(matchingSuggestion.place_id, matchingSuggestion.description);
-      } else {
-        // If no matching suggestion, use the input value directly
-        setLocation(inputValue);
-        onLocationChange(inputValue);
-      }
+    if (selectedPlace) {
+      // Use the full formatted address
+      const fullAddress = selectedPlace.formatted_address || selectedPlace.name || location;
+      onLocationChange(fullAddress);
+      triggerFilterUpdate(); // Trigger filter update to refresh activities
     }
   };
 
-  // Loading state
-  if (!scriptLoaded) {
-    return (
-      <PopoverContent className="w-[300px] shadow-md p-4">
-        <div className="flex items-center justify-center py-4">
-          <Loader className="w-5 h-5 mr-2 animate-spin" /> Loading maps...
-        </div>
-      </PopoverContent>
-    );
-  }
+  const handleDetectLocation = async () => {
+    await detectLocation();
+    // After detection, trigger the search
+    handleSearch();
+  };
 
   return (
-    <PopoverContent className="w-[300px] shadow-md p-4" onOpenAutoFocus={(e) => e.preventDefault()}>
-      <h3 className="text-lg font-semibold">Choose your location</h3>
-      <p className="text-gray-500 text-sm">Select a location to see hobby options</p>
+    <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={libraries}>
+      <PopoverContent 
+        className="w-[300px] shadow-md p-4"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking on the search box
+          if (e.target instanceof HTMLElement && 
+              (e.target.closest('.pac-container') || 
+               e.target.closest('.pac-item'))) {
+            e.preventDefault();
+          }
+        }}
+      >
+        <h3 className="text-lg font-semibold">Choose your location</h3>
+        <p className="text-gray-500 text-sm">Select a location to see hobby options</p>
 
-      <div className="relative mt-3">
-        <Input
-          ref={searchInputRef}
-          type="text"
-          placeholder="Enter location"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none"
-          value={inputValue}
-          onChange={handleChange}
-          onFocus={() => setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
-        />
-
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <Loader className="w-4 h-4 animate-spin" />
-          </div>
-        )}
-
-        {/* Suggestions dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-200">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.place_id}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleSelect(suggestion.place_id, suggestion.description);
-                }}
-              >
-                {suggestion.description}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Buttons */}
-      <div className="mt-4 space-y-2">
-        <Button 
-          className="w-full bg-blue-600 text-white hover:bg-blue-700"
-          onClick={handleSearch}
+        {/* Google Autocomplete Input */}
+        <StandaloneSearchBox 
+          onLoad={(ref) => (searchBoxRef.current = ref)} 
+          onPlacesChanged={handlePlacesChanged}
         >
-          Search By Location
-        </Button>
-        <hr />
-        <Button 
-          className="w-full bg-yellow-500 text-black hover:bg-yellow-600" 
-          onClick={detectLocation}
-        >
-          {isDetecting ? (
-            <div className="flex items-center justify-center">
-              <Loader className="w-4 h-4 mr-2 animate-spin" /> Detecting...
-            </div>
-          ) : (
-            "Detect My Location"
-          )}
-        </Button>
-      </div>
-    </PopoverContent>
+          <Input
+            type="text"
+            placeholder="Enter location"
+            className="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+        </StandaloneSearchBox>
+
+        {/* Buttons */}
+        <div className="mt-4 space-y-2">
+          <Button 
+            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            onClick={handleSearch}
+            disabled={!selectedPlace}
+          >
+            Search By Location
+          </Button>
+          <hr />
+          <Button 
+            className="w-full bg-yellow-500 text-black hover:bg-yellow-600" 
+            onClick={handleDetectLocation}
+          >
+            Detect My Location
+          </Button>
+        </div>
+      </PopoverContent>
+    </LoadScript>
   );
 }
