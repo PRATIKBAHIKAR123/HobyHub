@@ -76,7 +76,7 @@ export default function HobbyGrid() {
   const [favorites, setFavorites] = useState<{ [key: string]: boolean }>({});
   const { isOnline } = useMode();
   const { sortFilter } = useSortFilter();
-  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter } = useFilter();
+  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location } = useFilter();
 
   useEffect(() => {
     // Load favorites from localStorage when component mounts
@@ -95,7 +95,7 @@ export default function HobbyGrid() {
           subCatId: categoryFilter.subCatId || undefined,
           mode: isOnline ? "online" : "offline",
           sortFilter: sortFilter,
-          location: "",
+          location: location || "",
           age: areFiltersApplied ? parseInt(age) : 0,
           type: "",
           time: areFiltersApplied ? time : "",
@@ -112,7 +112,7 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time]);
+  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time, location]);
 
   const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation(); // Prevent card click event

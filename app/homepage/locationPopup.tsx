@@ -14,11 +14,12 @@ interface PopupScreenProps {
   defaultLocation?: string;
 }
 
-export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
+export default function LocationPopup({onLocationChange}: PopupScreenProps) {
   const { location, setLocation, detectLocation } = useLocation();
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
-  const { triggerFilterUpdate } = useFilter();
+  const { triggerFilterUpdate, setLocation: setFilterLocation } = useFilter();
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
+  const [isDetecting, setIsDetecting] = useState(false);
 
   const handlePlacesChanged = () => {
     const places = searchBoxRef.current?.getPlaces();
@@ -37,14 +38,26 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
       // Use the full formatted address
       const fullAddress = selectedPlace.formatted_address || selectedPlace.name || location;
       onLocationChange(fullAddress);
+      setFilterLocation(fullAddress);
       triggerFilterUpdate(); // Trigger filter update to refresh activities
     }
   };
 
   const handleDetectLocation = async () => {
-    await detectLocation();
-    // After detection, trigger the search
-    handleSearch();
+    try {
+      setIsDetecting(true);
+      await detectLocation();
+      // The location state will be updated by the useLocation hook
+      if (location) {
+        onLocationChange(location);
+        setFilterLocation(location);
+        triggerFilterUpdate(); // Trigger filter update to refresh activities
+      }
+    } catch (error) {
+      console.error("Error detecting location:", error);
+    } finally {
+      setIsDetecting(false);
+    }
   };
 
   return (
@@ -90,8 +103,9 @@ export default function LocationPopup({ onLocationChange }: PopupScreenProps) {
           <Button 
             className="w-full bg-yellow-500 text-black hover:bg-yellow-600" 
             onClick={handleDetectLocation}
+            disabled={isDetecting}
           >
-            Detect My Location
+            {isDetecting ? "Detecting..." : "Detect My Location"}
           </Button>
         </div>
       </PopoverContent>
