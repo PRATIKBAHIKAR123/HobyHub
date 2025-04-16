@@ -36,6 +36,7 @@ const personalDetailsSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
+    
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
