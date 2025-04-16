@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
 // import { useRouter } from "next/navigation";
-import { registerVendor, generateLoginOtp, login, createVendorActivity, createVendorClass } from "@/app/services/vendorService";
+import { registerVendor, createVendorActivity, createVendorClass } from "@/app/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
@@ -36,7 +36,7 @@ const personalDetailsSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
-    
+
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
@@ -301,7 +301,7 @@ export default function RegistrationForm() {
 
   const {
     register: registerInstitute,
-    handleSubmit: handleSubmitInstitute,
+    // handleSubmit: handleSubmitInstitute,
     setValue: setValueInstitute,
     watch: watchInstitute,
     formState: { errors: errorsInstitute },
@@ -371,21 +371,6 @@ export default function RegistrationForm() {
       setImages(JSON.parse(savedImages));
     }
   }, [setValuePersonal, setValueInstitute, setCourses, setValueClass, setValueCourse]);
-
-  // Save class details to localStorage
-  useEffect(() => {
-    localStorage.setItem("classDetails", JSON.stringify(courses));
-  }, [courses]);
-
-  // Save course details to localStorage
-  useEffect(() => {
-    localStorage.setItem("corseDetails", JSON.stringify(courses));
-  }, [courses]);
-
-  // Save contacts to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("contacts", JSON.stringify(contacts));
-  }, [contacts]);
 
   // Extract complex expressions
   const courseCategory = watchCourse("category");
@@ -466,15 +451,6 @@ export default function RegistrationForm() {
     };
   }, []);
 
-  // Save locations to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('locations', JSON.stringify(locations));
-    } catch (error) {
-      console.error('Error saving locations to localStorage:', error);
-    }
-  }, [locations]);
-
   // Function to handle new location submission
   const handleLocationSubmit = (locationData: LocationData) => {
     setLocations(prev => [...prev, locationData]);
@@ -490,7 +466,7 @@ export default function RegistrationForm() {
     if (files.length > 0) {
       // Store the actual File objects
       setImages(files);
-      
+
       // Create URLs for preview only
       const newImageUrls = files.map(file => URL.createObjectURL(file));
       setImageUrls([...imageUrls, ...newImageUrls]);
@@ -517,18 +493,9 @@ export default function RegistrationForm() {
       if (response) {
         // Store only the API response in localStorage
         localStorage.setItem('vendorResponse', JSON.stringify(response));
-        
+
         // Store the vendor ID in state
         setVendorId(response.vendorId.toString());
-
-        // Generate OTP for login
-        await generateLoginOtp(response.username);
-
-        // Login with OTP
-        const loginResponse = await login(response.username, '1234');
-        
-        // Store login response in localStorage
-        localStorage.setItem('loginResponse', JSON.stringify(loginResponse));
 
         setCompletedSections(prev => ({ ...prev, personalDetails: true }));
         setActiveAccordion("item-1");
@@ -544,99 +511,11 @@ export default function RegistrationForm() {
     }
   };
 
-  // Save institute details to API and proceed to the next section
-  const saveInstituteDetails = async (data: any) => {
+  // Modify the saveClassDetails function
+  const saveClassDetails = async () => {
     try {
       setIsLoading(true);
-
-      // Get vendor ID from localStorage
-      const vendorResponse = localStorage.getItem('vendorResponse');
-      if (!vendorResponse) {
-        throw new Error('Vendor ID not found');
-      }
-
-      const { vendorId } = JSON.parse(vendorResponse);
-
-      // Check if there are any images uploaded
-      if (images.length === 0) {
-        toast.error("Please upload at least one image");
-        return;
-      }
-
-      // Validate required fields
-      if (!data.programTitle) {
-        toast.error("Program title is required");
-        return;
-      }
-
-      // Create FormData object
-      const formData = new FormData();
-      
-      // Add the image file directly
-      formData.append('thumbnailImageFile', images[0]); // Use the first image as thumbnail
-
-      // Add all other fields
-      formData.append('vendorId', vendorId);
-      formData.append('type', 'INSTITUTE');
-      formData.append('categoryId', '0');
-      formData.append('title', data.programTitle);
-      formData.append('companyName', data.instituteName);
-      formData.append('description', data.introduction || '');
-      formData.append('sinceYear', data.since || '');
-      formData.append('gstNo', data.gstNo || '');
-      formData.append('address', data.address || '');
-      formData.append('road', data.road || '');
-      formData.append('area', data.area || '');
-      formData.append('state', data.state || '');
-      formData.append('city', data.city || '');
-      formData.append('pincode', data.pincode || '');
-      formData.append('country', data.country || '');
-      formData.append('longitude', data.longitude || '');
-      formData.append('latitute', data.latitude || '');
-      formData.append('purchaseMaterialIds', '');
-      formData.append('itemCarryText', '');
-      formData.append('tutorFirstName', data.firstName || '');
-      formData.append('tutorLastName', data.lastName || '');
-      formData.append('tutorEmailID', data.email || '');
-      formData.append('tutorCountryCode', '+91');
-      formData.append('tutorPhoneNo', data.phoneNumber || '');
-      formData.append('whatsappCountryCode', '+91');
-      formData.append('whatsappNo', data.whatsappNumber || '');
-      formData.append('tutorIntro', data.contactIntroduction || '');
-      formData.append('website', '');
-      formData.append('classLevel', '');
-      formData.append('instagramAcc', '');
-      formData.append('youtubeAcc', '');
-      formData.append('createdDate', new Date().toISOString());
-      formData.append('modifiedDate', new Date().toISOString());
-
-      // Call vendor activity creation API with FormData
-      const response = await createVendorActivity(formData);
-
-      if (response) {
-        // Store activity response in localStorage
-        localStorage.setItem('activityResponse', JSON.stringify(response));
-        
-        setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
-        setActiveAccordion("item-2");
-        toast.success("Institute details saved successfully!");
-      } else {
-        toast.error("Failed to save institute details. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error saving institute details:", error);
-      toast.error("An error occurred while saving institute details. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Save class details to localStorage
-  const saveClassDetails = async (formData: any) => {
-    try {
-      debugger
-      setIsLoading(true);
-      console.log('Starting class details save...', formData);
+      const data = watchClass();
 
       // Get vendor ID from localStorage
       const vendorResponse = localStorage.getItem('vendorResponse');
@@ -652,76 +531,53 @@ export default function RegistrationForm() {
         return;
       }
 
-      // Validate required fields
-      if (!formData.className) {
-        toast.error('Class name is required');
-        return;
-      }
-      if (!formData.category) {
-        toast.error('Category is required');
-        return;
-      }
-      if (!formData.time) {
-        toast.error('Time is required');
-        return;
-      }
-      if (!formData.weekdays || formData.weekdays.length === 0) {
-        toast.error('Please select at least one weekday');
-        return;
-      }
-
       const parsedVendorResponse = JSON.parse(vendorResponse);
       const parsedActivityResponse = JSON.parse(activityResponse);
-
-      console.log('Vendor Response:', parsedVendorResponse);
-      console.log('Activity Response:', parsedActivityResponse);
-
-      // Get access token from localStorage
-      const loginResponse = localStorage.getItem('loginResponse');
-      if (!loginResponse) {
-        toast.error('Not logged in. Please log in first.');
-        return;
-      }
-
-      const { AccessToken } = JSON.parse(loginResponse);
-      if (!AccessToken) {
-        toast.error('Access token not found. Please log in again.');
-        return;
-      }
 
       // Prepare vendor class data
       const classData: VendorClassData = {
         id: 0,
         vendorId: parseInt(parsedVendorResponse.vendorId),
-        activityId: parseInt(parsedActivityResponse.id),
-        subCategoryID: formData.subCategory || '',
-        title: formData.className,
-        timingsFrom: formData.time === 'morning' ? '09:00' : 
-                    formData.time === 'afternoon' ? '13:00' : 
-                    formData.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: formData.time === 'morning' ? '12:00' : 
-                  formData.time === 'afternoon' ? '16:00' : 
-                  formData.time === 'evening' ? '20:00' : '12:00',
-        day: formData.weekdays.join(','),
+        activityId: parseInt(parsedActivityResponse),
+        subCategoryID: data.subCategory || '',
+        title: data.className || '',
+        timingsFrom: data.time === 'morning' ? '09:00' :
+          data.time === 'afternoon' ? '13:00' :
+            data.time === 'evening' ? '17:00' : '09:00',
+        timingsTo: data.time === 'morning' ? '12:00' :
+          data.time === 'afternoon' ? '16:00' :
+            data.time === 'evening' ? '20:00' : '12:00',
+        day: Array.isArray(data.weekdays) && data.weekdays.length > 0 ? data.weekdays.join(',') : '',
         type: "REGULAR",
-        ageFrom: parseInt(formData.fromage) || 0,
-        ageTo: parseInt(formData.toage) || 0,
+        ageFrom: parseInt(data.fromage?.toString() || '0'),
+        ageTo: parseInt(data.toage?.toString() || '0'),
         sessionFrom: 1,
-        sessionTo: parseInt(formData.noOfSessions) || 1,
-        gender: formData.gender || 'both',
-        price: parseInt(formData.cost) || 0
+        sessionTo: parseInt(data.noOfSessions?.toString() || '1'),
+        gender: data.gender || 'both',
+        price: parseInt(data.cost?.toString() || '0')
       };
 
-      console.log('Class Data to be sent:', classData);
+      console.log('Sending class data to API:', classData);
 
       // Call vendor class creation API
-      const response = await createVendorClass([classData]);
-      console.log('API Response:', response);
+      const response = await fetch('https://api.hobyhub.com/api/1/vendor/vendor-class/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([classData])
+      });
 
-      if (response) {
-        const updatedClasses = [...courses, { ...formData }];
-        setCourses(updatedClasses);
-        localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create vendor class');
+      }
+
+      const responseData = await response.json();
+      console.log('API Response:', responseData);
+
+      if (responseData.message === 'Classes added successfully') {
+        setCourses(prev => [...prev, { ...data }]);
         setCompletedSections(prev => ({ ...prev, classDetails: true }));
         toast.success("Class details saved successfully!");
 
@@ -748,7 +604,7 @@ export default function RegistrationForm() {
       }
     } catch (error) {
       console.error("Error saving class details:", error);
-      toast.error("An error occurred while saving class details. Please try again.");
+      toast.error(error instanceof Error ? error.message : "An error occurred while saving class details. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -776,18 +632,14 @@ export default function RegistrationForm() {
     };
 
     // Update the directory state
-    setDirectory((prev) => [...prev, newDirectoryItem]);
+    setDirectory([...directory, newDirectoryItem]);
 
-    // Save the directory to localStorage
-    localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
-    
-    // Update courses state directly
+    // Update courses state
     setCourses(prev => [...prev, { ...data }]);
-    localStorage.setItem('corseDetails', JSON.stringify([...courses, { ...data }]));
-    
+
     setCompletedSections(prev => ({ ...prev, classDetails: true }));
     toast.success("Course details saved successfully!");
-    
+
     // Reset form fields
     setValueCourse('className', '');
     setValueCourse('category', '');
@@ -823,7 +675,7 @@ export default function RegistrationForm() {
       formData.append('vendorId', vendorId.toString());
       formData.append('type', 'INSTITUTE');
       formData.append('title', instituteDetails.programTitle);
-      
+
       // Add thumbnail image
       if (images && images.length > 0 && images[0] instanceof File) {
         formData.append('thumbnailImageFile', images[0], images[0].name);
@@ -865,26 +717,23 @@ export default function RegistrationForm() {
 
       // Create vendor activity
       const activityResponse = await createVendorActivity(formData);
-      
+
       // Extract vendor ID from response
-      let extractedVendorId;
-      
-      if (activityResponse && activityResponse.data) {
+      let activityId;
+
+      if (activityResponse) {
         // Try to get vendor ID from response data
-        extractedVendorId = activityResponse.data.vendorId || activityResponse.data.id;
-      } else if (activityResponse) {
-        // Try to get vendor ID directly from response
-        extractedVendorId = activityResponse.vendorId || activityResponse.id;
+        activityId = activityResponse;
       }
 
       // If we have a valid vendor ID, use it
-      if (extractedVendorId) {
-        setVendorId(extractedVendorId.toString());
+      if (activityId) {
+        setVendorId(activityId.toString());
       } else {
         // Use the API response status code as fallback
-        setVendorId(activityResponse?.status?.toString() || "235");
+        setVendorId(activityResponse?.status?.toString());
       }
-
+      localStorage.setItem('activityResponse', activityId);
       // Mark institute details as completed
       setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
 
@@ -928,13 +777,10 @@ export default function RegistrationForm() {
       const apiError = error as ApiError;
       if (apiError.response?.data) {
         const responseData = apiError.response.data;
-        
+
         // Try to get vendor ID from error response
-        const extractedVendorId = responseData.vendorId || 
-                        responseData.data?.vendorId || 
-                        responseData.id ||
-                        "235"; // Use status code as fallback
-        
+        const extractedVendorId = responseData; // Use status code as fallback
+
         setVendorId(extractedVendorId.toString());
         setIsSuccessPopupOpen(true);
         toast.success("Registration completed successfully!");
@@ -1134,7 +980,7 @@ export default function RegistrationForm() {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <form onSubmit={handleSubmitInstitute(saveInstituteDetails)}>
+                <form>
                   <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -1415,7 +1261,7 @@ export default function RegistrationForm() {
                     <h3 className="text-[#05244f] text-lg font-semibold mb-4">Location Details</h3>
                     <div className="border border-[#05244f] rounded-md p-4">
                       <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Location Details</h3>
-                      
+
                       {/* Location Fields */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
@@ -1578,9 +1424,9 @@ export default function RegistrationForm() {
           </AccordionItem>
 
           {/* Remove the Additional Information AccordionItem since we moved it */}
-          
+
           {/* Class Details Button */}
-         <Button
+          <Button
             variant="outline"
             className="border-[#05244f] mt-4"
             onClick={() => setIsOpen(true)}
@@ -1598,7 +1444,7 @@ export default function RegistrationForm() {
 
           {/* Class Details Section */}
           {showClassFields && (
-            <AccordionItem value="item-4" >
+            <AccordionItem value="item-4">
               <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
                 <AccordionTrigger onClick={() => setActiveAccordion('item-4')}>
                   <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
@@ -1813,7 +1659,7 @@ export default function RegistrationForm() {
                     </div>
 
                     <Button
-                      type="submit"
+                      onClick={saveClassDetails}
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >

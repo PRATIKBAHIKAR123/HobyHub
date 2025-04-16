@@ -15,6 +15,7 @@ export interface VendorRegistrationData {
 
 export interface VendorRegistrationResponse {
   username: string;
+  id: number;
 }
 
 export interface LoginResponse {
@@ -114,17 +115,13 @@ export interface VendorClassData {
   price: number;
 }
 
-// Static vendor ID counter starting from 25
-let currentVendorId = 25;
-
 export const registerVendor = async (data: VendorRegistrationData): Promise<{ username: string; vendorId: number }> => {
   try {
     const response = await axios.post<VendorRegistrationResponse>(`${API_BASE_URL}/vendor/register`, data);
-    // Get the current vendor ID and increment for next time
-    const vendorId = currentVendorId++;
+
     return {
       username: response.data.username,
-      vendorId
+      vendorId: response.data.id
     };
   } catch (error) {
     console.error('Error registering vendor:', error);
@@ -157,17 +154,9 @@ export const login = async (username: string, loginOtp: string): Promise<LoginRe
 
 export const createVendorActivity = async (data: FormData) => {
   try {
-    if (!accessToken) {
-      throw new Error('No access token available');
-    }
 
     const response = await fetch('https://api.hobyhub.com/api/1/vendor/activity/create', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        // Don't set Content-Type header when sending FormData
-        // browser will set it automatically with the correct boundary
-      },
       body: data,
     });
 
