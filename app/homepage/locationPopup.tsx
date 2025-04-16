@@ -15,7 +15,7 @@ interface PopupScreenProps {
 }
 
 export default function LocationPopup({onLocationChange}: PopupScreenProps) {
-  const { location, setLocation, detectLocation } = useLocation();
+  const { location, setLocation, detectLocation, coordinates, setCoordinates } = useLocation();
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const { triggerFilterUpdate, setLocation: setFilterLocation } = useFilter();
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
@@ -30,13 +30,21 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
       // Get the most specific location name available
       const locationName = place.formatted_address || place.name || "";
       setLocation(locationName);
+      
+      // Also update coordinates if available
+      if (place.geometry?.location) {
+        setCoordinates({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        });
+      }
     }
   };
 
   const handleSearch = () => {
     if (selectedPlace) {
       // Use the full formatted address
-      const fullAddress = selectedPlace.formatted_address || selectedPlace.name || location;
+      const fullAddress = selectedPlace.formatted_address || selectedPlace.name || (typeof location === 'string' ? location : '');
       onLocationChange(fullAddress);
       setFilterLocation(fullAddress);
       triggerFilterUpdate(); // Trigger filter update to refresh activities
@@ -49,8 +57,10 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
       await detectLocation();
       // The location state will be updated by the useLocation hook
       if (location) {
-        onLocationChange(location);
-        setFilterLocation(location);
+        const locationString = typeof location === 'string' ? location : 
+          coordinates ? `${coordinates.lat},${coordinates.lng}` : '';
+        onLocationChange(locationString);
+        setFilterLocation(locationString);
         triggerFilterUpdate(); // Trigger filter update to refresh activities
       }
     } catch (error) {
@@ -85,7 +95,7 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
             type="text"
             placeholder="Enter location"
             className="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none"
-            value={location}
+            value={typeof location === 'string' ? location : ''}
             onChange={(e) => setLocation(e.target.value)}
           />
         </StandaloneSearchBox>

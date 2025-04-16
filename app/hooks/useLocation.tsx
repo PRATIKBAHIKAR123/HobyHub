@@ -3,10 +3,31 @@ import { useState, useEffect, useCallback } from "react";
 const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
 const DEFAULT_LOCATION = "Pune";
 
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
+type LocationState = Location | string | null;
+
 const useLocation = () => {
-  const [location, setLocation] = useState(DEFAULT_LOCATION);
+  const [location, setLocation] = useState<LocationState>(null);
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [displayLocation, setDisplayLocation] = useState<string>(DEFAULT_LOCATION);
+
+  const getDisplayLocation = (loc: LocationState, coords: {lat: number, lng: number} | null): string => {
+    if (typeof loc === 'string') {
+      return loc;
+    }
+    if (loc && 'latitude' in loc) {
+      return `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`;
+    }
+    if (coords) {
+      return `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`;
+    }
+    return DEFAULT_LOCATION;
+  };
 
   const getAddressFromCoordinates = async (lat: number, lng: number) => {
     try {
@@ -46,23 +67,34 @@ const useLocation = () => {
           addressComponents[1]?.long_name ||
           DEFAULT_LOCATION;
         
-        setLocation(locationName);
+        setLocation({
+          latitude: lat,
+          longitude: lng,
+        });
         setCoordinates({ lat, lng });
+        setDisplayLocation(locationName);
         
         return locationName;
       } else {
-        setLocation(DEFAULT_LOCATION);
+        setLocation(null);
+        setDisplayLocation(DEFAULT_LOCATION);
         return DEFAULT_LOCATION;
       }
     } catch (error) {
       console.error("Error fetching address:", error);
-      setLocation(DEFAULT_LOCATION);
+      setLocation(null);
+      setDisplayLocation(DEFAULT_LOCATION);
       return DEFAULT_LOCATION;
     }
   };
 
+  // Update display location whenever location or coordinates change
+  useEffect(() => {
+    setDisplayLocation(getDisplayLocation(location, coordinates));
+  }, [location, coordinates]);
+
   const detectLocation = useCallback(() => {
-    if (isDetecting) return; // Prevent multiple simultaneous detection attempts
+    if (isDetecting) return;
     
     setIsDetecting(true);
     if (navigator.geolocation) {
@@ -76,20 +108,34 @@ const useLocation = () => {
         (error) => {
           console.error("Geolocation error:", error);
           setIsDetecting(false);
-          setLocation(DEFAULT_LOCATION);
+          setLocation(null);
+          setDisplayLocation(DEFAULT_LOCATION);
         },
-        { timeout: 5000, enableHighAccuracy: true } // Reduced timeout to 5 seconds
+        { timeout: 5000, enableHighAccuracy: true }
       );
     } else {
       setIsDetecting(false);
-      setLocation(DEFAULT_LOCATION);
+      setLocation(null);
+      setDisplayLocation(DEFAULT_LOCATION);
     }
-  }, [isDetecting]); // Only recreate when isDetecting changes
+  }, [isDetecting]);
 
   // Auto-detect location on startup, but only once
   useEffect(() => {
-    detectLocation();
-  }, []); // Empty dependency array to run only once on mount
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  }, [setLocation]); // Add setLocation as a dependency
 
   return { 
     location, 
@@ -98,7 +144,8 @@ const useLocation = () => {
     isDetecting,
     coordinates,
     setCoordinates,
-    getAddressFromCoordinates
+    getAddressFromCoordinates,
+    displayLocation
   };
 };
 

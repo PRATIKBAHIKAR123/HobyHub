@@ -3,7 +3,6 @@
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 interface SuccessPopupScreenProps {
   open: boolean;
@@ -12,8 +11,6 @@ interface SuccessPopupScreenProps {
 }
 
 export default function SuccessPopupScreen({ open, setOpen, vendorId }: SuccessPopupScreenProps) {
-  const router = useRouter();
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogOverlay className="bg-[#003161] opacity-[50%] fixed inset-0" />
@@ -49,10 +46,7 @@ export default function SuccessPopupScreen({ open, setOpen, vendorId }: SuccessP
 
           {/* Okay Button */}
           <Button
-            onClick={() => {
-              setOpen(false);
-              router.push("/auth/login");
-            }}
+            onClick={() => setOpen(false)}
             className="w-32 bg-[#05244f] text-white hover:bg-[#03162f]"
           >
             Okay

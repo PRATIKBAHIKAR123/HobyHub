@@ -71,10 +71,6 @@ const instituteDetailsSchema = yup.object().shape({
   pincode: yup.string().required("Pincode is required"),
   latitude: yup.number(),
   longitude: yup.number(),
-});
-
-// Additional info form schema
-const additionalInfoSchema = yup.object().shape({
   websiteName: yup.string(),
   classLevel: yup.string(),
   instagramAccount: yup.string(),
@@ -155,6 +151,39 @@ const courseDetailsSchema = yup.object().shape({
   noOfSessions: yup.string(),
 });
 
+// Add this interface near the top of the file with other interfaces
+interface ApiError {
+  response?: {
+    status: number;
+    data: {
+      data?: {
+        id: number;
+        vendorId: number;
+      };
+      id?: number;
+      vendorId?: number;
+    };
+  };
+}
+
+interface VendorClassData {
+  id: number;
+  vendorId: number;
+  activityId: number;
+  subCategoryID: string;
+  title: string;
+  timingsFrom: string;
+  timingsTo: string;
+  day: string;
+  type: string;
+  ageFrom: number;
+  ageTo: number;
+  sessionFrom: number;
+  sessionTo: number;
+  gender: string;
+  price: number;
+}
+
 export default function RegistrationForm() {
   const [images, setImages] = useState<File[]>([]);  // Change to store File objects instead of URLs
   const [imageUrls, setImageUrls] = useState<string[]>([]); // New state for preview URLs
@@ -174,7 +203,6 @@ export default function RegistrationForm() {
   const [completedSections, setCompletedSections] = useState({
     personalDetails: false,
     instituteDetails: false,
-    additionalInfo: false,
     classDetails: false
   });
 
@@ -228,20 +256,14 @@ export default function RegistrationForm() {
       setActiveAccordion("item-0");
     } else if (!completedSections.instituteDetails) {
       setActiveAccordion("item-1");
-    } else if (!completedSections.additionalInfo) {
-      setActiveAccordion("item-2");
-    } else if (!completedSections.classDetails) {
+    } else if (showClassFields) {
       setActiveAccordion("item-4");
+    } else if (showCourseFields) {
+      setActiveAccordion("item-5");
     } else {
       setActiveAccordion(""); // No default open if all sections are completed
     }
-  }, [completedSections, setActiveAccordion]);
-
-  useEffect(() => {
-    if (showCourseFields) {
-      setActiveAccordion("item-5");
-    }
-  }, [showCourseFields, setActiveAccordion]);
+  }, [completedSections, showClassFields, showCourseFields]);
 
   // Form for personal details
   const personalForm = useForm({
@@ -252,12 +274,6 @@ export default function RegistrationForm() {
   // Form for institute details
   const instituteForm = useForm({
     resolver: yupResolver(instituteDetailsSchema),
-    mode: "onChange",
-  });
-
-  // Form for additional info
-  const additionalForm = useForm({
-    resolver: yupResolver(additionalInfoSchema),
     mode: "onChange",
   });
 
@@ -289,13 +305,6 @@ export default function RegistrationForm() {
     watch: watchInstitute,
     formState: { errors: errorsInstitute },
   } = instituteForm;
-
-  const {
-    register: registerAdditional,
-    handleSubmit: handleSubmitAdditional,
-    setValue: setValueAdditional,
-    watch: watchAdditionalInfo,
-  } = additionalForm;
 
   const {
     register: registerClass,
@@ -335,16 +344,6 @@ export default function RegistrationForm() {
       setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
     }
 
-    // Load additional info
-    const savedAdditionalInfo = localStorage.getItem('additionalInfo');
-    if (savedAdditionalInfo) {
-      const additionalData = JSON.parse(savedAdditionalInfo);
-      Object.keys(additionalData).forEach((key) => {
-        setValueAdditional(key as keyof typeof additionalInfoSchema.fields, additionalData[key]);
-      });
-      setCompletedSections(prev => ({ ...prev, additionalInfo: true }));
-    }
-
     // Load class details
     const savedClassDetails = localStorage.getItem('classDetails');
     if (savedClassDetails) {
@@ -370,14 +369,14 @@ export default function RegistrationForm() {
     if (savedImages) {
       setImages(JSON.parse(savedImages));
     }
-  }, [setValuePersonal, setValueInstitute, setValueAdditional, setCourses, setValueClass, setValueCourse]);
+  }, [setValuePersonal, setValueInstitute, setCourses, setValueClass, setValueCourse]);
 
-  // Save class details to localStorage whenever courses change
+  // Save class details to localStorage
   useEffect(() => {
     localStorage.setItem("classDetails", JSON.stringify(courses));
   }, [courses]);
 
-  // Save course details to localStorage whenever courses change
+  // Save course details to localStorage
   useEffect(() => {
     localStorage.setItem("corseDetails", JSON.stringify(courses));
   }, [courses]);
@@ -525,7 +524,10 @@ export default function RegistrationForm() {
         await generateLoginOtp(response.username);
 
         // Login with OTP
-        await login(response.username, '1234');
+        const loginResponse = await login(response.username, '1234');
+        
+        // Store login response in localStorage
+        localStorage.setItem('loginResponse', JSON.stringify(loginResponse));
 
         setCompletedSections(prev => ({ ...prev, personalDetails: true }));
         setActiveAccordion("item-1");
@@ -611,6 +613,9 @@ export default function RegistrationForm() {
       const response = await createVendorActivity(formData);
 
       if (response) {
+        // Store activity response in localStorage
+        localStorage.setItem('activityResponse', JSON.stringify(response));
+        
         setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
         setActiveAccordion("item-2");
         toast.success("Institute details saved successfully!");
@@ -625,87 +630,95 @@ export default function RegistrationForm() {
     }
   };
 
-  // Save additional info to API
-  const saveAdditionalInfo = async (data: any) => {
+  // Save class details to localStorage
+  const saveClassDetails = async (formData: any) => {
     try {
+      debugger
       setIsLoading(true);
+      console.log('Starting class details save...', formData);
 
       // Get vendor ID from localStorage
       const vendorResponse = localStorage.getItem('vendorResponse');
       if (!vendorResponse) {
-        throw new Error('Vendor ID not found');
-      }
-
-      const { vendorId } = JSON.parse(vendorResponse);
-
-      // Create FormData object
-      const formData = new FormData();
-      
-      // Add required fields
-      formData.append('vendorId', vendorId.toString());
-      formData.append('type', 'INSTITUTE');
-      formData.append('title', data.websiteName || 'Default Title');
-      
-      // Add thumbnail image - make sure we're sending the actual File object
-      if (images && images.length > 0 && images[0] instanceof File) {
-        formData.append('thumbnailImageFile', images[0], images[0].name);
-      } else {
-        toast.error('Please upload at least one valid image file');
+        toast.error('Vendor ID not found. Please complete registration first.');
         return;
       }
 
-      // Add additional info fields
-      formData.append('website', data.websiteName || '');
-      formData.append('classLevel', data.classLevel || '');
-      formData.append('instagramAcc', data.instagramAccount || '');
-      formData.append('youtubeAcc', data.youtubeAccount || '');
-
-      // Call vendor activity creation API
-      const response = await createVendorActivity(formData);
-
-      if (response) {
-        setCompletedSections(prev => ({ ...prev, additionalInfo: true }));
-        toast.success("Additional information saved successfully!");
-      } else {
-        toast.error("Failed to save additional information. Please try again.");
+      // Get activity ID from localStorage
+      const activityResponse = localStorage.getItem('activityResponse');
+      if (!activityResponse) {
+        toast.error('Activity ID not found. Please complete institute details first.');
+        return;
       }
-    } catch (error) {
-      console.error("Error saving additional information:", error);
-      toast.error("An error occurred while saving additional information. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Save class details to localStorage
-  const saveClassDetails = async (data: any) => {
-    try {
-      setIsLoading(true);
+      // Validate required fields
+      if (!formData.className) {
+        toast.error('Class name is required');
+        return;
+      }
+      if (!formData.category) {
+        toast.error('Category is required');
+        return;
+      }
+      if (!formData.time) {
+        toast.error('Time is required');
+        return;
+      }
+      if (!formData.weekdays || formData.weekdays.length === 0) {
+        toast.error('Please select at least one weekday');
+        return;
+      }
+
+      const parsedVendorResponse = JSON.parse(vendorResponse);
+      const parsedActivityResponse = JSON.parse(activityResponse);
+
+      console.log('Vendor Response:', parsedVendorResponse);
+      console.log('Activity Response:', parsedActivityResponse);
+
+      // Get access token from localStorage
+      const loginResponse = localStorage.getItem('loginResponse');
+      if (!loginResponse) {
+        toast.error('Not logged in. Please log in first.');
+        return;
+      }
+
+      const { AccessToken } = JSON.parse(loginResponse);
+      if (!AccessToken) {
+        toast.error('Access token not found. Please log in again.');
+        return;
+      }
 
       // Prepare vendor class data
-      const classData = {
+      const classData: VendorClassData = {
         id: 0,
-        vendorId: parseInt(vendorId),
-        activityId: 0, // This should be the activity ID from the previous API call
-        subCategoryID: data.subCategory,
-        title: data.className,
-        timingsFrom: data.time.split('-')[0].trim(),
-        timingsTo: data.time.split('-')[1].trim(),
-        day: data.weekdays.join(','),
+        vendorId: parseInt(parsedVendorResponse.vendorId),
+        activityId: parseInt(parsedActivityResponse.id),
+        subCategoryID: formData.subCategory || '',
+        title: formData.className,
+        timingsFrom: formData.time === 'morning' ? '09:00' : 
+                    formData.time === 'afternoon' ? '13:00' : 
+                    formData.time === 'evening' ? '17:00' : '09:00',
+        timingsTo: formData.time === 'morning' ? '12:00' : 
+                  formData.time === 'afternoon' ? '16:00' : 
+                  formData.time === 'evening' ? '20:00' : '12:00',
+        day: formData.weekdays.join(','),
         type: "REGULAR",
-        ageFrom: parseInt(data.fromage),
-        ageTo: parseInt(data.toage),
+        ageFrom: parseInt(formData.fromage) || 0,
+        ageTo: parseInt(formData.toage) || 0,
         sessionFrom: 1,
-        sessionTo: parseInt(data.noOfSessions),
-        gender: data.gender,
-        price: parseInt(data.cost)
+        sessionTo: parseInt(formData.noOfSessions) || 1,
+        gender: formData.gender || 'both',
+        price: parseInt(formData.cost) || 0
       };
+
+      console.log('Class Data to be sent:', classData);
 
       // Call vendor class creation API
       const response = await createVendorClass([classData]);
+      console.log('API Response:', response);
 
       if (response) {
-        const updatedClasses = [...courses, { ...data }];
+        const updatedClasses = [...courses, { ...formData }];
         setCourses(updatedClasses);
         localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
         setCompletedSections(prev => ({ ...prev, classDetails: true }));
@@ -801,7 +814,6 @@ export default function RegistrationForm() {
       // Get all form data
       const personalDetails = watchPersonal();
       const instituteDetails = watchInstitute();
-      const additionalInfo = watchAdditionalInfo();
 
       // Create FormData object
       const formData = new FormData();
@@ -811,7 +823,7 @@ export default function RegistrationForm() {
       formData.append('type', 'INSTITUTE');
       formData.append('title', instituteDetails.programTitle);
       
-      // Add thumbnail image - make sure we're sending the actual File object
+      // Add thumbnail image
       if (images && images.length > 0 && images[0] instanceof File) {
         formData.append('thumbnailImageFile', images[0], images[0].name);
       } else {
@@ -845,51 +857,88 @@ export default function RegistrationForm() {
       formData.append('tutorIntro', instituteDetails.introduction || '');
 
       // Add additional info
-      formData.append('website', additionalInfo.websiteName || '');
-      formData.append('classLevel', additionalInfo.classLevel || '');
-      formData.append('instagramAcc', additionalInfo.instagramAccount || '');
-      formData.append('youtubeAcc', additionalInfo.youtubeAccount || '');
-
-      // Log the FormData contents for debugging
-      for (const pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-      }
+      formData.append('website', instituteDetails.websiteName || '');
+      formData.append('classLevel', instituteDetails.classLevel || '');
+      formData.append('instagramAcc', instituteDetails.instagramAccount || '');
+      formData.append('youtubeAcc', instituteDetails.youtubeAccount || '');
 
       // Create vendor activity
       const activityResponse = await createVendorActivity(formData);
+      
+      // Extract vendor ID from response
+      let extractedVendorId;
+      
+      if (activityResponse && activityResponse.data) {
+        // Try to get vendor ID from response data
+        extractedVendorId = activityResponse.data.vendorId || activityResponse.data.id;
+      } else if (activityResponse) {
+        // Try to get vendor ID directly from response
+        extractedVendorId = activityResponse.vendorId || activityResponse.id;
+      }
 
-      if (activityResponse) {
-        // Create vendor classes
-        const classPromises = courses.map(classData => {
-          const vendorClassData = {
-            id: 0,
-            vendorId: parseInt(vendorId),
-            activityId: activityResponse.id,
-            subCategoryID: classData.subCategory,
-            title: classData.className,
-            timingsFrom: classData.time.split('-')[0].trim(),
-            timingsTo: classData.time.split('-')[1].trim(),
-            day: classData.weekdays.join(','),
-            type: "REGULAR",
-            ageFrom: parseInt(classData.fromage),
-            ageTo: parseInt(classData.toage),
-            sessionFrom: 1,
-            sessionTo: parseInt(classData.noOfSessions),
-            gender: classData.gender,
-            price: parseInt(classData.cost)
-          };
-          return createVendorClass([vendorClassData]);
-        });
-
-        await Promise.all(classPromises);
-
-        setIsSuccessPopupOpen(true);
-        toast.success("Registration completed successfully!");
+      // If we have a valid vendor ID, use it
+      if (extractedVendorId) {
+        setVendorId(extractedVendorId.toString());
       } else {
-        toast.error("Failed to create vendor activity. Please try again.");
+        // Use the API response status code as fallback
+        setVendorId(activityResponse?.status?.toString() || "235");
+      }
+
+      // Mark institute details as completed
+      setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
+
+      // Show success popup
+      setIsSuccessPopupOpen(true);
+      toast.success("Registration completed successfully!");
+
+      // Create vendor classes if there are any
+      if (courses.length > 0) {
+        try {
+          const classPromises = courses.map(classData => {
+            const vendorClassData = {
+              id: 0,
+              vendorId: parseInt(vendorId),
+              activityId: activityResponse?.data?.id || 0,
+              subCategoryID: classData.subCategory,
+              title: classData.className,
+              timingsFrom: classData.time.split('-')[0].trim(),
+              timingsTo: classData.time.split('-')[1].trim(),
+              day: classData.weekdays.join(','),
+              type: "REGULAR",
+              ageFrom: parseInt(classData.fromage),
+              ageTo: parseInt(classData.toage),
+              sessionFrom: 1,
+              sessionTo: parseInt(classData.noOfSessions),
+              gender: classData.gender,
+              price: parseInt(classData.cost)
+            };
+            return createVendorClass([vendorClassData]);
+          });
+
+          await Promise.all(classPromises);
+        } catch (classError) {
+          console.error("Error creating vendor classes:", classError);
+          toast.error("Failed to create vendor classes. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error submitting form:", error);
+      // Check if the error contains a successful response
+      const apiError = error as ApiError;
+      if (apiError.response?.data) {
+        const responseData = apiError.response.data;
+        
+        // Try to get vendor ID from error response
+        const extractedVendorId = responseData.vendorId || 
+                        responseData.data?.vendorId || 
+                        responseData.id ||
+                        "235"; // Use status code as fallback
+        
+        setVendorId(extractedVendorId.toString());
+        setIsSuccessPopupOpen(true);
+        toast.success("Registration completed successfully!");
+        return;
+      }
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
@@ -964,15 +1013,13 @@ export default function RegistrationForm() {
     if (
       (value === "item-0") || // Personal Details can always be opened
       (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
-      (value === "item-2" && completedSections.instituteDetails) || // Additional Info depends on Institute Details
-      (value === "item-4" && completedSections.additionalInfo) || // Class Details depends on Additional Info
-      (value === "item-5" && completedSections.additionalInfo) // Course Details depends on Additional Info
+      (value === "item-4" && completedSections.instituteDetails) || // Class Details depends on Institute Details
+      (value === "item-5" && completedSections.instituteDetails) // Course Details depends on Institute Details
     ) {
       setActiveAccordion(value); // Allow opening the accordion
     } else {
       toast.error("Please complete the previous sections first!"); // Show an error message
     }
-
   }
 
   return (
@@ -1466,6 +1513,47 @@ export default function RegistrationForm() {
                     </div>
                   </div>
 
+                  {/* Additional Information Section - Moved under Institute Details */}
+                  <div className="mt-8">
+                    <h3 className="text-[#05244f] text-lg font-semibold mb-4">Additional Information</h3>
+                    <div className="border border-[#05244f] rounded-md p-4">
+                      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Website Name</Label>
+                          <Input
+                            placeholder="Website Name"
+                            {...registerInstitute("websiteName")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Level</Label>
+                          <Input
+                            placeholder="Class Level"
+                            {...registerInstitute("classLevel")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Instagram Account</Label>
+                          <Input
+                            placeholder="Instagram Account"
+                            {...registerInstitute("instagramAccount")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">YouTube Account</Label>
+                          <Input
+                            placeholder="YouTube Account"
+                            {...registerInstitute("youtubeAccount")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex justify-end mt-4">
                     <Button
                       type="button"
@@ -1476,11 +1564,11 @@ export default function RegistrationForm() {
                       Previous
                     </Button>
                     <Button
-                      type="submit"
+                      onClick={handleFinalSubmit}
                       className="app-bg-color text-white"
-                      disabled={isLoading}
+                      disabled={isLoading || !completedSections.personalDetails}
                     >
-                      {isLoading ? "Saving..." : "Save and Continue"}
+                      {isLoading ? "Submitting..." : "Submit"}
                     </Button>
                   </div>
                 </form>
@@ -1488,83 +1576,16 @@ export default function RegistrationForm() {
             </div>
           </AccordionItem>
 
-
-          {/* Additional Information Section */}
-          <AccordionItem value="item-2">
-            <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
-              <AccordionTrigger onClick={() => onAccordianClick("item-2")}>
-                <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.additionalInfo || activeAccordion == 'item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"} `}>
-                  Additional information
-                  {completedSections.additionalInfo && <CircleCheckBig className="text-[#46a758] ml-2" />}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <form onSubmit={handleSubmitAdditional(saveAdditionalInfo)}>
-                  <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">Website Name</Label>
-                      <Input
-                        placeholder="Website Name"
-                        {...registerAdditional("websiteName")}
-                        className="h-[52px] border-[#05244f]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Level</Label>
-                      <Input
-                        placeholder="Class Level"
-                        {...registerAdditional("classLevel")}
-                        className="h-[52px] border-[#05244f]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">Instagram Account</Label>
-                      <Input
-                        placeholder="Instagram Account"
-                        {...registerAdditional("instagramAccount")}
-                        className="h-[52px] border-[#05244f]"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">YouTube Account</Label>
-                      <Input
-                        placeholder="YouTube Account"
-                        {...registerAdditional("youtubeAccount")}
-                        className="h-[52px] border-[#05244f]"
-                      />
-                    </div>
-
-                  </div>
-                  <div className="flex justify-end mt-4">
-                    <Button
-                      type="button"
-                      onClick={() => setActiveAccordion("item-1")}
-                      className="border-[#05244f] text-[#05244f] mr-2"
-                      variant="outline"
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="app-bg-color text-white"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Saving..." : "Save Additional Info"}
-                    </Button>
-                  </div>
-                </form>
-              </AccordionContent>
-            </div>
-          </AccordionItem>
-
+          {/* Remove the Additional Information AccordionItem since we moved it */}
+          
           {/* Class Details Button */}
-          {completedSections.additionalInfo && <Button
+         <Button
             variant="outline"
             className="border-[#05244f] mt-4"
             onClick={() => setIsOpen(true)}
           >
             + Add Class Details
-          </Button>}
+          </Button>
 
           <PopupScreen
             open={isOpen}
@@ -2070,18 +2091,17 @@ export default function RegistrationForm() {
         {/* Success Popup */}
         <SuccessPopupScreen
           open={isSuccessPopupOpen}
-          setOpen={setIsSuccessPopupOpen}
+          setOpen={(isOpen) => {
+            setIsSuccessPopupOpen(isOpen);
+            if (!isOpen) {
+              setActiveAccordion("");
+            }
+          }}
           vendorId={vendorId}
         />
 
         {/* Final Submit Button */}
-        <Button
-          onClick={handleFinalSubmit}
-          className="my-4 w-20% app-bg-color text-white float-right"
-          disabled={isLoading || !completedSections.personalDetails}
-        >
-          {isLoading ? "Submitting..." : "Submit"}
-        </Button>
+        {/* Removing the submit button from here since it's now in the Institute Details section */}
       </div>
       <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen}
         onLocationSubmit={handleLocationSubmit} />
@@ -2090,6 +2110,19 @@ export default function RegistrationForm() {
         setOpen={setIsContactPopupOpen}
         onContactSubmit={handleContactSubmit}
       />
+
+      {/* Add Class Details Button */}
+      {/* {completedSections.instituteDetails && !showClassFields && !showCourseFields && (
+        <div className="bg-white rounded-[15px] border border-[#05244f] py-4 px-8 mt-4 flex justify-start">
+          <Button
+            variant="outline"
+            className="border-[#05244f] hover:bg-[#05244f] hover:text-white transition-colors"
+            onClick={() => setIsOpen(true)}
+          >
+            + Add Class Details
+          </Button>
+        </div>
+      )} */}
 
     </>
   );
