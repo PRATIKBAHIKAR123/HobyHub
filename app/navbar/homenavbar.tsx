@@ -355,16 +355,26 @@ const FilterButton = ({ setIsFilterPopupOpen }: FilterButtonProps) => {
 const ProfileDropdown = () => {
     const router = useRouter();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isUser, setIsUser] = useState(true);
 
     useEffect(() => {
         // Check if user is logged in using the correct token key
         const token = localStorage.getItem('token');
         setIsLoggedIn(!!token);
+        checkUserType(); // Check user type on mount
     }, []); // Empty dependency array means this runs once on mount
 
     const handleLogOut = () => {
         // Handle logout logic
     };
+
+   const checkUserType = () => {
+        const user = localStorage.getItem('userData');
+        if (user) {
+            const parsedUser = JSON.parse(user);
+            setIsUser(parsedUser.Role === "Vendor" ? false : true);
+        }
+    }
 
     return (
         <>
@@ -372,7 +382,7 @@ const ProfileDropdown = () => {
             <DropdownMenuSeparator />
             {isLoggedIn ? (
                 <>
-                    <DropdownMenuItem onClick={() => router.push('/profile')} className="hover:cursor-pointer">
+                    <DropdownMenuItem onClick={() => isUser?router.push('/profile'):router.push('/vendor/profile')} className="hover:cursor-pointer">
                         Profile
                     </DropdownMenuItem>
                     <LogOutConfirmation onConfirm={handleLogOut} />
