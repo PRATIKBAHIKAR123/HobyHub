@@ -29,6 +29,7 @@ import { LocationData } from "./locationSelection";
 import { DirectoryItem } from "./directoryList";
 import CostRangeInput from "./costRangeInput";
 import AgeRangeInput from "./ageRangeInput";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -48,6 +49,28 @@ const instituteDetailsSchema = yup.object().shape({
   since: yup.string(),
   gstNo: yup.string(),
   introduction: yup.string(),
+  firstName: yup.string().required("First name is required"),
+  lastName: yup.string().required("Last name is required"),
+  phoneNumber: yup.string().required("Phone number is required"),
+  whatsappNumber: yup.string(),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  experience: yup.string(),
+  contactIntroduction: yup.string(),
+  contactType: yup.object().shape({
+    primary: yup.boolean(),
+    secondary: yup.boolean(),
+    billing: yup.boolean(),
+  }),
+  certifications: yup.mixed().nullable(),
+  address: yup.string().required("Address is required"),
+  landmark: yup.string().required("Landmark is required"),
+  area: yup.string().required("Area is required"),
+  city: yup.string().required("City is required"),
+  state: yup.string(),
+  country: yup.string(),
+  pincode: yup.string().required("Pincode is required"),
+  latitude: yup.number(),
+  longitude: yup.number(),
 });
 
 // Additional info form schema
@@ -133,13 +156,13 @@ const courseDetailsSchema = yup.object().shape({
 });
 
 export default function RegistrationForm() {
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);  // Change to store File objects instead of URLs
+  const [imageUrls, setImageUrls] = useState<string[]>([]); // New state for preview URLs
   const [isInstDetailsSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
   const [showCourseFields, setShowCourseFields] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [editIndexforCourse, setEditIndexforCourse] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
   const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
@@ -155,8 +178,7 @@ export default function RegistrationForm() {
     classDetails: false
   });
 
-  const [classes, setClasses] = useState<any[]>([]);
-  const [course, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
 
   const [contacts, setContacts] = useState<ContactData[]>([]);
   const [locations, setLocations] = useState<LocationData[]>([]);
@@ -326,16 +348,11 @@ export default function RegistrationForm() {
     // Load class details
     const savedClassDetails = localStorage.getItem('classDetails');
     if (savedClassDetails) {
-      console.log('savedClassDetails', savedClassDetails)
       const classData = JSON.parse(savedClassDetails);
-      console.log('classData', classData)
-      setClasses(classData);
-      console.log('classes', classes)
+      setCourses(classData);
       Object.keys(classData).forEach((key) => {
         setValueClass(key as keyof typeof classDetailsSchema.fields, classData[key]);
       });
-      setShowClassFields(false);
-      // setCompletedSections(prev => ({...prev, classDetails: true}));    
     }
 
     // Load course details
@@ -346,23 +363,33 @@ export default function RegistrationForm() {
       Object.keys(courseData).forEach((key) => {
         setValueCourse(key as keyof typeof courseDetailsSchema.fields, courseData[key]);
       });
-      setShowCourseFields(false);
-      // setCompletedSections(prev => ({...prev, classDetails: true}));    
     }
+
     // Load saved images
     const savedImages = localStorage.getItem('images');
     if (savedImages) {
       setImages(JSON.parse(savedImages));
     }
-  }, [setValuePersonal, setValueInstitute, setValueAdditional, setClasses, setValueClass, setCourses, setValueCourse]);
+  }, [setValuePersonal, setValueInstitute, setValueAdditional, setCourses, setValueClass, setValueCourse]);
+
+  // Save class details to localStorage whenever courses change
+  useEffect(() => {
+    localStorage.setItem("classDetails", JSON.stringify(courses));
+  }, [courses]);
+
+  // Save course details to localStorage whenever courses change
+  useEffect(() => {
+    localStorage.setItem("corseDetails", JSON.stringify(courses));
+  }, [courses]);
+
+  // Save contacts to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
 
   // Extract complex expressions
   const courseCategory = watchCourse("category");
   const classCategory = watchClass("category");
-
-  useEffect(() => {
-    localStorage.setItem("classDetails", JSON.stringify(classes));
-  }, [classes]);
 
   useEffect(() => {
     const selectedCategory = categories.find(
@@ -388,34 +415,10 @@ export default function RegistrationForm() {
     }
   }, [classCategory, categories, setValueClass]);
 
-  useEffect(() => {
-    localStorage.setItem("corseDetails", JSON.stringify(course));
-  }, [course]);
-
-  useEffect(() => {
-    localStorage.setItem("contacts", JSON.stringify(contacts));
-  }, [contacts]);
-
-
-  // Save contacts to localStorage whenever they change
-  useEffect(() => {
-    try {
-
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-    } catch (error) {
-      console.error('Error saving contacts to localStorage:', error);
-    }
-  }, [contacts]);
-
   // Function to handle new contact submission
   const handleContactSubmit = (contactData: ContactData) => {
     setContacts(prev => [...prev, contactData]);
   };
-
-  // Function to handle contact deletion
-  // const handleDeleteContact = (id: string) => {
-  //   setContacts(prev => prev.filter(contact => contact.id !== id));
-  // };
 
   // Load locations from localStorage on initial render
   useEffect(() => {
@@ -477,58 +480,22 @@ export default function RegistrationForm() {
     setLocations(prev => [...prev, locationData]);
   };
 
-  // // Function to handle location deletion
-  // const handleDeleteLocation = (id: string) => {
-  //   setLocations(prev => prev.filter(location => location.id !== id));
-  // };
-
-
   const handleDeleteClass = (index: number) => {
     // Remove the class at the specified index
-    const updatedClasses = classes.filter((_, i) => i !== index);
-    setClasses(updatedClasses); // Update state
-  };
-
-  const handleDeleteCourse = (index: number) => {
-    // Remove the class at the specified index
-    const updatedClasses = course.filter((_, i) => i !== index);
-    setCourses(updatedClasses); // Update state
+    setCourses(prev => prev.filter((item: any, i: number) => i !== index));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from((event.target as HTMLInputElement)?.files || []);
-    const newImages = files.map((file) => URL.createObjectURL(file as Blob));
-    const updatedImages = [...images, ...newImages];
-    setImages(updatedImages);
-
-    // Save images to localStorage
-    localStorage.setItem('images', JSON.stringify(updatedImages));
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      // Store the actual File objects
+      setImages(files);
+      
+      // Create URLs for preview only
+      const newImageUrls = files.map(file => URL.createObjectURL(file));
+      setImageUrls([...imageUrls, ...newImageUrls]);
+    }
   };
-
-  // const savePersonalDetails = (data: unknown) => {
-  //   localStorage.setItem('personalDetails', JSON.stringify(data));
-  //   setCompletedSections(prev => ({...prev, personalDetails: true}));
-  //   setActiveAccordion("item-1");
-  //   toast.success("Personal details saved successfully!");
-  // };
-
-  // Save institute details to localStorage and proceed to the next section
-  // const saveInstituteDetails = (data: unknown) => {
-  //   setisInstDetailsSubmitted(true);
-  //   if (images.length === 0) {
-  //     return;
-  //   }
-  //   // Save images data with institute details
-  //   const instituteData = {
-  //     ...(typeof data === 'object' && data !== null ? data : {}),
-  //     images: images
-  //   };
-  //   localStorage.setItem('instituteDetails', JSON.stringify(instituteData));
-  //   setCompletedSections(prev => ({...prev, instituteDetails: true}));
-  //   setActiveAccordion("item-2");
-  //   toast.success("Institute details saved successfully!");
-  //   setisInstDetailsSubmitted(false);
-  // };
 
   // Save personal details to localStorage and proceed to the next section
   const savePersonalDetails = async (data: any) => {
@@ -548,9 +515,11 @@ export default function RegistrationForm() {
       const response = await registerVendor(vendorData);
 
       if (response) {
-        // Store the vendor ID in state and localStorage
+        // Store only the API response in localStorage
+        localStorage.setItem('vendorResponse', JSON.stringify(response));
+        
+        // Store the vendor ID in state
         setVendorId(response.vendorId.toString());
-        localStorage.setItem('vendorId', response.vendorId.toString());
 
         // Generate OTP for login
         await generateLoginOtp(response.username);
@@ -558,8 +527,6 @@ export default function RegistrationForm() {
         // Login with OTP
         await login(response.username, '1234');
 
-        // Store personal details
-        localStorage.setItem('personalDetails', JSON.stringify(data));
         setCompletedSections(prev => ({ ...prev, personalDetails: true }));
         setActiveAccordion("item-1");
         toast.success(`Personal details saved successfully!`);
@@ -574,16 +541,82 @@ export default function RegistrationForm() {
     }
   };
 
-  // Save institute details to localStorage and proceed to the next section
+  // Save institute details to API and proceed to the next section
   const saveInstituteDetails = async (data: any) => {
     try {
       setIsLoading(true);
 
-      // Store institute details in localStorage
-      localStorage.setItem('instituteDetails', JSON.stringify(data));
-      setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
-      setActiveAccordion("item-2");
-      toast.success("Institute details saved successfully!");
+      // Get vendor ID from localStorage
+      const vendorResponse = localStorage.getItem('vendorResponse');
+      if (!vendorResponse) {
+        throw new Error('Vendor ID not found');
+      }
+
+      const { vendorId } = JSON.parse(vendorResponse);
+
+      // Check if there are any images uploaded
+      if (images.length === 0) {
+        toast.error("Please upload at least one image");
+        return;
+      }
+
+      // Validate required fields
+      if (!data.programTitle) {
+        toast.error("Program title is required");
+        return;
+      }
+
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Add the image file directly
+      formData.append('thumbnailImageFile', images[0]); // Use the first image as thumbnail
+
+      // Add all other fields
+      formData.append('vendorId', vendorId);
+      formData.append('type', 'INSTITUTE');
+      formData.append('categoryId', '0');
+      formData.append('title', data.programTitle);
+      formData.append('companyName', data.instituteName);
+      formData.append('description', data.introduction || '');
+      formData.append('sinceYear', data.since || '');
+      formData.append('gstNo', data.gstNo || '');
+      formData.append('address', data.address || '');
+      formData.append('road', data.road || '');
+      formData.append('area', data.area || '');
+      formData.append('state', data.state || '');
+      formData.append('city', data.city || '');
+      formData.append('pincode', data.pincode || '');
+      formData.append('country', data.country || '');
+      formData.append('longitude', data.longitude || '');
+      formData.append('latitute', data.latitude || '');
+      formData.append('purchaseMaterialIds', '');
+      formData.append('itemCarryText', '');
+      formData.append('tutorFirstName', data.firstName || '');
+      formData.append('tutorLastName', data.lastName || '');
+      formData.append('tutorEmailID', data.email || '');
+      formData.append('tutorCountryCode', '+91');
+      formData.append('tutorPhoneNo', data.phoneNumber || '');
+      formData.append('whatsappCountryCode', '+91');
+      formData.append('whatsappNo', data.whatsappNumber || '');
+      formData.append('tutorIntro', data.contactIntroduction || '');
+      formData.append('website', '');
+      formData.append('classLevel', '');
+      formData.append('instagramAcc', '');
+      formData.append('youtubeAcc', '');
+      formData.append('createdDate', new Date().toISOString());
+      formData.append('modifiedDate', new Date().toISOString());
+
+      // Call vendor activity creation API with FormData
+      const response = await createVendorActivity(formData);
+
+      if (response) {
+        setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
+        setActiveAccordion("item-2");
+        toast.success("Institute details saved successfully!");
+      } else {
+        toast.error("Failed to save institute details. Please try again.");
+      }
     } catch (error) {
       console.error("Error saving institute details:", error);
       toast.error("An error occurred while saving institute details. Please try again.");
@@ -592,75 +625,57 @@ export default function RegistrationForm() {
     }
   };
 
-  // Save additional info to localStorage
-  const saveAdditionalInfo = (data: unknown) => {
-    localStorage.setItem('additionalInfo', JSON.stringify(data));
-    setCompletedSections(prev => ({ ...prev, additionalInfo: true }));
-    toast.success("Additional information saved successfully!");
+  // Save additional info to API
+  const saveAdditionalInfo = async (data: any) => {
+    try {
+      setIsLoading(true);
+
+      // Get vendor ID from localStorage
+      const vendorResponse = localStorage.getItem('vendorResponse');
+      if (!vendorResponse) {
+        throw new Error('Vendor ID not found');
+      }
+
+      const { vendorId } = JSON.parse(vendorResponse);
+
+      // Create FormData object
+      const formData = new FormData();
+      
+      // Add required fields
+      formData.append('vendorId', vendorId.toString());
+      formData.append('type', 'INSTITUTE');
+      formData.append('title', data.websiteName || 'Default Title');
+      
+      // Add thumbnail image - make sure we're sending the actual File object
+      if (images && images.length > 0 && images[0] instanceof File) {
+        formData.append('thumbnailImageFile', images[0], images[0].name);
+      } else {
+        toast.error('Please upload at least one valid image file');
+        return;
+      }
+
+      // Add additional info fields
+      formData.append('website', data.websiteName || '');
+      formData.append('classLevel', data.classLevel || '');
+      formData.append('instagramAcc', data.instagramAccount || '');
+      formData.append('youtubeAcc', data.youtubeAccount || '');
+
+      // Call vendor activity creation API
+      const response = await createVendorActivity(formData);
+
+      if (response) {
+        setCompletedSections(prev => ({ ...prev, additionalInfo: true }));
+        toast.success("Additional information saved successfully!");
+      } else {
+        toast.error("Failed to save additional information. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving additional information:", error);
+      toast.error("An error occurred while saving additional information. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  // Save class details to localStorage
-  // const saveClassDetails = (data: any) => {
-  //   // Create a new array with the existing classes plus the new one
-  //   const selectedAddress = locations.find((item) => item.area === data.location);
-  //   const selectedContact = contacts.find(
-  //     (item) => item.firstName + " " + item.lastName === data.contact
-  //   );
-
-  //   const newDirectoryItem: DirectoryItem = {
-  //     address: selectedAddress?.area || "",
-  //     isPrimary: selectedContact?.contactType.primary?'Yes':'No', // Example value, update as needed
-  //     firstName: selectedContact?.firstName || "",
-  //     lastName: selectedContact?.lastName || "",
-  //     phoneNumber: selectedContact?.phoneNumber || "",
-  //     whatsappNumber: selectedContact?.whatsappNumber || "",
-  //     email: selectedContact?.email || "",
-  //     contactType: {
-  //       primary: false,
-  //       secondary: false,
-  //       billing: false,
-  //     },
-  //   };
-
-  //   // Update the directory state
-  //   setDirectory((prev) => [...prev, newDirectoryItem]);
-
-  //   // Save the directory to localStorage
-  //   localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
-
-
-  //   const updatedClasses = [
-  //     ...classes,{...data},
-  //   ];
-
-  //   // Update the state
-  //   setClasses(updatedClasses);
-
-  //   // Save to localStorage
-  //   localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
-
-  //   setCompletedSections(prev => ({...prev, classDetails: true}));
-  //   toast.success("Class details saved successfully!");
-
-  //   // Reset the form and hide the class fields
-  //   setValueClass('className', '');
-  //   setValueClass('category', '');
-  //   setValueClass('subCategory', '');
-  //   setValueClass('location', '');
-  //   setValueClass('contact', '');
-  //   setValueClass('time', '');
-  //   setValueClass('gender', '');
-  //   setValueClass('fromage', '');
-  //   setValueClass('toage', '');
-  //   setValueClass('fromcost', '');
-  //   setValueClass('tocost', '');
-  //   setValueClass('cost', '');
-  //   setValueClass('classSize', '');
-  //   setValueClass('weekdays', []);
-  //   setValueClass('experienceLevel', '');
-  //   setValueClass('noOfSessions', '');
-  //   setShowClassFields(false);
-  // };
 
   // Save class details to localStorage
   const saveClassDetails = async (data: any) => {
@@ -690,8 +705,8 @@ export default function RegistrationForm() {
       const response = await createVendorClass([classData]);
 
       if (response) {
-        const updatedClasses = [...classes, { ...data }];
-        setClasses(updatedClasses);
+        const updatedClasses = [...courses, { ...data }];
+        setCourses(updatedClasses);
         localStorage.setItem('classDetails', JSON.stringify(updatedClasses));
         setCompletedSections(prev => ({ ...prev, classDetails: true }));
         toast.success("Class details saved successfully!");
@@ -725,7 +740,6 @@ export default function RegistrationForm() {
     }
   };
 
-
   const saveCourseDetails = (data: any) => {
     const selectedAddress = locations.find((item) => item.area === data.location);
     const selectedContact = contacts.find(
@@ -734,7 +748,7 @@ export default function RegistrationForm() {
 
     const newDirectoryItem: DirectoryItem = {
       address: selectedAddress?.area || "",
-      isPrimary: selectedContact?.contactType.primary ? 'Yes' : 'No', // Example value, update as needed
+      isPrimary: selectedContact?.contactType.primary ? 'Yes' : 'No',
       firstName: selectedContact?.firstName || "",
       lastName: selectedContact?.lastName || "",
       phoneNumber: selectedContact?.phoneNumber || "",
@@ -752,11 +766,15 @@ export default function RegistrationForm() {
 
     // Save the directory to localStorage
     localStorage.setItem("directory", JSON.stringify([...directory, newDirectoryItem]));
-    const updatedClasses = [...course, { ...data }];
-    localStorage.setItem('corseDetails', JSON.stringify(updatedClasses));
-    setCourses(updatedClasses);
+    
+    // Update courses state directly
+    setCourses(prev => [...prev, { ...data }]);
+    localStorage.setItem('corseDetails', JSON.stringify([...courses, { ...data }]));
+    
     setCompletedSections(prev => ({ ...prev, classDetails: true }));
     toast.success("Course details saved successfully!");
+    
+    // Reset form fields
     setValueCourse('className', '');
     setValueCourse('category', '');
     setValueCourse('subCategory', '');
@@ -774,42 +792,7 @@ export default function RegistrationForm() {
     setValueCourse('experienceLevel', '');
     setValueCourse('noOfSessions', '');
     setShowCourseFields(false);
-    // Reset the class form after saving
   };
-  // Final form submission - gather all data and submit to API
-  //  const handleFinalSubmit = async () => {
-  //     try {
-  //       setIsLoading(true);
-
-  //       // Prepare the form data
-  //       const formData = {
-  //         personalDetails: watchPersonal(),
-  //         instituteDetails: watchInstitute(),
-  //         additionalInfo: watchAdditionalInfo(),
-  //         classes,
-  //         course,
-  //         contacts,
-  //         locations,
-  //         directory,
-  //         images
-  //       };
-
-  //       // Call the registerVendor service
-  //       const response = await registerVendor(formData);
-
-  //       if (response.data && response.data.id) {
-  //         setVendorId(response.data.id);
-  //         setIsSuccessPopupOpen(true);
-  //       } else {
-  //         toast.error("Failed to register vendor. Please try again.");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error submitting form:", error);
-  //       toast.error("An error occurred while submitting the form. Please try again.");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
 
   const handleFinalSubmit = async () => {
     try {
@@ -820,51 +803,68 @@ export default function RegistrationForm() {
       const instituteDetails = watchInstitute();
       const additionalInfo = watchAdditionalInfo();
 
-      // Prepare vendor activity data
-      const activityData = {
-        vendorId: parseInt(vendorId),
-        type: "INSTITUTE",
-        categoryId: 0, // You'll need to map this from your category selection
-        title: instituteDetails.programTitle,
-        companyName: instituteDetails.instituteName,
-        description: instituteDetails.introduction || "",
-        sinceYear: instituteDetails.since || "",
-        gstNo: instituteDetails.gstNo || "",
-        address: "", // These fields should be populated from your location data
-        road: "",
-        area: "",
-        state: "",
-        city: "",
-        pincode: "",
-        country: "",
-        longitude: "",
-        latitute: "",
-        purchaseMaterialIds: "",
-        itemCarryText: "",
-        tutorFirstName: personalDetails.name.split(' ')[0] || "",
-        tutorLastName: personalDetails.name.split(' ').slice(1).join(' ') || "",
-        tutorEmailID: personalDetails.emailId,
-        tutorCountryCode: "+91",
-        tutorPhoneNo: personalDetails.phoneNumber,
-        whatsappCountryCode: "+91",
-        whatsappNo: personalDetails.phoneNumber,
-        tutorIntro: instituteDetails.introduction || "",
-        website: additionalInfo.websiteName || "",
-        classLevel: additionalInfo.classLevel || "",
-        instagramAcc: additionalInfo.instagramAccount || "",
-        youtubeAcc: additionalInfo.youtubeAccount || ""
-      };
+      // Create FormData object
+      const formData = new FormData();
+
+      // Add required fields
+      formData.append('vendorId', vendorId.toString());
+      formData.append('type', 'INSTITUTE');
+      formData.append('title', instituteDetails.programTitle);
+      
+      // Add thumbnail image - make sure we're sending the actual File object
+      if (images && images.length > 0 && images[0] instanceof File) {
+        formData.append('thumbnailImageFile', images[0], images[0].name);
+      } else {
+        toast.error('Please upload at least one valid image file');
+        return;
+      }
+
+      // Add institute details
+      formData.append('companyName', instituteDetails.instituteName || '');
+      formData.append('description', instituteDetails.introduction || '');
+      formData.append('sinceYear', instituteDetails.since || '');
+      formData.append('gstNo', instituteDetails.gstNo || '');
+      formData.append('address', instituteDetails.address || '');
+      formData.append('road', '');
+      formData.append('area', instituteDetails.area || '');
+      formData.append('state', instituteDetails.state || '');
+      formData.append('city', instituteDetails.city || '');
+      formData.append('pincode', instituteDetails.pincode || '');
+      formData.append('country', instituteDetails.country || '');
+      formData.append('longitude', (instituteDetails.longitude || '').toString());
+      formData.append('latitute', (instituteDetails.latitude || '').toString());
+
+      // Add tutor details
+      formData.append('tutorFirstName', personalDetails.name.split(' ')[0] || '');
+      formData.append('tutorLastName', personalDetails.name.split(' ').slice(1).join(' ') || '');
+      formData.append('tutorEmailID', personalDetails.emailId || '');
+      formData.append('tutorCountryCode', '+91');
+      formData.append('tutorPhoneNo', personalDetails.phoneNumber || '');
+      formData.append('whatsappCountryCode', '+91');
+      formData.append('whatsappNo', personalDetails.phoneNumber || '');
+      formData.append('tutorIntro', instituteDetails.introduction || '');
+
+      // Add additional info
+      formData.append('website', additionalInfo.websiteName || '');
+      formData.append('classLevel', additionalInfo.classLevel || '');
+      formData.append('instagramAcc', additionalInfo.instagramAccount || '');
+      formData.append('youtubeAcc', additionalInfo.youtubeAccount || '');
+
+      // Log the FormData contents for debugging
+      for (const pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
 
       // Create vendor activity
-      const activityResponse = await createVendorActivity(activityData);
+      const activityResponse = await createVendorActivity(formData);
 
       if (activityResponse) {
         // Create vendor classes
-        const classPromises = classes.map(classData => {
+        const classPromises = courses.map(classData => {
           const vendorClassData = {
             id: 0,
             vendorId: parseInt(vendorId),
-            activityId: activityResponse.id, // Use the activity ID from the response
+            activityId: activityResponse.id,
             subCategoryID: classData.subCategory,
             title: classData.className,
             timingsFrom: classData.time.split('-')[0].trim(),
@@ -896,11 +896,11 @@ export default function RegistrationForm() {
     }
   };
 
-  const handleWeekdayChange = (day: any, isCLassfields: boolean) => {
-    const currentWeekdays = isCLassfields ? watchClass('weekdays') || [] : watchCourse('weekdays') || []; // Get current weekdays value
+  const handleWeekdayChange = (day: string, isClassfields: boolean) => {
+    const currentWeekdays = isClassfields ? watchClass('weekdays') || [] : watchCourse('weekdays') || []; // Get current weekdays value
 
     // If day is already selected, remove it; otherwise, add it
-    if (isCLassfields) {
+    if (isClassfields) {
       if (currentWeekdays.includes(day)) {
         setValueClass('weekdays', currentWeekdays.filter((d: any) => d !== null && d !== day));
       } else {
@@ -917,24 +917,12 @@ export default function RegistrationForm() {
 
   const handleEditClass = (index: number) => {
     setEditIndex(index); // Set the index of the class being edited
-    const classToEdit = classes[index];
+    const classToEdit = courses[index];
     console.log(editIndex)
     setActiveAccordion("item-4");
     Object.keys(classToEdit).forEach((key) => {
-      setValueClass(key as keyof typeof classDetailsSchema.fields, classToEdit[key as keyof typeof classDetailsSchema.fields]);
+      setValueClass(key as keyof typeof classDetailsSchema.fields, classToEdit[key]);
     });
-    setShowClassFields(true); // Show the class form
-  };
-
-  const handleEditCourse = (index: number) => {
-    setEditIndexforCourse(index); // Set the index of the class being edited
-    const classToEdit = course[index];
-    setActiveAccordion("item-5");
-    console.log(editIndexforCourse)
-    Object.keys(classToEdit).forEach((key) => {
-      setValueCourse(key as keyof typeof courseDetailsSchema.fields, classToEdit[key as keyof typeof courseDetailsSchema.fields]);
-    });
-    setShowCourseFields(true); // Show the class form
   };
 
   useEffect(() => {
@@ -1148,7 +1136,7 @@ export default function RegistrationForm() {
                     <h3 className="text-[#05244f] trajan-pro text-md font-semibold">Photos<span className="text-red-500 ml-1 text-sm">*</span></h3>
                     {images.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
-                        {images.map((src, index) => (
+                        {imageUrls.map((src, index) => (
                           <div key={index} className="relative w-[158px] h-[158px]">
                             <Image
                               src={src}
@@ -1161,11 +1149,17 @@ export default function RegistrationForm() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Create a new array without the image at this index
+                                // Remove both the File and its preview URL
                                 const updatedImages = images.filter((_, i) => i !== index);
+                                const updatedUrls = imageUrls.filter((_, i) => i !== index);
                                 setImages(updatedImages);
+                                setImageUrls(updatedUrls);
                                 // Update localStorage
-                                localStorage.setItem('images', JSON.stringify(updatedImages));
+                                localStorage.setItem('imageMetadata', JSON.stringify(updatedImages.map(file => ({
+                                  name: file.name,
+                                  type: file.type,
+                                  size: file.size
+                                }))));
                               }}
                               className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
                             >
@@ -1209,6 +1203,7 @@ export default function RegistrationForm() {
                         onChange={handleImageUpload}
                         ref={fileInputRef}
                         className="hidden"
+                        accept="image/jpeg,image/png,image/avif,.jpg,.jpeg,.png,.avif"
                       />
                     </div>
                     <div className="relative justify-center text-[#cecece] text-[11.6px] font-medium">
@@ -1224,6 +1219,251 @@ export default function RegistrationForm() {
                       {...registerInstitute("introduction")}
                       className="rounded-[15px] h-[120px] border-[#05244f]"
                     />
+                  </div>
+
+                  {/* Contact Details Section */}
+                  <div className="mt-8">
+                    <h3 className="text-[#05244f] text-lg font-semibold mb-4">Contact Details</h3>
+                    <div className="border border-[#05244f] rounded-md p-4">
+                      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            First Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="First Name"
+                            {...registerInstitute("firstName")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.firstName && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.firstName.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Last Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Last Name"
+                            {...registerInstitute("lastName")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.lastName && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.lastName.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Phone Number <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Enter Phone No."
+                            {...registerInstitute("phoneNumber")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.phoneNumber && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.phoneNumber.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            WhatsApp Number
+                          </Label>
+                          <Input
+                            placeholder="Enter WhatsApp Number"
+                            {...registerInstitute("whatsappNumber")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Email Address <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Email Address"
+                            {...registerInstitute("email")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.email && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.email.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Experience
+                          </Label>
+                          <Input
+                            placeholder="Enter in years"
+                            {...registerInstitute("experience")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Certifications
+                          </Label>
+                          <Input
+                            type="file"
+                            accept=".pdf,.jpg,.png"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setValueInstitute("certifications", file);
+                              }
+                            }}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mb-6">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Contact Introduction
+                        </Label>
+                        <Textarea
+                          placeholder="Contact Introduction"
+                          rows={8}
+                          {...registerInstitute("contactIntroduction")}
+                          className="border-[#05244f] h-[90px]"
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Contact Type
+                        </Label>
+                        <div className="flex items-center gap-4 mt-2">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="primary"
+                              className="border-black"
+                              {...registerInstitute("contactType.primary")}
+                            />
+                            <Label htmlFor="primary">Primary</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="secondary"
+                              className="border-black"
+                              {...registerInstitute("contactType.secondary")}
+                            />
+                            <Label htmlFor="secondary">Secondary</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="billing"
+                              className="border-black"
+                              {...registerInstitute("contactType.billing")}
+                            />
+                            <Label htmlFor="billing">Billing</Label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location Details Section */}
+                  <div className="mt-8">
+                    <h3 className="text-[#05244f] text-lg font-semibold mb-4">Location Details</h3>
+                    <div className="border border-[#05244f] rounded-md p-4">
+                      <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Location Details</h3>
+                      
+                      {/* Location Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Address<span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Address"
+                            {...registerInstitute("address")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.address && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.address.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Landmark <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Near by landmark"
+                            {...registerInstitute("landmark")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.landmark && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.landmark.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Area <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="Area"
+                            {...registerInstitute("area")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.area && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.area.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            City <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            placeholder="City"
+                            {...registerInstitute("city")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                          {errorsInstitute.city && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.city.message}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">State</Label>
+                          <Input
+                            placeholder="State"
+                            {...registerInstitute("state")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Country</Label>
+                          <Input
+                            placeholder="Country"
+                            {...registerInstitute("country")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Pincode</Label>
+                          <Input
+                            placeholder="Pincode"
+                            {...registerInstitute("pincode")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Latitude</Label>
+                          <Input
+                            placeholder="Latitude"
+                            {...registerInstitute("latitude")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Longitude</Label>
+                          <Input
+                            placeholder="Longitude"
+                            {...registerInstitute("longitude")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex justify-end mt-4">
@@ -1398,7 +1638,7 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                      <div className="flex flex-col gap-2">
+                      {/* <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Location<span className="text-red-500">*</span>
                         </Label>
@@ -1423,9 +1663,9 @@ export default function RegistrationForm() {
                         {errorsClass.location && (
                           <p className="text-red-500 text-xs">{errorsClass.location.message}</p>
                         )}
-                      </div>
+                      </div> */}
 
-                      <div className="flex flex-col gap-2">
+                      {/* <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Contact<span className="text-red-500">*
                           </span>
@@ -1452,7 +1692,7 @@ export default function RegistrationForm() {
                         {errorsClass.contact && (
                           <p className="text-red-500 text-xs">{errorsClass.contact.message}</p>
                         )}
-                      </div>
+                      </div> */}
 
 
 
@@ -1793,23 +2033,15 @@ export default function RegistrationForm() {
             </AccordionItem>
           )}
         </Accordion>
-        {classes.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
+        {courses.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Classes</div>
           <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
-            <ClassTable classes={classes} handleDelete={handleDeleteClass} handleEdit={handleEditClass} />
+            <ClassTable classes={courses} handleDelete={handleDeleteClass} handleEdit={handleEditClass} />
             <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsOpen(true)}>+ Add More Details</Button>
           </div>
         </div>
         }
 
-        {course.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
-          <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Courses</div>
-          <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
-            <ClassTable classes={course} handleDelete={handleDeleteCourse} handleEdit={handleEditCourse} />
-            <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsOpen(true)}>+ Add More Details</Button>
-          </div>
-        </div>
-        }
         {/* Directory Section */}
         {directory.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Directory</div>

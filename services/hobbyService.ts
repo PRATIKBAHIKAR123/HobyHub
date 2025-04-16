@@ -217,7 +217,7 @@ export const increaseActivityViewCount = async (activityId: number): Promise<voi
         const token = getAuthToken();
         await axios.post(
             `${API_BASE_URL}/increase-view`,
-            activityId,
+            { activityId },
             {
                 headers: {
                     'accept': '*/*',

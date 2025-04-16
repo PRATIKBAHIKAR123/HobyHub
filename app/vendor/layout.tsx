@@ -2,13 +2,13 @@
 import VendorNavbar from "./layouts/navbar";
 // import Sidebar from "./layouts/sidebar";
 
- // ✅ Mark this as a client component
+// ✅ Mark this as a client component
 
 
 export default function VenodrLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-     <VendorNavbar />
+      <VendorNavbar />
       <div>{children}</div>
       {/* <Sidebar/> */}
     </>

@@ -155,18 +155,28 @@ export const login = async (username: string, loginOtp: string): Promise<LoginRe
   }
 };
 
-export const createVendorActivity = async (data: VendorActivityData): Promise<VendorActivityResponse> => {
+export const createVendorActivity = async (data: FormData) => {
   try {
     if (!accessToken) {
       throw new Error('No access token available');
     }
 
-    const response = await axios.post<VendorActivityResponse>(`${API_BASE_URL}/vendor/activity/create`, data, {
+    const response = await fetch('https://api.hobyhub.com/api/1/vendor/activity/create', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
+        'Authorization': `Bearer ${accessToken}`,
+        // Don't set Content-Type header when sending FormData
+        // browser will set it automatically with the correct boundary
+      },
+      body: data,
     });
-    return response.data;
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create vendor activity');
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error creating vendor activity:', error);
     throw error;

@@ -6,14 +6,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Clock, Users, Sparkle } from "lucide-react";
 import { useFilter } from "@/contexts/FilterContext";
+import { Input } from "@/components/ui/input";
 
 interface SearchPopupProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
-
 export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
-  const { 
+  const {
     priceRange, setPriceRange,
     gender, setGender,
     age, setAge,
@@ -26,7 +26,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
   const clearFilter: () => void = () => {
     setGender("");
-    setPriceRange([0, 100000]);
+    setPriceRange([0, 5000]);
     setTime("");
     setAge('');
     setAreFiltersApplied(false);
@@ -36,6 +36,18 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
     setAreFiltersApplied(true);
     triggerFilterUpdate();
     setOpen(false);
+  };
+
+  // Function to handle manual input changes for min price
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMin = Math.max(0, Math.min(parseInt(e.target.value) || 0, priceRange[1]));
+    setPriceRange([newMin, priceRange[1]]);
+  };
+
+  // Function to handle manual input changes for max price
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMax = Math.min(5000, Math.max(parseInt(e.target.value) || 0, priceRange[0]));
+    setPriceRange([priceRange[0], newMax]);
   };
 
   return (
@@ -136,26 +148,58 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
               </div>
               <Slider
                 min={0}
-                max={100000}
+                max={5000}
                 step={100}
                 value={priceRange}
                 onValueChange={setPriceRange}
                 className="[&>span]:bg-[#1E3A8A]"
               />
+
+              {/* Manual Price Input Fields */}
+              <div className="flex gap-4 mt-3">
+                <div className="flex-1">
+                  <Label htmlFor="minPrice" className="text-xs text-gray-500 mb-1 block">
+                    Min Price
+                  </Label>
+                  <Input
+                    id="minPrice"
+                    type="number"
+                    value={priceRange[0]}
+                    onChange={handleMinPriceChange}
+                    className="border-gray-200 rounded-lg focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                    min={0}
+                    max={priceRange[1]}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="maxPrice" className="text-xs text-gray-500 mb-1 block">
+                    Max Price
+                  </Label>
+                  <Input
+                    id="maxPrice"
+                    type="number"
+                    value={priceRange[1]}
+                    onChange={handleMaxPriceChange}
+                    className="border-gray-200 rounded-lg focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
+                    min={priceRange[0]}
+                    max={5000}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="px-6 py-5 border-t border-gray-100 flex gap-3 justify-end">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={clearFilter}
             className="rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-5"
           >
             Clear All
           </Button>
-          <Button 
+          <Button
             onClick={handleSearch}
             className="rounded-xl bg-[#013161] hover:bg-[#1E3A8A] text-white border-0 px-6 transition-colors"
           >
