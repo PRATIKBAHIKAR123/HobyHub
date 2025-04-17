@@ -8,6 +8,7 @@ import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import Loader from "../components/Loader";
 import { useSortFilter } from "@/contexts/SortFilterContext";
+import HomepageRedirectWithParams from "./params";
 
 export default function Homepage() {
     const [distance, setDistance] = useState("10");
@@ -29,6 +30,7 @@ export default function Homepage() {
 
     return (
         <div>
+            <HomepageRedirectWithParams />
             <Categories />
             <div className="w-full h-[30px] pr-8 bg-[#f1f1f1] md:justify-end justify-center items-center gap-[3.41px] inline-flex">
                 <Select value={distance} onValueChange={setDistance}>

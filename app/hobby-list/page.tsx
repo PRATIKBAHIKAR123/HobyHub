@@ -12,68 +12,68 @@ import withAuth from "../auth/withAuth";
 import InquiryPopupScreen from "../components/InquiryPopupScreen";
 import DeletePopupScreen from "../components/DeletePopupScreen";
 
-const classes = [
-  {
-    sno: 1,
-    name: "Yoga for Beginners",
-    schedule: "Monday, Wednesday, Friday",
-    scheduletime: "09:00 - 10:00",
-    agegroup: "18-45",
-    gender: "Mixed",
-    stratdate: "2024-04-01",
-    enddate: "2024-06-30",
-    sessions: 12,
-    cost: "$299"
-  },
-  {
-    sno: 2,
-    name: "Advanced Pilates",
-    schedule: "Tuesday, Thursday",
-    scheduletime: "18:00 - 19:30",
-    agegroup: "25-50",
-    gender: "Female",
-    stratdate: "2024-04-02",
-    enddate: "2024-07-02",
-    sessions: 8,
-    cost: "$399"
-  },
-  {
-    sno: 3,
-    name: "Kids Dance Class",
-    schedule: "Saturday",
-    scheduletime: "10:00 - 11:30",
-    agegroup: "5-12",
-    gender: "Mixed",
-    stratdate: "2024-04-06",
-    enddate: "2024-06-29",
-    sessions: 6,
-    cost: "$199"
-  },
-  {
-    sno: 4,
-    name: "Zumba Fitness",
-    schedule: "Monday, Wednesday",
-    scheduletime: "19:00 - 20:00",
-    agegroup: "16-60",
-    gender: "Mixed",
-    stratdate: "2024-04-01",
-    enddate: "2024-06-30",
-    sessions: 10,
-    cost: "$249"
-  },
-  {
-    sno: 5,
-    name: "Meditation Workshop",
-    schedule: "Sunday",
-    scheduletime: "15:00 - 16:30",
-    agegroup: "18+",
-    gender: "Mixed",
-    stratdate: "2024-04-07",
-    enddate: "2024-06-30",
-    sessions: 4,
-    cost: "$179"
-  }
-];
+// const classes = [
+//   {
+//     sno: 1,
+//     name: "Yoga for Beginners",
+//     schedule: "Monday, Wednesday, Friday",
+//     scheduletime: "09:00 - 10:00",
+//     agegroup: "18-45",
+//     gender: "Mixed",
+//     stratdate: "2024-04-01",
+//     enddate: "2024-06-30",
+//     sessions: 12,
+//     cost: "$299"
+//   },
+//   {
+//     sno: 2,
+//     name: "Advanced Pilates",
+//     schedule: "Tuesday, Thursday",
+//     scheduletime: "18:00 - 19:30",
+//     agegroup: "25-50",
+//     gender: "Female",
+//     stratdate: "2024-04-02",
+//     enddate: "2024-07-02",
+//     sessions: 8,
+//     cost: "$399"
+//   },
+//   {
+//     sno: 3,
+//     name: "Kids Dance Class",
+//     schedule: "Saturday",
+//     scheduletime: "10:00 - 11:30",
+//     agegroup: "5-12",
+//     gender: "Mixed",
+//     stratdate: "2024-04-06",
+//     enddate: "2024-06-29",
+//     sessions: 6,
+//     cost: "$199"
+//   },
+//   {
+//     sno: 4,
+//     name: "Zumba Fitness",
+//     schedule: "Monday, Wednesday",
+//     scheduletime: "19:00 - 20:00",
+//     agegroup: "16-60",
+//     gender: "Mixed",
+//     stratdate: "2024-04-01",
+//     enddate: "2024-06-30",
+//     sessions: 10,
+//     cost: "$249"
+//   },
+//   {
+//     sno: 5,
+//     name: "Meditation Workshop",
+//     schedule: "Sunday",
+//     scheduletime: "15:00 - 16:30",
+//     agegroup: "18+",
+//     gender: "Mixed",
+//     stratdate: "2024-04-07",
+//     enddate: "2024-06-30",
+//     sessions: 4,
+//     cost: "$179"
+//   }
+// ];
 
 function NavigationSkeleton() {
   return (
@@ -172,14 +172,27 @@ function ClassListSkeleton() {
 function ClassDetails() {
   const [isListView, setIsListView] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [classes, setClasses] = useState([]);
 
   // Simulate loading
   useEffect(() => {
+    const classList = sessionStorage.getItem('activityClassData');
+    const parsedClassList = classList ? JSON.parse(classList) : [];
+    setClasses(parsedClassList);
+console.log(classes)
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000); // Reduced loading time for better UX
     return () => clearTimeout(timer);
   }, []);
+
+  if (!classes.length && !isLoading) {
+    return (
+      <div className="flex items-center justify-center top-[50%] w-full absolute">
+        <span className="text-bold">No Classes Available</span>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return isListView ? <ClassListSkeleton /> : <ClassDetailsSkeleton />;
@@ -213,13 +226,13 @@ function ClassDetails() {
           </div>
         </div>
       </div>
-      {!isListView && <ClassGridList />}
-      {isListView && <ClassList />}
+      {!isListView && <ClassGridList classes={classes} />}
+      {isListView && <ClassList classes={classes} />}
     </div>
   );
 }
 
-function ClassGridList() {
+function ClassGridList({ classes }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
@@ -231,18 +244,18 @@ function ClassGridList() {
   };
 
   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {classes.map((item, index) => (
+    {classes.map((item:any, index:number) => (
       <Card key={index} className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
         <CardContent className="px-6">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.name}</span> 
+            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
           </h3>
-          <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.schedule}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.scheduletime}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.agegroup}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.sessions}</p></p>
+          <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.day}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.timingsFrom} - {item.timingsTo}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.ageFrom} - {item.ageTo}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.sessionFrom}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.cost}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
           <div className="flex justify-between gap-2 mt-4">
             <Button 
               variant="outline"
@@ -276,7 +289,7 @@ function ClassGridList() {
   </div>
 }
 
-function ClassList() {
+function ClassList({ classes }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
@@ -307,18 +320,18 @@ function ClassList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {classes.map((item, index) => (
+          {classes.map((item:any, index:number) => (
             <TableRow key={index}>
-              <TableCell>{item.sno}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.schedule}</TableCell>
-              <TableCell>{item.scheduletime}</TableCell>
-              <TableCell>{item.agegroup}</TableCell>
+              <TableCell>{index +1}</TableCell>
+              <TableCell>{item.title}</TableCell>
+              <TableCell>{item.day}</TableCell>
+              <TableCell>{item.timingsFrom} - {item.timingsTo}</TableCell>
+              <TableCell>{item.ageFrom} - {item.ageTo}</TableCell>
               <TableCell>{item.gender}</TableCell>
-              <TableCell>{item.stratdate}</TableCell>
-              <TableCell>{item.enddate}</TableCell>
-              <TableCell>{item.sessions}</TableCell>
-              <TableCell>{item.cost}</TableCell>
+              <TableCell>{item.sessionFrom}</TableCell>
+              <TableCell>{item.sessionTo}</TableCell>
+              <TableCell>{item.sessionFrom}</TableCell>
+              <TableCell>{item.price}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Button 

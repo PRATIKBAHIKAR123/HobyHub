@@ -3,11 +3,14 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CardContent } from "@/components/ui/card";
-import { Trash2, Camera, ImageIcon } from "lucide-react";
+import { Trash2, Camera, ImageIcon, BookOpen, Users, Image as ImageIcon2, Info } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { getClassList, getCourseList, getImageList } from "@/services/vendorService";
+import AddClassPopup from "./addClassPopup";
+import AddCoursePopup from "./addCoursePopup";
 
 interface ProfileData {
   email: string;
@@ -28,6 +31,40 @@ interface ProfileData {
   classLevel?: string;
   instagramAccount?: string;
   youtubeAccount?: string;
+  // New fields for expanded sections
+  classList?: ClassItem[];
+  courseList?: ClassItem[];
+  galleryImages?: GalleryImage[];
+}
+
+export interface ClassItem {
+  vendorId: number;
+  activityId: number;
+  subCategoryID: string;
+  timingsFrom: string;
+  timingsTo: string;
+  day: string;
+  type: string;
+  ageFrom: number;
+  ageTo: number;
+  sessionFrom: number;
+  sessionTo: number;
+  gender: string;
+  price: number;
+  fromPrice: number | null;
+  toPrice: number | null;
+  createdDate: string; // ISO date string
+  modifiedDate: string; // ISO date string
+  id: number;
+  title: string;
+}
+
+
+interface GalleryImage {
+  id: number;
+  url: string;
+  title: string;
+  date: string;
 }
 
 interface DeletePopupProps {
@@ -169,7 +206,10 @@ export default function ProfilePage() {
     websiteName: "",
     classLevel: "",
     instagramAccount: "",
-    youtubeAccount: ""
+    youtubeAccount: "",
+    classList: [],
+    courseList: [],
+    galleryImages: []
   });
 
   const [validationErrors, setValidationErrors] = useState<{
@@ -187,6 +227,9 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPhotoOptionsOpen, setIsPhotoOptionsOpen] = useState(false);
+  const [isClassOpen, setIsClassOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  const [isCourseOpen, setIsCourseOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = () => {
@@ -213,7 +256,27 @@ export default function ProfilePage() {
           websiteName: "",
           classLevel: "",
           instagramAccount: "",
-          youtubeAccount: ""
+          youtubeAccount: "",
+          // Mock data for classes
+          // classList: [
+          //   { id: 1, title: "Beginner's Yoga", ageFrom: 15, day: "Mon, Wed 5-6 PM", status: "Active" },
+          //   { id: 2, title: "Advanced Meditation", students: 8, schedule: "Tue, Thu 7-8 PM", status: "Active" },
+          //   { id: 3, title: "Morning Fitness", students: 12, schedule: "Mon-Fri 6-7 AM", status: "Inactive" },
+          //   { id: 4, title: "Weekend Workshop", students: 20, schedule: "Sat 10-12 AM", status: "Active" }
+          // ],
+          // // Mock data for courses
+          // courseList: [
+          //   { id: 1, title: "Yoga for Beginners", duration: "8 weeks", level: "Beginner", enrollments: 25, image: "/images/course1.jpg" },
+          //   { id: 2, title: "Advanced Meditation Techniques", duration: "4 weeks", level: "Advanced", enrollments: 15, image: "/images/course2.jpg" },
+          //   { id: 3, title: "Fitness Fundamentals", duration: "12 weeks", level: "Intermediate", enrollments: 30, image: "/images/course3.jpg" }
+          // ],
+          // Mock data for gallery
+          galleryImages: [
+            { id: 1, url: "/images/no image available.jpg", title: "Annual Retreat", date: "May 15, 2024" },
+            { id: 2, url: "/images/no image available.jpg", title: "Outdoor Class", date: "June 3, 2024" },
+            { id: 3, url: "/images/no image available.jpg", title: "Community Event", date: "July 10, 2024" },
+            { id: 4, url: "/images/no image available.jpg", title: "Workshop Session", date: "August 22, 2024" }
+          ]
         };
         
         // Parse personal details
@@ -332,6 +395,9 @@ export default function ProfilePage() {
       localStorage.setItem("instituteDetails", JSON.stringify(instituteData));
       localStorage.setItem("additionalInfo", JSON.stringify(additionalData));
       
+      // Additional data would be saved here
+      // For demo purposes, we're not saving the mock class/course/gallery data
+      
       setIsEditing(false);
       setError(null);
       setValidationErrors({}); // Clear validation errors on successful update
@@ -343,67 +409,53 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
+  
+  useEffect(() => {
+    if(activeTab==='profile'){
+    
+    }else if(activeTab==='classes'){
+      // Fetch classes data if needed
+      getClasses();
+    }else if(activeTab==='courses'){
+      getCourses();
+    }
+    else if(activeTab==='gallery'){
+      getImages();
+    }
+  },[activeTab]);
 
-  return (
-    <div className="flex justify-center mt-8">
-      <div className="w-full max-w-5xl bg-white rounded-lg shadow-md p-8">
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-2">
-            {error}
-          </div>
-        )}
+  const getClasses= async ()=>{
+      const data = await getClassList();
+      setProfile(prev => ({
+        ...prev,
+        classList: data.data
+      }));
+   
+  }
 
-        <div className="flex flex-col items-center">
-          <h1 className="text-2xl font-bold text-gray-700 mb-6">My Profile</h1>
+  const getCourses= async ()=>{
+    const data = await getCourseList();
+    setProfile(prev => ({
+      ...prev,
+      courseList: data.data
+    }));
+ 
+}
 
-          {/* Profile Image */}
-          <div className="mb-6">
-            <div className="relative w-32 h-32">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
-                <Image
-                  src={profile.profileImage}
-                  alt="Profile Picture"
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <button 
-                className="absolute -bottom-1.5 -right-1.5 cursor-pointer bg-emerald-500 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors border-2 border-white"
-                onClick={() => setIsPhotoOptionsOpen(true)}
-              >
-                <Camera className="h-4 w-4 text-white" />
-              </button>
-            </div>
-          </div>
+const getImages= async ()=>{
+  const data = await getImageList();
+  setProfile(prev => ({
+    ...prev,
+    galleryImages: data.data
+  }));
 
-          {/* Name and Profession */}
-          <div className="w-full mb-2 text-center">
-            {isEditing ? (
-              <div className="max-w-md mx-auto">
-                <Input
-                  type="text"
-                  name="name"
-                  value={profile.name}
-                  onChange={handleInputChange}
-                  className="text-center text-lg font-medium mb-2"
-                  placeholder="Your Name"
-                />
-                {validationErrors.name && (
-                  <div className="text-red-500 text-sm">{validationErrors.name}</div>
-                )}
-              </div>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold text-gray-700">{profile.name}</h2>
-                <p className="text-gray-500">{profile.profession}</p>
-              </>
-            )}
-          </div>
-        </div>
+}
 
-        {/* Profile Details */}
-        <CardContent className="p-0">
+  // Render different content based on active tab
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "profile":
+        return (
           <div className="space-y-8">
             {/* Personal Information Section */}
             <div>
@@ -719,26 +771,380 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-8">
-            <Button
-              variant="outline"
-              onClick={() => isEditing ? setIsEditing(false) : null}
-              className="px-6"
-            >
-              {isEditing ? "Cancel" : "Close"}
-            </Button>
-
-            <Button
-              onClick={isEditing ? handleUpdateProfile : handleEditToggle}
-              disabled={isLoading}
-              className="px-6 text-white"
-            >
-              {isLoading ? "Loading..." : isEditing ? "Save Changes" : "Edit Profile"}
-            </Button>
+        );
+      case "classes":
+        return (
+          <div className="w-250">
+            <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
+              <h3 className="text-lg font-semibold text-gray-700">My Classes</h3>
+            </div>
+            
+            {profile.classList && profile.classList.length > 0 ? (
+              <div className="overflow-x-scroll overflow-y-scroll h-110">
+                <table className="min-w-full bg-white border rounded-lg overflow-hidden">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {profile.classList.map((classItem) => (
+                      <tr key={classItem.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{classItem.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {classItem.ageFrom} - {classItem.ageTo} years</td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.timingsFrom} - {classItem.timingsTo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            classItem.type === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {classItem.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2">
+                            View
+                          </Button> */}
+                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800">
+                            Edit
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                No classes found. Add your first class to get started.
+              </div>
+            )}
+            
+            <div className="flex justify-end mt-6">
+              <Button variant={'default'} className=" hover:bg-blue-700 text-white"
+              onClick={() => setIsClassOpen(true)}>
+                Add New Class
+              </Button>
+            </div>
+            <AddClassPopup open={isClassOpen} setOpen={setIsClassOpen} onSubmit={()=>{getClasses()}}/>
           </div>
-        </CardContent>
+        );
+      case "courses":
+        return (
+          <div>
+            <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
+              <h3 className="text-lg font-semibold text-gray-700">My Courses</h3>
+            </div>
+            
+            {profile.courseList && profile.courseList.length > 0 ? (
+              // <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              //   {profile.courseList.map((course) => (
+              //     <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden border">
+              //       <div className="h-48 w-full relative">
+              //         <Image
+              //           src={course.image || "/api/placeholder/400/320"}
+              //           alt={course.title}
+              //           layout="fill"
+              //           objectFit="cover"
+              //         />
+              //       </div>
+              //       <div className="p-4">
+              //         <h4 className="text-lg font-semibold mb-2">{course.title}</h4>
+              //         <h4 className="text-lg font-semibold mb-2">{course.title}</h4>
+              //         <div className="flex justify-between text-sm text-gray-600 mb-2">
+              //           <span>Duration: {course.duration}</span>
+              //           <span>Level: {course.level}</span>
+              //         </div>
+              //         <div className="text-sm text-gray-600 mb-4">
+              //           <span>Enrollments: {course.enrollments} students</span>
+              //         </div>
+              //         <div className="flex space-x-2">
+              //           <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800">
+              //             View Details
+              //           </Button>
+              //           <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800">
+              //             Edit
+              //           </Button>
+              //         </div>
+              //       </div>
+              //     </div>
+              //   ))}
+              // </div>
+              <div className="overflow-x-scroll">
+                <table className="min-w-full bg-white border rounded-lg overflow-hidden">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {profile.courseList.map((classItem) => (
+                      <tr key={classItem.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{classItem.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {classItem.ageFrom} - {classItem.ageTo} years</td>
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.timingsFrom} - {classItem.timingsTo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            classItem.type === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {classItem.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2">
+                            View
+                          </Button> */}
+                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800">
+                            Edit
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                No courses found. Add your first course to get started.
+              </div>
+            )}
+            
+            <div className="flex justify-end mt-6">
+              <Button className="hover:bg-blue-700 text-white" onClick={() => setIsCourseOpen(true)}>
+                Add New Course
+              </Button>
+            </div>
+            <AddCoursePopup open={isCourseOpen} setOpen={setIsCourseOpen} onSubmit={()=>{getCourses()}}/>
+          </div>
+        );
+      case "gallery":
+        return (
+          <div>
+            <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
+              <h3 className="text-lg font-semibold text-gray-700">Gallery</h3>
+            </div>
+            
+            {profile.galleryImages && profile.galleryImages.length > 0 ? (
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {profile.galleryImages.map((image) => (
+                    <div key={image.id} className="relative group">
+                      <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100">
+                        <Image
+                          src={image.url || "/images/no image available.jpg"}
+                          alt={image.title}
+                          width={400}
+                          height={400}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-end justify-start p-3">
+                          <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="font-semibold">{image.title}</p>
+                            <p className="text-sm">{image.date}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add image tile */}
+                  {/* <div className="aspect-square rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center text-gray-500">
+                      <ImageIcon2 className="w-10 h-10 mb-2" />
+                      <span>Add Image</span>
+                    </div>
+                  </div> */}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                No images found. Add your first image to get started.
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex justify-center mt-8">
+      <div className="w-full max-w-7xl bg-white rounded-lg shadow-md">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-2">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center p-8 border-b">
+          <h1 className="text-2xl font-bold text-gray-700 mb-6">My Profile</h1>
+
+          {/* Profile Image */}
+          <div className="mb-6">
+            <div className="relative w-32 h-32">
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
+                <Image
+                  src={profile.profileImage}
+                  alt="Profile Picture"
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button 
+                className="absolute -bottom-1.5 -right-1.5 cursor-pointer bg-emerald-500 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors border-2 border-white"
+                onClick={() => setIsPhotoOptionsOpen(true)}
+              >
+                <Camera className="h-4 w-4 text-white" />
+              </button>
+            </div>
+          </div>
+
+          {/* Name and Profession */}
+          <div className="w-full mb-2 text-center">
+            {isEditing ? (
+              <div className="max-w-md mx-auto">
+                <Input
+                  type="text"
+                  name="name"
+                  value={profile.name}
+                  onChange={handleInputChange}
+                  className="text-center text-lg font-medium mb-2"
+                  placeholder="Your Name"
+                />
+                {validationErrors.name && (
+                  <div className="text-red-500 text-sm">{validationErrors.name}</div>
+                )}
+              </div>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold text-gray-700">{profile.name}</h2>
+                <p className="text-gray-500">{profile.profession}</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content with Tabs */}
+        <div className="flex">
+          {/* Vertical Tabs */}
+          <div className="w-48 border-r min-h-[600px] bg-gray-50">
+            <nav className="p-4">
+              <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => setActiveTab("profile")}
+                    className={cn(
+                      "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md",
+                      activeTab === "profile"
+                        ? "bg-blue-100 text-blue-800"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <Info className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveTab("classes")}
+                    className={cn(
+                      "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md",
+                      activeTab === "classes"
+                        ? "bg-blue-100 text-blue-800"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Classes</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveTab("courses")}
+                    className={cn(
+                      "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md",
+                      activeTab === "courses"
+                        ? "bg-blue-100 text-blue-800"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>Courses</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setActiveTab("gallery")}
+                    className={cn(
+                      "flex items-center w-full px-3 py-2 text-sm font-medium rounded-md",
+                      activeTab === "gallery"
+                        ? "bg-blue-100 text-blue-800"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <ImageIcon2 className="mr-2 h-4 w-4" />
+                    <span>Gallery</span>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-grow p-6">
+            {renderTabContent()}
+            
+            {/* Action Buttons - only show for profile tab */}
+            {activeTab === "profile" && (
+              <div className="flex justify-end gap-3 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => isEditing ? setIsEditing(false) : null}
+                  className="px-6"
+                >
+                  {isEditing ? "Cancel" : "Close"}
+                </Button>
+
+                <Button
+                  onClick={isEditing ? handleUpdateProfile : handleEditToggle}
+                  disabled={isLoading}
+                  className="px-6 text-white"
+                >
+                  {isLoading ? "Loading..." : isEditing ? "Save Changes" : "Edit Profile"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Photo Options Dialog */}
         <PhotoOptionsDialog 

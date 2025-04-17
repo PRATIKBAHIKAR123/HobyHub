@@ -6,14 +6,15 @@ import { useEffect, useState, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
 import { getActivityById, increaseActivityViewCount } from "@/services/hobbyService";
+import { API_BASE_URL_1 } from "@/lib/apiConfigs";
 
-const thumbnails = [
-  // "/images/thumb2.png",
-  "/images/thumb3.png",
-  "/images/thumb4.png",
-  "/images/thumb5.png",
-  "/images/thumb6.png",
-];
+// const thumbnails = [
+//   // "/images/thumb2.png",
+//   "/images/thumb3.png",
+//   "/images/thumb4.png",
+//   "/images/thumb5.png",
+//   "/images/thumb6.png",
+// ];
 
 interface ActivityData {
   id: number;
@@ -59,6 +60,8 @@ interface ActivityData {
   isCreatedByAdmin: string;
   createdDate: string;
   viewCount: number;
+  images?: any;
+  classDetails?: any;
 }
 
 function HobbyDetailsPageSkeleton() {
@@ -114,6 +117,7 @@ function HobbyDetailsPageContent() {
   const [apiImage, setApiImage] = useState("");
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
+  const [thumbnails , setThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchActivityData = async () => {
@@ -131,7 +135,7 @@ function HobbyDetailsPageContent() {
           // If logged in, fetch fresh data from API
           activity = await getActivityById(parseInt(activityId));
           // Save the activity data in sessionStorage
-          sessionStorage.setItem('activityData', JSON.stringify(activity));
+           sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
           
           // Increase view count for logged-in users
           try {
@@ -148,14 +152,15 @@ function HobbyDetailsPageContent() {
             throw new Error('No activity data available');
           }
         }
-
+      
         setActivityData(activity);
+
         // Handle image URL with fallback
         let imageUrl;
         if (activity.thumbnailImage) {
           try {
             // Try to construct the full URL
-            imageUrl = `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}`;
+            imageUrl = `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
             // Test if image exists
             const response = await fetch(imageUrl);
             if (!response.ok) {
@@ -168,6 +173,14 @@ function HobbyDetailsPageContent() {
         } else {
           // If no thumbnail image is provided, use default image
           imageUrl = '/images/noimg.png';
+        }
+        if (activity.images) {
+          const uniqueThumbnails = new Set(thumbnails);
+          activity.images.forEach((img: any) => {
+            const fullImageUrl = `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
+            uniqueThumbnails.add(fullImageUrl);
+          });
+          setThumbnails(Array.from(uniqueThumbnails));
         }
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);

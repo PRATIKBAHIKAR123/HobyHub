@@ -4,8 +4,8 @@ export type FormValues = {
   className: string;
   category: string;
   subCategory?: string;
-  location: string;
-  contact: string;
+  location?: string;
+  contact?: string;
   time: string;
   gender?: string;
   fromage?: string;

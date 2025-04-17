@@ -112,7 +112,8 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time, location]);
+  // }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time, location]);
+}, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location]);
 
   const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation(); // Prevent card click event
@@ -158,7 +159,7 @@ export default function HobbyGrid() {
           key={activity.id}
           onClick={() => {
             // Store the activity data in sessionStorage before navigation
-            sessionStorage.setItem('activityData', JSON.stringify(activity));
+            //sessionStorage.setItem('activityData', JSON.stringify(activity));
             router.push(`/hobby-list/hobby-details-page?id=${activity.id}`);
           }}
           className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
