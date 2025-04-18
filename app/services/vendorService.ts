@@ -115,6 +115,26 @@ export interface VendorClassData {
   price: number;
 }
 
+export interface VendorCourseData {
+  id: number;
+  activityId: number;
+  subCategoryID: string;
+  title: string;
+  timingsFrom: string;
+  timingsTo: string;
+  day: string;
+  type: string;
+  ageFrom: number;
+  ageTo: number;
+  sessionFrom: number;
+  sessionTo: number;
+  gender: string;
+  fromPrice: number;
+  toPrice: number;
+  startDate: string;
+  endDate: string;
+}
+
 export const registerVendor = async (data: VendorRegistrationData): Promise<{ username: string; vendorId: number }> => {
   try {
     const response = await axios.post<VendorRegistrationResponse>(`${API_BASE_URL}/vendor/register`, data);
@@ -186,6 +206,24 @@ export const createVendorClass = async (data: VendorClassData[]) => {
     return response.data;
   } catch (error) {
     console.error('Error creating vendor class:', error);
+    throw error;
+  }
+};
+
+export const createVendorCourse = async (data: VendorCourseData[]) => {
+  try {
+    if (!accessToken) {
+      throw new Error('No access token available');
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-course/create`, data, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating vendor course:', error);
     throw error;
   }
 }; 

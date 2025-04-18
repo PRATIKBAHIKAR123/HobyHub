@@ -11,9 +11,8 @@ import { Category } from "@/app/homepage/categories";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { createClass } from "@/services/vendorService";
+import { createClass, VendorClassData } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
-import { VendorClassData } from "@/app/services/vendorService";
 
 const classDetailsSchema = yup.object().shape({
   className: yup.string().required("Class name is required"),
@@ -119,7 +118,6 @@ export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenPr
     // setIsLoading(true);
     const classData: VendorClassData = {
         id: 0,
-        vendorId: 0,
         activityId: 0,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
@@ -136,7 +134,8 @@ export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenPr
         sessionFrom: 1,
         sessionTo: parseInt(formData.noOfSessions) || 1,
         gender: formData.gender || 'both',
-        price: parseInt(formData.cost) || 0
+        fromPrice: parseInt(formData.cost) || 0,
+        toPrice: parseInt(formData.cost) || 0
       };
 console.log('classForm',classData)
     try {

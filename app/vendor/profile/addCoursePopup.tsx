@@ -11,9 +11,8 @@ import { Category } from "@/app/homepage/categories";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {  createCourse } from "@/services/vendorService";
+import { createCourse, VendorClassData } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
-import { VendorClassData } from "@/app/services/vendorService";
 
 const classDetailsSchema = yup.object().shape({
   className: yup.string().required("Class name is required"),
@@ -54,7 +53,7 @@ const classDetailsSchema = yup.object().shape({
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onSubmit?: (classForm: VendorClassData) => void;
+  onSubmit?: (courseForm: VendorClassData) => void;
 }
 
 
@@ -116,11 +115,9 @@ export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenP
       fetchCategories();
     }, [setIsLoading]);
 
-  const submitClass = async (formData:any) => {
-    // setIsLoading(true);
-    const classData: VendorClassData = {
+  const submitCourse = async (formData:any) => {
+    const courseData: VendorClassData = {
         id: 0,
-        vendorId: 0,
         activityId: 0,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
@@ -137,15 +134,16 @@ export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenP
         sessionFrom: 1,
         sessionTo: parseInt(formData.noOfSessions) || 1,
         gender: formData.gender || 'both',
-        price: parseInt(formData.cost) || 0
+        fromPrice: parseInt(formData.cost) || 0,
+        toPrice: parseInt(formData.cost) || 0
       };
-console.log('classForm',classData)
+console.log('classForm',courseData)
     try {
-      const data = await createCourse([classData]);
+      const data = await createCourse([courseData]);
 
       if (data.status === 200) {
         toast.success("New Course Added!");
-        onSubmit?.(classData);
+        onSubmit?.(courseData);
         setOpen(false);
       } else {
         toast.error(String(data.data));
@@ -178,7 +176,7 @@ console.log('classForm',classData)
     <DialogOverlay className="bg-[#003161] opacity-50 fixed inset-0" />
     
     <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-scroll max-h-screen mx-auto text-center">
-    <form onSubmit={handleSubmitClass(submitClass)}>
+    <form onSubmit={handleSubmitClass(submitCourse)}>
                     <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6">
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
