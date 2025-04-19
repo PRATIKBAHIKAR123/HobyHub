@@ -180,7 +180,7 @@ function ClassDetails() {
     const classList = sessionStorage.getItem('activityClassData');
     const parsedClassList = classList ? JSON.parse(classList) : [];
     setClasses(parsedClassList);
-console.log(classes)
+    console.log(classes)
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000); // Reduced loading time for better UX
@@ -227,16 +227,18 @@ console.log(classes)
           </div>
         </div>
       </div>
-      {!isListView && <ClassGridList classes={classes} />}
-      {isListView && <ClassList classes={classes} />}
+      {!isListView && <ClassGridList classes={classes} filterType={filterType} />}
+      {isListView && <ClassList classes={classes} filterType={filterType} />}
     </div>
   );
 }
 
-function ClassGridList({ classes }:any) {
+function ClassGridList({ classes, filterType }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+
+  const filteredClasses = classes.filter((item: any) => item.type === filterType);
 
   const handleDelete = () => {
     // Handle delete logic here
@@ -244,8 +246,18 @@ function ClassGridList({ classes }:any) {
     // After successful deletion, you might want to refresh the list
   };
 
+  if (filteredClasses.length === 0) {
+    return (
+      <div className="flex items-center justify-center w-full py-8">
+        <span className="text-[#767676] text-lg font-semibold">
+          No {filterType} Classes Available
+        </span>
+      </div>
+    );
+  }
+
   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {classes.map((item:any, index:number) => (
+    {filteredClasses.map((item:any, index:number) => (
       <Card key={index} className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
         <CardContent className="px-6">
           <h3 className="text-lg font-bold flex items-center gap-2">
@@ -290,10 +302,12 @@ function ClassGridList({ classes }:any) {
   </div>
 }
 
-function ClassList({ classes }:any) {
+function ClassList({ classes, filterType }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+
+  const filteredClasses = classes.filter((item: any) => item.type === filterType);
 
   const handleDelete = () => {
     // Handle delete logic here
@@ -301,6 +315,16 @@ function ClassList({ classes }:any) {
     setIsDeleteOpen(false);
     // After successful deletion, you might want to refresh the list
   };
+
+  if (filteredClasses.length === 0) {
+    return (
+      <div className="flex items-center justify-center w-full py-8">
+        <span className="text-[#767676] text-lg font-semibold">
+          No {filterType} Classes Available
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
@@ -321,7 +345,7 @@ function ClassList({ classes }:any) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {classes.map((item:any, index:number) => (
+          {filteredClasses.map((item:any, index:number) => (
             <TableRow key={index}>
               <TableCell>{index +1}</TableCell>
               <TableCell>{item.title}</TableCell>
