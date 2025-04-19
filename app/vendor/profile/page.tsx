@@ -307,7 +307,10 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
             profileImage: data.profileImage || "/Icons/icons8-user-96.png",
             gender: data.gender || ""
           };
-          const profileImage  = `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
+          //const profileImage  = `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
+          const profileImage = data?.profileImage?.startsWith('http') 
+              ? data?.profileImage
+              : `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
           setImagePreview(profileImage || "/Icons/icons8-user-96.png");
         }
         
