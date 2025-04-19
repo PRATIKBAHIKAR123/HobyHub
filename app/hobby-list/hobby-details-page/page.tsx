@@ -7,6 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
 import { getActivityById, increaseActivityViewCount } from "@/services/hobbyService";
 import { API_BASE_URL_1 } from "@/lib/apiConfigs";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 // const thumbnails = [
 //   // "/images/thumb2.png",
@@ -111,13 +118,13 @@ function HobbyDetailsPageSkeleton() {
 }
 
 function HobbyDetailsPageContent() {
-  const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
-  const [apiImage, setApiImage] = useState("");
+  const [apiImage, setApiImage] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
   const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [carouselApi, setCarouselApi] = useState<any>(null);
 
   useEffect(() => {
     const fetchActivityData = async () => {
@@ -127,70 +134,57 @@ function HobbyDetailsPageContent() {
       }
 
       try {
-        // Check if user is logged in by checking for token
         const token = localStorage.getItem('token');
         let activity: ActivityData;
         activity = await getActivityById(parseInt(activityId));
         if (token) {
-          // If logged in, fetch fresh data from API
-          
-          // Save the activity data in sessionStorage
-           sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
-           sessionStorage.setItem('activity', JSON.stringify(activity));
-          // Increase view count for logged-in users
+          sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
+          sessionStorage.setItem('activity', JSON.stringify(activity));
           try {
             await increaseActivityViewCount(parseInt(activityId));
           } catch (error) {
             console.error('Error increasing view count:', error);
           }
         } else {
-          // If not logged in, try to get data from sessionStorage
           const storedData = sessionStorage.getItem('activityData');
           if (storedData) {
             activity = JSON.parse(storedData);
-          } else {
-            // throw new Error('No activity data available');
           }
         }
       
         setActivityData(activity);
 
         // Handle image URL with fallback
-        let imageUrl;
+        let imageUrl: string | null = null;
         if (activity.thumbnailImage) {
           try {
-            // Try to construct the full URL
             const baseImageUrl = activity.thumbnailImage.startsWith('http') 
               ? activity.thumbnailImage 
               : `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
             
-            // Test if image exists
             const response = await fetch(baseImageUrl);
             if (!response.ok) {
-              imageUrl = '/images/noimg.png';
-            } else {
-              imageUrl = baseImageUrl;
+              throw new Error('Image not found');
             }
+            imageUrl = baseImageUrl;
           } catch {
-            // If image is not available, use default image
-            imageUrl = '/images/noimg.png';
+            throw new Error('Image not found');
           }
         } else {
-          // If no thumbnail image is provided, use default image
-          imageUrl = '/images/noimg.png';
+          throw new Error('No thumbnail image available');
         }
         setApiImage(imageUrl);
-        setSelectedImage(imageUrl);
 
         // Handle additional images
         if (activity.images) {
           const uniqueThumbnails = new Set<string>();
-          // Add other images, excluding the thumbnail if it exists in the images array
           activity.images.forEach((img: any) => {
+            if (!img) return; // Skip empty image URLs
+            
             const fullImageUrl = img.startsWith('http') 
               ? img 
               : `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
-            // Only add if it's not the same as the thumbnail
+            
             if (activity.thumbnailImage && 
                 fullImageUrl === `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`) {
               return;
@@ -218,81 +212,115 @@ function HobbyDetailsPageContent() {
     return <div className="p-6 text-center">No activity data available</div>;
   }
 
-  const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
+  const allImages = apiImage ? [apiImage, ...thumbnails] : thumbnails;
 
   return (
     <div className="p-6">
-      <div className="flex:col md:flex gap-6 mt-4">
-        {/* Main Image */}
-        <div className="w-full md:w-[85%] bg-white">
-          <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center">
-            <Image 
-              src={selectedImage} 
-              alt={activityData.title} 
-              width={800}
-              height={557} 
-              className="rounded-md object-contain"
-              style={{ width: '100%', height: '100%' }}
-              unoptimized={true}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
+      <div className="flex flex-col md:flex-row gap-6 mt-4">
+        {/* Main Image Carousel */}
+        <div className="w-full md:w-[85%]">
+          {allImages.length > 0 ? (
+            <Carousel
+              setApi={setCarouselApi}
+              className="w-full"
+              opts={{
+                align: "start",
+                loop: true,
               }}
-            />
-          </div>
-        </div>
-        {/* Thumbnail Images */}
-        <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
-          <div 
-            className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
-              selectedImage === apiImage ? 'border-blue-500' : 'border-transparent'
-            } hover:border-blue-500`}
-            onClick={() => setSelectedImage(apiImage)}
-          >
-            <Image
-              src={apiImage}
-              alt="Thumbnail"
-              width={120}
-              height={96}
-              className="rounded-lg"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              unoptimized={true}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
-              }}
-            />
-          </div>
-          {thumbnails.map((thumb, index) => (
-            <div 
-              key={index}
-              className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
-                selectedImage === thumb ? 'border-blue-500' : 'border-transparent'
-              } hover:border-blue-500`}
-              onClick={() => setSelectedImage(thumb)}
             >
-              <Image
-                src={thumb}
-                alt="Thumbnail"
-                width={120}
-                height={96}
-                className="rounded-lg"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                unoptimized={true}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/images/noimg.png';
-                }}
-              />
+              <CarouselContent>
+                {allImages.map((image, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center bg-gray-100">
+                      <Image
+                        src={image}
+                        alt={`${activityData.title} - Image ${index + 1}`}
+                        width={800}
+                        height={510}
+                        className="rounded-md object-contain"
+                        style={{ width: '100%', height: '100%' }}
+                        priority={index === 0}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          ) : (
+            <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center bg-gray-100">
+              <div className="text-gray-500">No images available</div>
             </div>
-          ))}
+          )}
         </div>
+
+        {/* Thumbnail Navigation */}
+        {allImages.length > 0 && (
+          <div className="w-full md:w-[14%]">
+            {/* Mobile View - Horizontal Carousel */}
+            <div className="md:hidden">
+              <Carousel
+                className="w-full"
+                opts={{
+                  align: "start",
+                  loop: true,
+                  dragFree: true,
+                }}
+              >
+                <CarouselContent className="flex gap-2">
+                  {allImages.map((image, index) => (
+                    <CarouselItem key={index} className="basis-[120px]">
+                      <div 
+                        className={`relative w-[120px] h-[96px] rounded-lg cursor-pointer border-2 ${
+                          carouselApi?.selectedScrollSnap() === index ? 'border-blue-500' : 'border-transparent'
+                        } hover:border-blue-500`}
+                        onClick={() => carouselApi?.scrollTo(index)}
+                      >
+                        <Image
+                          src={image}
+                          alt={`Thumbnail ${index + 1}`}
+                          width={120}
+                          height={96}
+                          className="rounded-lg object-cover"
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+            </div>
+
+            {/* Desktop View - Vertical Grid */}
+            <div className="hidden md:flex md:flex-col gap-2 overflow-auto h-[510px]">
+              {allImages.map((image, index) => (
+                <div 
+                  key={index}
+                  className={`relative w-full h-[96px] rounded-lg cursor-pointer border-2 ${
+                    carouselApi?.selectedScrollSnap() === index ? 'border-blue-500' : 'border-transparent'
+                  } hover:border-blue-500`}
+                  onClick={() => carouselApi?.scrollTo(index)}
+                >
+                  <Image
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    width={120}
+                    height={96}
+                    className="rounded-lg object-cover"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-col block md:flex md:flex-row justify-between items-center">
         <div>
           <h1 className="text-black text-[32.60px] font-medium font-['Minion_Pro'] mt-[21px]">{activityData.title}</h1>
-          <div className="justify-center text-[#929292] text-[19px] font-medium font-['Minion_Pro'] mt-[10px]">{fullAddress}</div>
+          <div className="justify-center text-[#929292] text-[19px] font-medium font-['Minion_Pro'] mt-[10px]">{activityData.address}, {activityData.road}, {activityData.area}, {activityData.city}, {activityData.state} - {activityData.pincode}, {activityData.country}</div>
         </div>
         <span className="px-[17px] bg-[#d4e1f2] max-h-12 rounded-[28px] border-[7px] content-center border-[#dfe8f2] inline-block mt-2">
           <div className="justify-left md:justify-center text-[#7a8491] text-md font-bold font-['Trajan_Pro']">
