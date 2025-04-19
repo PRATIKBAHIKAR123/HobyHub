@@ -126,35 +126,35 @@ function HobbyContactDetailsPageContent() {
           <div className="space-y-6">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">Institute</p>
-              <p className="text-lg font-semibold text-gray-900">{activityData.companyName}</p>
+              <p className="text-lg font-semibold text-gray-900">{activityData?.companyName}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">Contact Person</p>
-              <p className="text-lg text-gray-800">{activityData.tutorFirstName} {activityData.tutorLastName}</p>
+              <p className="text-lg text-gray-800">{activityData?.tutorFirstName} {activityData?.tutorLastName}</p>
             </div>
             <div className="md:col-span-2">
                 <p className="text-sm font-medium text-gray-600 mb-1">Intro</p>
-                <p className="text-base text-gray-700 leading-relaxed">{activityData.tutorIntro}</p>
+                <p className="text-base text-gray-700 leading-relaxed">{activityData?.tutorIntro}</p>
             </div>
           </div>
           <div className="space-y-5">
             {activityData.website && (
-              <a href={activityData.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 text-base text-blue-700 hover:underline break-all">
+              <a href={activityData?.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 text-base text-blue-700 hover:underline break-all">
                 <Globe size={18} className="text-blue-600 flex-shrink-0" />
-                <span>{activityData.website}</span>
+                <span>{activityData?.website}</span>
               </a>
             )}
-            <a href={`mailto:${activityData.tutorEmailID}`} className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
+            <a href={`mailto:${activityData?.tutorEmailID}`} className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
               <Mail size={18} className="text-blue-600 flex-shrink-0" />
-              <span>{activityData.tutorEmailID}</span>
+              <span>{activityData?.tutorEmailID}</span>
             </a>
             <a href={phoneUrl} className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
               <Phone size={18} className="text-blue-600 flex-shrink-0" />
-              <span>{activityData.tutorCountryCode} {activityData.tutorPhoneNo}</span>
+              <span>{activityData?.tutorCountryCode} {activityData?.tutorPhoneNo}</span>
             </a>
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
               <MessageSquare size={18} className="text-blue-600 flex-shrink-0" />
-              <span>{activityData.whatsappCountryCode} {activityData.whatsappNo}</span>
+              <span>{activityData?.whatsappCountryCode} {activityData?.whatsappNo}</span>
             </a>
             <div className="flex items-start space-x-3">
               <MapPin size={18} className="text-blue-600 flex-shrink-0 mt-1" />
@@ -173,8 +173,8 @@ function HobbyContactDetailsPageContent() {
 
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Map Location</h2>
       <MapComponent
-        lat={parseFloat(activityData.latitute)}
-        lng={parseFloat(activityData.longitude)}
+        lat={parseFloat(activityData?.latitute??0)}
+        lng={parseFloat(activityData?.longitude??0)}
         address={fullAddress}
       />
 
