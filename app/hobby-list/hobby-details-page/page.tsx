@@ -126,6 +126,39 @@ function HobbyDetailsPageContent() {
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [carouselApi, setCarouselApi] = useState<any>(null);
 
+  const constructImageUrl = (imagePath: string): string => {
+    if (!imagePath) return '';
+    
+    // Remove any leading/trailing slashes and backslashes
+    const cleanPath = imagePath.replace(/^[\\/]+|[\\/]+$/g, '');
+    
+    // If it's already a full URL, return as is
+    if (cleanPath.startsWith('http')) {
+      return cleanPath;
+    }
+    
+    // Construct the full URL
+    return `${API_BASE_URL_1}/${cleanPath.replace(/\\/g, '/')}`;
+  };
+
+  const validateImageUrl = async (url: string): Promise<boolean> => {
+    if (!url) return false;
+    try {
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Error validating image URL:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const fetchActivityData = async () => {
       if (!activityId) {
@@ -154,50 +187,45 @@ function HobbyDetailsPageContent() {
       
         setActivityData(activity);
 
-        // Handle image URL with fallback
-        let imageUrl: string | null = null;
+        // Handle thumbnail image
+        let thumbnailUrl: string | null = null;
         if (activity.thumbnailImage) {
-          try {
-            const baseImageUrl = activity.thumbnailImage.startsWith('http') 
-              ? activity.thumbnailImage 
-              : `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
-            
-            const response = await fetch(baseImageUrl);
-            if (!response.ok) {
-              throw new Error('Image not found');
-            }
-            imageUrl = baseImageUrl;
-          } catch {
-            throw new Error('Image not found');
+          const constructedUrl = constructImageUrl(activity.thumbnailImage);
+          if (await validateImageUrl(constructedUrl)) {
+            thumbnailUrl = constructedUrl;
           }
-        } else {
-          throw new Error('No thumbnail image available');
         }
-        setApiImage(imageUrl);
+        setApiImage(thumbnailUrl);
 
         // Handle additional images
-        if (activity.images) {
-          const uniqueThumbnails = new Set<string>();
-          activity.images.forEach((img: any) => {
-            if (!img) return; // Skip empty image URLs
-            
-            const fullImageUrl = img.startsWith('http') 
-              ? img 
-              : `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
-            
-            if (activity.thumbnailImage && 
-                fullImageUrl === `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`) {
-              return;
-            }
-            uniqueThumbnails.add(fullImageUrl);
-          });
+        if (activity.images && activity.images.length > 0) {
+          const validImages = await Promise.all(
+            activity.images.map(async (img: string) => {
+              if (!img) return null;
+              const constructedUrl = constructImageUrl(img);
+              if (await validateImageUrl(constructedUrl)) {
+                return constructedUrl;
+              }
+              return null;
+            })
+          );
+          
+          const uniqueThumbnails = new Set<string>(
+            validImages.filter((url): url is string => url !== null)
+          );
+          
+          // Remove thumbnail from additional images if it exists
+          if (thumbnailUrl) {
+            uniqueThumbnails.delete(thumbnailUrl);
+          }
+          
           setThumbnails(Array.from(uniqueThumbnails));
         }
+        
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
         setIsLoading(false);
-        throw new Error('No activity data available');
       }
     };
 
