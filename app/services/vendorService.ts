@@ -6,16 +6,87 @@ const API_BASE_URL = 'https://api.hobyhub.com/api/1';
 let accessToken: string | null = null;
 
 export interface VendorRegistrationData {
-  id: number;
   name: string;
   emailId: string;
   phoneNumber: string;
   gender: string;
+  dob: string;
+  profileImageFile?: File;
+  activity: {
+    type: string;
+    categoryId: number;
+    title: string;
+    companyName: string;
+    description: string;
+    sinceYear: string;
+    gstNo: string;
+    thumbnailImageFile?: File;
+    address: string;
+    road: string;
+    area: string;
+    state: string;
+    city: string;
+    pincode: string;
+    country: string;
+    longitude: string;
+    latitute: string;
+    purchaseMaterialIds: string;
+    itemCarryText: string;
+    tutorFirstName: string;
+    tutorLastName: string;
+    tutorEmailID: string;
+    tutorCountryCode: string;
+    tutorPhoneNo: string;
+    whatsappCountryCode: string;
+    whatsappNo: string;
+    tutorIntro: string;
+    website: string;
+    classLevel: string;
+    instagramAcc: string;
+    youtubeAcc: string;
+    images: File[];
+    classDetails: {
+      sessionFrom: number;
+      gender: string;
+      timingsTo: string;
+      ageFrom: number;
+      activityId: number;
+      toPrice: number;
+      sessionTo: number;
+      timingsFrom: string;
+      title: string;
+      subCategoryID: string;
+      type: string;
+      ageTo: number;
+      id: number;
+      day: string;
+      fromPrice: number;
+    }[];
+    courseDetails: {
+      sessionFrom: number;
+      gender: string;
+      timingsTo: string;
+      ageFrom: number;
+      endDate: string;
+      toPrice: number;
+      startDate: string;
+      sessionTo: number;
+      timingsFrom: string;
+      title: string;
+      subCategoryID: string;
+      type: string;
+      ageTo: number;
+      id: number;
+      day: string;
+      fromPrice: number;
+    }[];
+    id: number;
+  };
 }
 
 export interface VendorRegistrationResponse {
-  username: string;
   id: number;
+  username: string;
 }
 
 export interface LoginResponse {
@@ -137,14 +208,19 @@ export interface VendorCourseData {
   endDate: string;
 }
 
-export const registerVendor = async (data: VendorRegistrationData): Promise<{ username: string; vendorId: number }> => {
+export const registerVendor = async (data: FormData): Promise<VendorRegistrationResponse> => {
   try {
-    const response = await axios.post<VendorRegistrationResponse>(`${API_BASE_URL}/vendor/register`, data);
+    const response = await fetch('https://api.hobyhub.com/api/1/vendor/register', {
+      method: 'POST',
+      body: data,
+    });
 
-    return {
-      username: response.data.username,
-      vendorId: response.data.id
-    };
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to register vendor');
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error registering vendor:', error);
     throw error;

@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import PopupScreen from "./addInfoPopupScreen";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DirectoryTable } from "./directoryList";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
-import { registerVendor, createVendorActivity, createVendorClass } from "@/app/services/vendorService";
+import { registerVendor } from "@/app/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
@@ -24,18 +24,23 @@ import { DirectoryItem } from "./directoryList";
 import CostRangeInput from "./costRangeInput";
 import AgeRangeInput from "./ageRangeInput";
 import { Checkbox } from "@/components/ui/checkbox";
-import { createClass, createCourse, VendorClassData } from "../../../services/vendorService";
+// import { createClass, createCourse, VendorClassData } from "../../../services/vendorService";
+import { FormValues } from "./types";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
-
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
   gender: yup.string().required("Gender is required"),
+  dob: yup.date().nullable().transform((value, originalValue) => {
+    if (originalValue === '') return null;
+    return value;
+  }),
+  profileImageFile: yup.mixed().nullable(),
 });
 
 // Institute details form schema
@@ -59,6 +64,7 @@ const instituteDetailsSchema = yup.object().shape({
   }),
   certifications: yup.mixed().nullable(),
   address: yup.string().required("Address is required"),
+  road: yup.string(),
   landmark: yup.string().required("Landmark is required"),
   area: yup.string().required("Area is required"),
   city: yup.string().required("City is required"),
@@ -71,6 +77,9 @@ const instituteDetailsSchema = yup.object().shape({
   classLevel: yup.string(),
   instagramAccount: yup.string(),
   youtubeAccount: yup.string(),
+  categoryId: yup.number().required("Category is required"),
+  purchaseMaterialIds: yup.string(),
+  itemCarryText: yup.string(),
 });
 
 // Class details form schema
@@ -79,6 +88,7 @@ const classDetailsSchema = yup.object().shape({
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   time: yup.string().required("Time is required"),
+  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Class type is required"),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -106,14 +116,17 @@ const classDetailsSchema = yup.object().shape({
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
   noOfSessions: yup.string(),
+  location: yup.string(),
+  contact: yup.string()
 });
 
 // Course details form schema
 const courseDetailsSchema = yup.object().shape({
-  className: yup.string().required("Class name is required"),
+  className: yup.string().required("Course name is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   time: yup.string().required("Time is required"),
+  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Course type is required"),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -141,22 +154,9 @@ const courseDetailsSchema = yup.object().shape({
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
   noOfSessions: yup.string(),
+  location: yup.string(),
+  contact: yup.string()
 });
-
-// Add this interface near the top of the file with other interfaces
-interface ApiError {
-  response?: {
-    status: number;
-    data: {
-      data?: {
-        id: number;
-        vendorId: number;
-      };
-      id?: number;
-      vendorId?: number;
-    };
-  };
-}
 
 export default function RegistrationForm() {
   const [images, setImages] = useState<File[]>([]);
@@ -181,6 +181,12 @@ export default function RegistrationForm() {
   const [courses, setCourses] = useState<any[]>([]);
 
   const [directory, setDirectory] = useState<DirectoryItem[]>([]);
+
+  // Add these state variables at the top with other state declarations
+  const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
+  const [instituteDetailsData, setInstituteDetailsData] = useState<any>(null);
+  const [classDetailsData, setClassDetailsData] = useState<any[]>([]);
+  const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
 
   useEffect(() => {
     if (showClassFields) {
@@ -248,15 +254,29 @@ export default function RegistrationForm() {
   });
 
   // Form for class details
-  const classForm = useForm({
+  const classForm = useForm<FormValues>({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
+    defaultValues: {
+      type: 'OFFLINE',
+      className: '',
+      category: '',
+      time: '',
+      weekdays: []
+    }
   });
 
   // Form for course details
-  const courseForm = useForm({
+  const courseForm = useForm<FormValues>({
     resolver: yupResolver(courseDetailsSchema),
     mode: "onChange",
+    defaultValues: {
+      type: 'OFFLINE',
+      className: '',
+      category: '',
+      time: '',
+      weekdays: []
+    }
   });
 
   // Destructure form methods
@@ -370,32 +390,14 @@ export default function RegistrationForm() {
   const savePersonalDetails = async (data: any) => {
     try {
       setIsLoading(true);
-
-      // Prepare vendor registration data
-      const vendorData = {
-        id: 0,
-        name: data.name,
-        emailId: data.emailId,
-        phoneNumber: data.phoneNumber,
-        gender: data.gender
-      };
-
-      // Call vendor registration API
-      const response = await registerVendor(vendorData);
-
-      if (response) {
-        // Store only the API response in localStorage
-        localStorage.setItem('vendorResponse', JSON.stringify(response));
-
-        // Store the vendor ID in state
-        setVendorId(response.vendorId.toString());
-
-        setCompletedSections(prev => ({ ...prev, personalDetails: true }));
-        setActiveAccordion("item-1");
-        toast.success(`Personal details saved successfully!`);
-      } else {
-        toast.error("Failed to register vendor. Please try again.");
-      }
+      
+      // Store personal details in state
+      setPersonalDetailsData(data);
+      
+      // Mark section as completed and move to next
+      setCompletedSections(prev => ({ ...prev, personalDetails: true }));
+      setActiveAccordion("item-1");
+      toast.success(`Personal details saved successfully!`);
     } catch (error) {
       console.error("Error saving personal details:", error);
       toast.error("An error occurred while saving personal details. Please try again.");
@@ -404,300 +406,195 @@ export default function RegistrationForm() {
     }
   };
 
-  // Modify the saveClassDetails function
+  // Add a new function to save institute details
+  const saveInstituteDetails = async () => {
+    try {
+      setIsLoading(true);
+      const data = watchInstitute();
+      
+      // Store institute details in state
+      setInstituteDetailsData(data);
+      
+      // Mark section as completed
+      setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
+      toast.success(`Institute details saved successfully!`);
+    } catch (error) {
+      console.error("Error saving institute details:", error);
+      toast.error("An error occurred while saving institute details. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update the saveClassDetails function
   const saveClassDetails = async () => {
     try {
       setIsLoading(true);
       const data = watchClass();
-
-      // Get vendor ID from localStorage
-      const vendorResponse = localStorage.getItem('vendorResponse');
-      if (!vendorResponse) {
-        toast.error('Vendor ID not found. Please complete registration first.');
-        return;
-      }
-
-      // Get activity ID from localStorage
-      const activityResponse = localStorage.getItem('activityResponse');
-      if (!activityResponse) {
-        toast.error('Activity ID not found. Please complete institute details first.');
-        return;
-      }
-
-      const parsedActivityResponse = JSON.parse(activityResponse);
-
-      // Prepare vendor class data
-      const classData: VendorClassData = {
-        id: 0,
-        activityId: parseInt(parsedActivityResponse),
-        subCategoryID: data.subCategory || '',
-        title: data.className || '',
-        timingsFrom: data.time === 'morning' ? '09:00' :
-          data.time === 'afternoon' ? '13:00' :
-            data.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: data.time === 'morning' ? '12:00' :
-          data.time === 'afternoon' ? '16:00' :
-            data.time === 'evening' ? '20:00' : '12:00',
-        day: Array.isArray(data.weekdays) && data.weekdays.length > 0 ? data.weekdays.join(',') : '',
-        type: "REGULAR",
-        ageFrom: parseInt(data.fromage?.toString() || '0'),
-        ageTo: parseInt(data.toage?.toString() || '0'),
-        sessionFrom: 1,
-        sessionTo: parseInt(data.noOfSessions?.toString() || '1'),
-        gender: data.gender || 'both',
-        fromPrice: parseInt(data.cost?.toString() || '0'),
-        toPrice: parseInt(data.cost?.toString() || '0')
-      };
-
-      console.log('Sending class data to API:', classData);
-
-      // Call vendor class creation API using the service
-      const response = await createClass([classData]);
-
-      if (response.data.message === 'Classes added successfully') {
-        setCourses(prev => [...prev, { ...data }]);
-        setCompletedSections(prev => ({ ...prev, classDetails: true }));
-        toast.success("Class details saved successfully!");
-
-        // Reset form fields
-        setValueClass('className', '');
-        setValueClass('category', '');
-        setValueClass('subCategory', '');
-        // setValueClass('location', '');
-        // setValueClass('contact', '');
-        setValueClass('time', '');
-        setValueClass('gender', '');
-        setValueClass('fromage', '');
-        setValueClass('toage', '');
-        setValueClass('fromcost', '');
-        setValueClass('tocost', '');
-        setValueClass('cost', '');
-        setValueClass('classSize', '');
-        setValueClass('weekdays', []);
-        setValueClass('experienceLevel', '');
-        setValueClass('noOfSessions', '');
-        setShowClassFields(false);
-      } else {
-        toast.error("Failed to create vendor class. Please try again.");
-      }
+      
+      // Add class to the list
+      setClassDetailsData(prev => [...prev, data]);
+      
+      // Reset form and close
+      setShowClassFields(false);
+      toast.success("Class details saved successfully!");
     } catch (error) {
       console.error("Error saving class details:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred while saving class details. Please try again.");
+      toast.error("An error occurred while saving class details. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Update the saveCourseDetails function
   const saveCourseDetails = async (data: any) => {
     try {
       setIsLoading(true);
-
-      // Get vendor ID from localStorage
-      const vendorResponse = localStorage.getItem('vendorResponse');
-      if (!vendorResponse) {
-        toast.error('Vendor ID not found. Please complete registration first.');
-        return;
-      }
-
-      // Get activity ID from localStorage
-      const activityResponse = localStorage.getItem('activityResponse');
-      if (!activityResponse) {
-        toast.error('Activity ID not found. Please complete institute details first.');
-        return;
-      }
-
-      const parsedActivityResponse = JSON.parse(activityResponse);
-
-      // Prepare vendor course data
-      const courseData: VendorClassData = {
-        id: 0,
-        activityId: parseInt(parsedActivityResponse),
-        subCategoryID: data.subCategory || '',
-        title: data.className || '',
-        timingsFrom: data.time === 'morning' ? '09:00' :
-          data.time === 'afternoon' ? '13:00' :
-            data.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: data.time === 'morning' ? '12:00' :
-          data.time === 'afternoon' ? '16:00' :
-            data.time === 'evening' ? '20:00' : '12:00',
-        day: Array.isArray(data.weekdays) && data.weekdays.length > 0 ? data.weekdays.join(',') : '',
-        type: "REGULAR",
-        ageFrom: parseInt(data.fromage?.toString() || '0'),
-        ageTo: parseInt(data.toage?.toString() || '0'),
-        sessionFrom: 1,
-        sessionTo: parseInt(data.noOfSessions?.toString() || '1'),
-        gender: data.gender || 'both',
-        fromPrice: parseInt(data.cost?.toString() || '0'),
-        toPrice: parseInt(data.cost?.toString() || '0')
-      };
-
-      console.log('Sending course data to API:', courseData);
-
-      // Call vendor course creation API using the service
-      const response = await createCourse([courseData]);
-
-      if (response.data.message === 'Course added successfully') {
-        setCourses(prev => [...prev, { ...data }]);
-        setCompletedSections(prev => ({ ...prev, classDetails: true }));
-        toast.success("Course details saved successfully!");
-
-        // Reset form fields
-        setValueCourse('className', '');
-        setValueCourse('category', '');
-        setValueCourse('subCategory', '');
-        // setValueCourse('location', '');
-        // setValueCourse('contact', '');
-        setValueCourse('time', '');
-        setValueCourse('gender', '');
-        setValueCourse('fromage', '');
-        setValueCourse('toage', '');
-        setValueCourse('fromcost', '');
-        setValueCourse('tocost', '');
-        setValueCourse('cost', '');
-        setValueCourse('classSize', '');
-        setValueCourse('weekdays', []);
-        setValueCourse('experienceLevel', '');
-        setValueCourse('noOfSessions', '');
-        setShowCourseFields(false);
-      } else {
-        toast.error("Failed to create vendor course. Please try again.");
-      }
+      
+      // Add course to the list
+      setCourseDetailsData(prev => [...prev, data]);
+      
+      // Reset form and close
+      setShowCourseFields(false);
+      toast.success("Course details saved successfully!");
     } catch (error) {
       console.error("Error saving course details:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred while saving course details. Please try again.");
+      toast.error("An error occurred while saving course details. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Update the handleFinalSubmit function to use stored data
   const handleFinalSubmit = async () => {
     try {
       setIsLoading(true);
 
-      // Get all form data
-      const personalDetails = watchPersonal();
-      const instituteDetails = watchInstitute();
-
       // Create FormData object
       const formData = new FormData();
 
-      // Add required fields
-      formData.append('vendorId', vendorId.toString());
-      formData.append('type', 'INSTITUTE');
-      formData.append('title', instituteDetails.programTitle);
-
-      // Add thumbnail image
-      if (images && images.length > 0 && images[0] instanceof File) {
-        formData.append('thumbnailImageFile', images[0], images[0].name);
-      } else {
-        toast.error('Please upload at least one valid image file');
-        return;
-      }
-
-      // Add institute details
-      formData.append('companyName', instituteDetails.instituteName || '');
-      formData.append('description', instituteDetails.introduction || '');
-      formData.append('sinceYear', instituteDetails.since || '');
-      formData.append('gstNo', instituteDetails.gstNo || '');
-      formData.append('address', instituteDetails.address || '');
-      formData.append('road', '');
-      formData.append('area', instituteDetails.area || '');
-      formData.append('state', instituteDetails.state || '');
-      formData.append('city', instituteDetails.city || '');
-      formData.append('pincode', instituteDetails.pincode || '');
-      formData.append('country', instituteDetails.country || '');
-      formData.append('longitude', (instituteDetails.longitude || '').toString());
-      formData.append('latitute', (instituteDetails.latitude || '').toString());
-
-      // Add tutor details
-      formData.append('tutorFirstName', personalDetails.name.split(' ')[0] || '');
-      formData.append('tutorLastName', personalDetails.name.split(' ').slice(1).join(' ') || '');
-      formData.append('tutorEmailID', personalDetails.emailId || '');
-      formData.append('tutorCountryCode', '+91');
-      formData.append('tutorPhoneNo', personalDetails.phoneNumber || '');
-      formData.append('whatsappCountryCode', '+91');
-      formData.append('whatsappNo', personalDetails.phoneNumber || '');
-      formData.append('tutorIntro', instituteDetails.introduction || '');
-
-      // Add additional info
-      formData.append('website', instituteDetails.websiteName || '');
-      formData.append('classLevel', instituteDetails.classLevel || '');
-      formData.append('instagramAcc', instituteDetails.instagramAccount || '');
-      formData.append('youtubeAcc', instituteDetails.youtubeAccount || '');
-
-      // Create vendor activity
-      const activityResponse = await createVendorActivity(formData);
-
-      // Extract vendor ID from response
-      let activityId;
-
-      if (activityResponse) {
-        // Try to get vendor ID from response data
-        activityId = activityResponse;
-      }
-
-      // If we have a valid vendor ID, use it
-      if (activityId) {
-        setVendorId(activityId.toString());
-      } else {
-        // Use the API response status code as fallback
-        setVendorId(activityResponse?.status?.toString());
-      }
-      localStorage.setItem('activityResponse', activityId);
-      // Mark institute details as completed
-      setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
-
-      // Show success popup
-      setIsSuccessPopupOpen(true);
-      toast.success("Registration completed successfully!");
-
-      // Create vendor classes if there are any
-      if (courses.length > 0) {
-        try {
-          const classPromises = courses.map(classData => {
-            const vendorClassData = {
-              id: 0,
-              vendorId: parseInt(vendorId),
-              activityId: activityResponse?.data?.id || 0,
-              subCategoryID: classData.subCategory,
-              title: classData.className,
-              timingsFrom: classData.time.split('-')[0].trim(),
-              timingsTo: classData.time.split('-')[1].trim(),
-              day: classData.weekdays.join(','),
-              type: "REGULAR",
-              ageFrom: parseInt(classData.fromage),
-              ageTo: parseInt(classData.toage),
-              sessionFrom: 1,
-              sessionTo: parseInt(classData.noOfSessions),
-              gender: classData.gender,
-              fromPrice: parseInt(classData.cost),
-              toPrice: parseInt(classData.cost),
-              price: parseInt(classData.cost)
-            };
-            return createVendorClass([vendorClassData]);
-          });
-
-          await Promise.all(classPromises);
-        } catch (classError) {
-          console.error("Error creating vendor classes:", classError);
-          toast.error("Failed to create vendor classes. Please try again.");
+      // Add personal details
+      if (personalDetailsData) {
+        formData.append('name', personalDetailsData.name);
+        formData.append('emailId', personalDetailsData.emailId);
+        formData.append('phoneNumber', personalDetailsData.phoneNumber);
+        formData.append('gender', personalDetailsData.gender);
+        if (personalDetailsData.dob) {
+          formData.append('dob', personalDetailsData.dob.toISOString());
         }
+        if (personalDetailsData.profileImageFile instanceof File) {
+          formData.append('profileImageFile', personalDetailsData.profileImageFile);
+        }
+      }
+
+      // Add activity details
+      if (instituteDetailsData) {
+        formData.append('activity.type', 'INSTITUTE');
+        formData.append('activity.categoryId', instituteDetailsData.categoryId.toString());
+        formData.append('activity.title', instituteDetailsData.programTitle);
+        formData.append('activity.companyName', instituteDetailsData.instituteName);
+        formData.append('activity.description', instituteDetailsData.introduction || '');
+        formData.append('activity.sinceYear', instituteDetailsData.since || '');
+        formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
+        if (images.length > 0 && images[0] instanceof File) {
+          formData.append('activity.thumbnailImageFile', images[0]);
+        }
+        formData.append('activity.address', instituteDetailsData.address || '');
+        formData.append('activity.road', instituteDetailsData.road || '');
+        formData.append('activity.area', instituteDetailsData.area || '');
+        formData.append('activity.state', instituteDetailsData.state || '');
+        formData.append('activity.city', instituteDetailsData.city || '');
+        formData.append('activity.pincode', instituteDetailsData.pincode || '');
+        formData.append('activity.country', instituteDetailsData.country || '');
+        formData.append('activity.longitude', (instituteDetailsData.longitude || '').toString());
+        formData.append('activity.latitute', (instituteDetailsData.latitude || '').toString());
+        formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
+        formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
+        formData.append('activity.tutorFirstName', instituteDetailsData.firstName);
+        formData.append('activity.tutorLastName', instituteDetailsData.lastName);
+        formData.append('activity.tutorEmailID', instituteDetailsData.email);
+        formData.append('activity.tutorCountryCode', '+91');
+        formData.append('activity.tutorPhoneNo', instituteDetailsData.phoneNumber);
+        formData.append('activity.whatsappCountryCode', '+91');
+        formData.append('activity.whatsappNo', instituteDetailsData.whatsappNumber || '');
+        formData.append('activity.tutorIntro', instituteDetailsData.contactIntroduction || '');
+        formData.append('activity.website', instituteDetailsData.websiteName || '');
+        formData.append('activity.classLevel', instituteDetailsData.classLevel || '');
+        formData.append('activity.instagramAcc', instituteDetailsData.instagramAccount || '');
+        formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
+      }
+
+      // Add activity images
+      images.forEach((image) => {
+        if (image instanceof File) {
+          formData.append('activity.images', image);
+        }
+      });
+
+      // Prepare class details array
+      const classDetailsArray = classDetailsData.map((course) => ({
+        title: course.className,
+        subCategoryID: course.subCategory,
+        timingsFrom: course.time === 'morning' ? '09:00' :
+          course.time === 'afternoon' ? '13:00' :
+            course.time === 'evening' ? '17:00' : '09:00',
+        timingsTo: course.time === 'morning' ? '12:00' :
+          course.time === 'afternoon' ? '16:00' :
+            course.time === 'evening' ? '20:00' : '12:00',
+        day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : '',
+        type: course.type || 'OFFLINE',
+        ageFrom: course.fromage ? parseInt(course.fromage) : 0,
+        ageTo: course.toage ? parseInt(course.toage) : 0,
+        sessionFrom: 1,
+        sessionTo: course.noOfSessions ? parseInt(course.noOfSessions) : 1,
+        gender: course.gender || 'both',
+        fromPrice: course.cost ? parseFloat(course.cost) : 0,
+        toPrice: course.cost ? parseFloat(course.cost) : 0
+      }));
+
+      // Prepare course details array
+      const courseDetailsArray = courseDetailsData.map((course) => ({
+        title: course.className,
+        subCategoryID: course.subCategory,
+        timingsFrom: course.time === 'morning' ? '09:00' :
+          course.time === 'afternoon' ? '13:00' :
+            course.time === 'evening' ? '17:00' : '09:00',
+        timingsTo: course.time === 'morning' ? '12:00' :
+          course.time === 'afternoon' ? '16:00' :
+            course.time === 'evening' ? '20:00' : '12:00',
+        day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : 'monday',
+        type: course.type || 'OFFLINE',
+        ageFrom: course.fromage ? parseInt(course.fromage) : 0,
+        ageTo: course.toage ? parseInt(course.toage) : 0,
+        sessionFrom: 1,
+        sessionTo: course.noOfSessions ? parseInt(course.noOfSessions) : 1,
+        gender: course.gender || 'both',
+        fromPrice: course.cost ? parseFloat(course.cost) : 0,
+        toPrice: course.cost ? parseFloat(course.cost) : 0,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      }));
+
+      // Add stringified class and course details
+      formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
+      formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
+
+      // Call the API only if all required data is present
+      if (personalDetailsData && instituteDetailsData) {
+        const response = await registerVendor(formData);
+
+        if (response) {
+          setVendorId(response.id.toString());
+          setIsSuccessPopupOpen(true);
+          toast.success("Registration completed successfully!");
+        } else {
+          toast.error("Failed to register vendor. Please try again.");
+        }
+      } else {
+        toast.error("Please complete all required sections before submitting.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      // Check if the error contains a successful response
-      const apiError = error as ApiError;
-      if (apiError.response?.data) {
-        const responseData = apiError.response.data;
-
-        // Try to get vendor ID from error response
-        const extractedVendorId = responseData; // Use status code as fallback
-
-        setVendorId(extractedVendorId.toString());
-        setIsSuccessPopupOpen(true);
-        toast.success("Registration completed successfully!");
-        return;
-      }
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
@@ -869,13 +766,44 @@ export default function RegistrationForm() {
                         <p className="text-red-500 text-xs">{errorsPersonal.gender.message}</p>
                       )}
                     </div>
+                    <div className="flex flex-col gap-2">
+                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                        Date of Birth<span ></span>
+                      </Label>
+                      <Input
+                        type="date"
+                        {...registerPersonal("dob", {
+                          setValueAs: (value) => value === '' ? null : value
+                        })}
+                        className="h-[52px] border-[#05244f]"
+                      />
+                      {/* {errorsPersonal.dob && (
+                        <p className="text-red-500 text-xs">{errorsPersonal.dob.message}</p>
+                      )} */}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                        Profile Image
+                      </Label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setValuePersonal("profileImageFile", file);
+                          }
+                        }}
+                        className="h-[52px] border-[#05244f]"
+                      />
+                    </div>
                   </div>
                   <Button
                     type="submit"
                     className="my-4 w-20% app-bg-color text-white float-right"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Saving..." : "Next"}
+                    {isLoading ? "Saving..." : "Save"}
                   </Button>
                 </form>
               </AccordionContent>
@@ -939,7 +867,7 @@ export default function RegistrationForm() {
                   </div>
 
                   <div className="mb-6 mt-[50px]">
-                    <h3 className="text-[#05244f] trajan-pro text-md font-semibold">Photos<span className="text-red-500 ml-1 text-sm">*</span></h3>
+                    <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Thumbnail Image<span className="text-red-500 ml-1 text-sm">*</span></h3>
                     {images.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
                         {imageUrls.map((src, index) => (
@@ -1307,9 +1235,67 @@ export default function RegistrationForm() {
                             className="h-[52px] border-[#05244f]"
                           />
                         </div>
+                        
+                      </div>
+                      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 my-4 mb-6">
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Road
+                          </Label>
+                          <Input
+                            placeholder="Road"
+                            {...registerInstitute("road")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Purchase Material IDs
+                          </Label>
+                          <Input
+                            placeholder="Purchase Material IDs"
+                            {...registerInstitute("purchaseMaterialIds")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Item Carry Text
+                          </Label>
+                          <Input
+                            placeholder="Item Carry Text"
+                            {...registerInstitute("itemCarryText")}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                            Category<span className="text-red-500">*</span>
+                          </Label>
+                          <Select
+                            onValueChange={(value) => setValueInstitute("categoryId", parseInt(value))}
+                            value={watchInstitute("categoryId")?.toString() || ""}
+                          >
+                            <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                              <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {errorsInstitute.categoryId && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.categoryId.message}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                
 
                   <div className="flex justify-end mt-4">
                     <Button
@@ -1321,17 +1307,124 @@ export default function RegistrationForm() {
                       Previous
                     </Button>
                     <Button
-                      onClick={handleFinalSubmit}
-                      className="app-bg-color text-white"
-                      disabled={isLoading || !completedSections.personalDetails}
+                      type="button"
+                      onClick={saveInstituteDetails}
+                      className="w-20% app-bg-color text-white float-right"
+                      disabled={isLoading}
                     >
-                      {isLoading ? "Submitting..." : "Submit"}
+                      {isLoading ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </form>
               </AccordionContent>
             </div>
           </AccordionItem>
+
+          {/* Institute Images Section */}
+          <AccordionItem value="item-2">
+            <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
+              <AccordionTrigger onClick={() => onAccordianClick("item-2")}>
+                <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.instituteDetails || activeAccordion == 'item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"}`}>
+                  Institute Images
+                  {completedSections.instituteDetails && <CircleCheckBig className="text-[#46a758] ml-2" />}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="mb-6">
+                  <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Upload Institute Images</h3>
+                  {images.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
+                      {imageUrls.map((src, index) => (
+                        <div key={index} className="relative w-[158px] h-[158px]">
+                          <Image
+                            src={src}
+                            alt="Uploaded"
+                            width={158}
+                            height={158}
+                            className="rounded-md w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const updatedImages = images.filter((_, i) => i !== index);
+                              const updatedUrls = imageUrls.filter((_, i) => i !== index);
+                              setImages(updatedImages);
+                              setImageUrls(updatedUrls);
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div
+                    className="h-[180px] flex flex-col gap-3 justify-center items-center py-4 my-3 rounded-[15px] border border-dashed border-[#05244f] cursor-pointer p-4"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="flex justify-center">
+                      <Image src={"/Icons/file-upload.svg"} alt="file-upload" height={45} width={59} />
+                    </div>
+                    <div className="text-center text-[#acacac] trajan-pro text-[11.6px] font-medium">
+                      Drag your file(s) to start uploading
+                    </div>
+                    <div>
+                      <Button variant="outline" className="">Browse File</Button>
+                    </div>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleImageUpload}
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/jpeg,image/png,image/avif,.jpg,.jpeg,.png,.avif"
+                    />
+                  </div>
+                  <div className="relative justify-center text-[#cecece] text-[11.6px] font-medium">
+                    Only support jpg, png and avif files
+                  </div>
+                </div>
+
+                <div className="flex justify-end mt-4">
+                  <Button
+                    type="button"
+                    onClick={() => setActiveAccordion("item-1")}
+                    className="border-[#05244f] text-[#05244f] mr-2"
+                    variant="outline"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
+                      setActiveAccordion("");
+                    }}
+                    className="app-bg-color text-white"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Saving..." : "Save Images"}
+                  </Button>
+                </div>
+              </AccordionContent>
+            </div>
+          </AccordionItem>
+
           {/* Class Details Button */}
           <Button
             variant="outline"
@@ -1340,6 +1433,17 @@ export default function RegistrationForm() {
           >
             + Add Class Details
           </Button>
+
+          {/* Final Submit Button */}
+          <div className="flex justify-center mt-6">
+            <Button
+              onClick={handleFinalSubmit}
+              className="app-bg-color text-white px-8 py-6 text-lg"
+              disabled={isLoading || !completedSections.personalDetails || !completedSections.instituteDetails}
+            >
+              {isLoading ? "Submitting..." : "Submit Registration"}
+            </Button>
+          </div>
 
           <PopupScreen
             open={isOpen}
@@ -1420,7 +1524,7 @@ export default function RegistrationForm() {
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
                       </div>
                       <CostRangeInput
-                        form={classForm}
+                        form={classForm as UseFormReturn<FormValues>}
                         setValue={setValueClass}
                         errors={errorsClass}
                       />
@@ -1443,6 +1547,28 @@ export default function RegistrationForm() {
                         </Select>
                         {errorsClass.time && (
                           <p className="text-red-500 text-xs">{errorsClass.time.message}</p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Class Type<span className="text-red-500">*</span>
+                        </Label>
+                        <Select 
+                          onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueClass("type", value)} 
+                          value={watchClass("type") || "OFFLINE"}
+                        >
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Select Class Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="OFFLINE">Offline</SelectItem>
+                            <SelectItem value="ONLINE">Online</SelectItem>
+                            <SelectItem value="REGULAR">Regular</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errorsClass.type && (
+                          <p className="text-red-500 text-xs">{errorsClass.type.message}</p>
                         )}
                       </div>
 
@@ -1486,7 +1612,7 @@ export default function RegistrationForm() {
                         </div>
 
                         <AgeRangeInput
-                          form={classForm}
+                          form={classForm as UseFormReturn<FormValues>}
                           setValue={setValueClass}
                           errors={errorsClass}
                         />
@@ -1594,7 +1720,7 @@ export default function RegistrationForm() {
                         <Input type="number" {...registerCourse("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
                       </div>
                       <CostRangeInput
-                        form={classForm}
+                        form={classForm as UseFormReturn<FormValues>}
                         setValue={setValueClass}
                         errors={errorsClass}
                       />
@@ -1615,6 +1741,28 @@ export default function RegistrationForm() {
                         </Select>
                         {errorsCourse.time && (
                           <p className="text-red-500 text-xs">{errorsCourse.time.message}</p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Course Type<span className="text-red-500">*</span>
+                        </Label>
+                        <Select 
+                          onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueCourse("type", value)} 
+                          value={watchCourse("type") || "OFFLINE"}
+                        >
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Select Course Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="OFFLINE">Offline</SelectItem>
+                            <SelectItem value="ONLINE">Online</SelectItem>
+                            <SelectItem value="REGULAR">Regular</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {errorsCourse.type && (
+                          <p className="text-red-500 text-xs">{errorsCourse.type.message}</p>
                         )}
                       </div>
 
@@ -1658,7 +1806,7 @@ export default function RegistrationForm() {
                         </div>
 
                         <AgeRangeInput
-                          form={classForm}
+                          form={classForm as UseFormReturn<FormValues>}
                           setValue={setValueClass}
                           errors={errorsClass}
                         />

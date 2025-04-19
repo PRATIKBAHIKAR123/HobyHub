@@ -18,6 +18,8 @@ export type FormValues = {
   weekdays?: (string | null | undefined)[];
   experienceLevel?: string;
   noOfSessions?: string;
+  type: 'REGULAR' | 'ONLINE' | 'OFFLINE';
+
 };
 
 export interface FormInputProps {
