@@ -130,13 +130,13 @@ function HobbyDetailsPageContent() {
         // Check if user is logged in by checking for token
         const token = localStorage.getItem('token');
         let activity: ActivityData;
-
+        activity = await getActivityById(parseInt(activityId));
         if (token) {
           // If logged in, fetch fresh data from API
-          activity = await getActivityById(parseInt(activityId));
+          
           // Save the activity data in sessionStorage
            sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
-          
+           sessionStorage.setItem('activity', JSON.stringify(activity));
           // Increase view count for logged-in users
           try {
             await increaseActivityViewCount(parseInt(activityId));
@@ -149,7 +149,7 @@ function HobbyDetailsPageContent() {
           if (storedData) {
             activity = JSON.parse(storedData);
           } else {
-            throw new Error('No activity data available');
+            // throw new Error('No activity data available');
           }
         }
       
@@ -188,6 +188,7 @@ function HobbyDetailsPageContent() {
       } catch (error) {
         console.error('Error fetching activity data:', error);
         setIsLoading(false);
+        throw new Error('No activity data available');
       }
     };
 

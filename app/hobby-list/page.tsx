@@ -173,6 +173,7 @@ function ClassDetails() {
   const [isListView, setIsListView] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [classes, setClasses] = useState([]);
+  const [filterType, setFilterType] = useState('Online');
 
   // Simulate loading
   useEffect(() => {
@@ -221,8 +222,8 @@ console.log(classes)
             </ToggleGroupItem>
           </ToggleGroup>
           <div className="border-2 border-gray-300 rounded-md p-1 flex">
-            <Button className="app-bg-color text-white">Online Classes</Button>
-            <Button variant="outline" className="ml-1">Offline Classes</Button>
+            <Button variant={`${filterType=='Online'?'default':'outline'}`} onClick={() => setFilterType('Online')}>Online Classes</Button>
+            <Button variant={`${filterType=='Offline'?'default':'outline'}`} className="ml-1" onClick={() => setFilterType('Offline')}>Offline Classes</Button>
           </div>
         </div>
       </div>
@@ -255,7 +256,7 @@ function ClassGridList({ classes }:any) {
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Age:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.ageFrom} - {item.ageTo}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Session:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.sessionFrom}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
-          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.price}</p></p>
+          <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.fromPrice} - {item.toPrice}</p></p>
           <div className="flex justify-between gap-2 mt-4">
             <Button 
               variant="outline"
@@ -331,7 +332,7 @@ function ClassList({ classes }:any) {
               <TableCell>{item.sessionFrom}</TableCell>
               <TableCell>{item.sessionTo}</TableCell>
               <TableCell>{item.sessionFrom}</TableCell>
-              <TableCell>{item.price}</TableCell>
+              <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   <Button 

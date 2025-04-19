@@ -62,10 +62,10 @@ export const getUserProfile = async (): Promise<UserProfile> => {
  * @param profileData Updated profile data
  * @returns Updated user profile
  */
-export const updateUserProfile = async (profileData: ProfileUpdateData): Promise<UserProfile> => {
+export const updateUserProfile = async (profileData: FormData) => {
     try {
         const token = getAuthToken();
-        const response = await axios.post<UserProfile>(`${API_BASE_URL}/update-profile`, profileData, {
+        const response = await axios.post(`${API_BASE_URL}/update-profile`, profileData, {
             headers: {
                 'Content-Type': 'application/json',
                 'accept': '*/*',

@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/lib/apiConfigs";
 import axios from "axios";
 import { getStoredToken } from "@/utils/localStorage";
+import { VendorClassData } from "@/app/services/vendorService";
 
 const getHeaders = () => ({
   "Content-Type": "application/json",
@@ -24,9 +25,9 @@ export const registerVendor = async (formData: {}) => {
     }
 };
 
-export const getClassList = async () => {
+export const getClassList = async (id:number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-class/get-all?id=0`, {
+    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-class/get-all?id=${id}`, {
       headers: getHeaders(),
     });
     console.log("Response:", response.data);
@@ -37,49 +38,31 @@ export const getClassList = async () => {
   }
 };
 
-export interface VendorClassData {
-  id: number;
-  activityId: number;
-  subCategoryID: string;
-  title: string;
-  timingsFrom: string;
-  timingsTo: string;
-  day: string;
-  type: string;
-  ageFrom: number;
-  ageTo: number;
-  sessionFrom: number;
-  sessionTo: number;
-  gender: string;
-  fromPrice: number;
-  toPrice: number;
-}
-
-export const createClass = async (formData: VendorClassData[]) => {
+export const createClass = async (formData:VendorClassData[]) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-class/create`, formData, { headers: getHeaders() });
+    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-class/create`,formData,{ headers: getHeaders()});
     console.log("Response:", response.data);
     return response;
-  } catch (error: any) {
+  } catch (error : any) {
     console.error("Error:", error);
     return error.response;
   }
 };
 
-export const createCourse = async (formData: VendorClassData[]) => {
+export const createCourse = async (formData:VendorClassData[]) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-course/create`, formData, { headers: getHeaders() });
+    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-course/create`,formData,{ headers: getHeaders()});
     console.log("Response:", response.data);
     return response;
-  } catch (error: any) {
+  } catch (error : any) {
     console.error("Error:", error);
     return error.response;
   }
 };
 
-export const getCourseList = async () => {
+export const getCourseList = async (id:number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-course/get-all?id=0`, {
+    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-course/get-all?id=${id}`, {
       headers: getHeaders(),
     });
     console.log("Response:", response.data);
@@ -90,15 +73,30 @@ export const getCourseList = async () => {
   }
 };
 
-export const getImageList = async () => {
+export const getImageList = async (id:number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-file/get-all?id=0`, {
+    const response = await axios.get(`${API_BASE_URL}/vendor/vendor-file/get-all?id=${id}`, {
       headers: getHeaders(),
     });
     console.log("Response:", response.data);
-    return response;
+    return response.data;
   } catch (error : any) {
     console.error("Error:", error);
     return error.response;
   }
 };
+
+export const getActivity = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/vendor/activity/get-all`, {
+      headers: getHeaders(),
+    });
+    console.log("Response:", response.data);
+    return response.data;
+  } catch (error : any) {
+    console.error("Error:", error);
+    return error.response;
+  }
+};
+
+export type { VendorClassData };

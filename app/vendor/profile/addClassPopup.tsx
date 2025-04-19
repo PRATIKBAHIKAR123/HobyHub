@@ -11,15 +11,19 @@ import { Category } from "@/app/homepage/categories";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { createClass, VendorClassData } from "@/services/vendorService";
+import { createClass } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
+import { VendorClassData } from "@/app/services/vendorService";
 
 const classDetailsSchema = yup.object().shape({
+    id: yup.number(),
+    activityId: yup.number(),
   className: yup.string().required("Class name is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   location: yup.string(),
   contact: yup.string(),
+  type: yup.string(),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -54,10 +58,12 @@ interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onSubmit?: (classForm: VendorClassData) => void;
+  classData?:VendorClassData;
+  activityId?:number;
 }
 
 
-export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenProps) {
+export default function AddClassPopup({ open, setOpen, onSubmit, classData, activityId }: PopupScreenProps) {
       const [categories, setCategories] = useState<Category[]>([]);
       const [isLoading, setIsLoading] = useState(false);
   // Form for class details
@@ -75,6 +81,32 @@ export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenPr
     formState: { errors: errorsClass },
   } = classForm;
 
+useEffect(() => {
+    if (classData) {
+        setValueClass("id", classData.id);
+        setValueClass("activityId", activityId);
+        setValueClass("className", classData.title || "");
+        const parentCategory = categories.find(cat => 
+            cat.subcategories.some(sub => sub.id === Number(classData.subCategoryID))
+        );
+        setValueClass("category", parentCategory?.title || "");
+        setValueClass("subCategory", classData.subCategoryID || "");
+        setValueClass("time", 
+            classData.timingsFrom === "09:00" ? "morning" : 
+            classData.timingsFrom === "13:00" ? "afternoon" : 
+            classData.timingsFrom === "17:00" ? "evening" : ""
+        );
+        setValueClass("type", classData.type || "");
+        setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
+        setValueClass("gender", classData.gender || "both");
+        setValueClass("fromage", classData.ageFrom?.toString() || "");
+        setValueClass("toage", classData.ageTo?.toString() || "");
+        setValueClass("fromcost", classData.fromPrice?.toString() || "");
+        setValueClass("tocost", classData.toPrice?.toString() || "");
+        setValueClass("noOfSessions", classData.sessionTo?.toString() || "1");
+        setValueClass("experienceLevel", classData.type || "");
+    }
+}, [classData, categories, setValueClass]);
 
   const handleWeekdayChange = (day: string) => {
     const currentWeekdays = watchClass('weekdays') || []; // Get current weekdays value
@@ -117,8 +149,9 @@ export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenPr
   const submitClass = async (formData:any) => {
     // setIsLoading(true);
     const classData: VendorClassData = {
-        id: 0,
-        activityId: 0,
+        id: formData.id,
+        vendorId: formData.vendorId,
+        activityId: formData.activityId,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
         timingsFrom: formData.time === 'morning' ? '09:00' : 
@@ -128,14 +161,15 @@ export default function AddClassPopup({ open, setOpen, onSubmit }: PopupScreenPr
                   formData.time === 'afternoon' ? '16:00' : 
                   formData.time === 'evening' ? '20:00' : '12:00',
         day: formData.weekdays.join(','),
-        type: "REGULAR",
+        type: formData.type,
         ageFrom: parseInt(formData.fromage) || 0,
         ageTo: parseInt(formData.toage) || 0,
         sessionFrom: 1,
         sessionTo: parseInt(formData.noOfSessions) || 1,
         gender: formData.gender || 'both',
-        fromPrice: parseInt(formData.cost) || 0,
-        toPrice: parseInt(formData.cost) || 0
+        price: parseInt(formData.cost) || 0,
+        fromPrice: parseInt(formData.fromcost) || 0,
+        toPrice: parseInt(formData.tocost) || 0,
       };
 console.log('classForm',classData)
     try {
@@ -228,9 +262,22 @@ console.log('classForm',classData)
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
+                    <div className="grid md:grid-cols-3 sm:grid-cols-1 gap-4 mb-6">
                       
 
+                      <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">Type</Label>
+                        <Select onValueChange={(value) => setValueClass("type", value)} value={watchClass("type") || ""}>
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                          <SelectItem value="Offline">Offline</SelectItem>
+                            <SelectItem value="Online">Online</SelectItem>
+                            
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />

@@ -71,7 +71,7 @@ function HobbyContactDetailsPageContent() {
   const activityId = searchParams.get('id');
 
   useEffect(() => {
-    const savedData = sessionStorage.getItem('activityData');
+    const savedData = sessionStorage.getItem('activity');
     if (savedData) {
       const data = JSON.parse(savedData);
       if (data.id === parseInt(activityId || '')) {

@@ -94,16 +94,25 @@ function ProfilePage() {
     try {
       setIsLoading(true);
 
-      const updateData = {
-        id: profile.id,
-        name: profile.name,
-        emailId: profile.email,
-        phoneNumber: profile.phoneNumber,
-        gender: profile.gender,
-        dob: profile.dob
-      };
+      // const updateData = {
+      //   id: profile.id,
+      //   name: profile.name,
+      //   emailId: profile.email,
+      //   phoneNumber: profile.phoneNumber,
+      //   gender: profile.gender,
+      //   dob: profile.dob
+      // };
 
-      await updateUserProfile(updateData);
+      const formData = new FormData();
+      // formData.append('id', instituteDetails.instituteName || '');
+      formData.append('name', profile.name || '');
+      formData.append('emailId', profile.email || '');
+      formData.append('phoneNumber', profile.phoneNumber || '');
+      formData.append('gender', profile.gender || '');
+      formData.append('dob', profile.dob||'');
+      formData.append('profileImageFile', profile.profileImage||'');
+
+      await updateUserProfile(formData);
       setIsEditing(false);
       setError(null);
       setValidationErrors({}); // Clear validation errors on successful update

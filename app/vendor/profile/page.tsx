@@ -8,15 +8,21 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { getClassList, getCourseList, getImageList } from "@/services/vendorService";
+import { getActivity, getClassList, getCourseList, getImageList } from "@/services/vendorService";
 import AddClassPopup from "./addClassPopup";
 import AddCoursePopup from "./addCoursePopup";
+import { getUserProfile, updateUserProfile } from "@/services/userService";
+import { toast } from "sonner";
+import { API_BASE_URL_1 } from "@/lib/apiConfigs";
+import { VendorClassData } from "@/app/services/vendorService";
+import withAuth from "@/app/auth/withAuth";
 
 interface ProfileData {
   email: string;
   joinedDate: string;
   phoneNumber: string;
   location: string;
+  dob?:string;
   name: string;
   profession: string;
   profileImage: string;
@@ -61,10 +67,21 @@ export interface ClassItem {
 
 
 interface GalleryImage {
-  id: number;
-  url: string;
-  title: string;
-  date: string;
+  activityId
+  : 
+  number;
+  filePath
+  : 
+  string;
+  fileType
+  : 
+  string;
+  id
+  : 
+  number;
+  vendorId
+  : 
+  number;
 }
 
 interface DeletePopupProps {
@@ -190,7 +207,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
   );
 }
 
-export default function ProfilePage() {
+ function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData>({
     email: "",
     joinedDate: "",
@@ -230,25 +247,25 @@ export default function ProfilePage() {
   const [isClassOpen, setIsClassOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [isCourseOpen, setIsCourseOpen] = useState(false);
+  const [activityId, setactivityId] = useState(0);
+  const [selectedClass, setSelectedClass] = useState<VendorClassData |undefined >();
 
   useEffect(() => {
-    const fetchUserProfile = () => {
+    const fetchUserProfile =async () => {
       try {
         setIsLoading(true);
+        const personalDetails = await getUserProfile();
+        const instituteDetails = await getActivity();
         
-        // Get data from local storage
-        const personalDetails = localStorage.getItem("personalDetails");
-        const instituteDetails = localStorage.getItem("instituteDetails");
-        const additionalInfo = localStorage.getItem("additionalInfo");
-        
-        let profileData: ProfileData = {
+        let profileData: ProfileData 
+        = {
           email: "",
           joinedDate: "",
           phoneNumber: "",
           location: "",
           name: "",
           profession: "",
-          profileImage: "/images/thumb5.png",
+          profileImage: "/Icons/icons8-user-96.png",
           instituteName: "",
           programTitle: "",
           gstNo: "",
@@ -257,68 +274,51 @@ export default function ProfilePage() {
           classLevel: "",
           instagramAccount: "",
           youtubeAccount: "",
-          // Mock data for classes
-          // classList: [
-          //   { id: 1, title: "Beginner's Yoga", ageFrom: 15, day: "Mon, Wed 5-6 PM", status: "Active" },
-          //   { id: 2, title: "Advanced Meditation", students: 8, schedule: "Tue, Thu 7-8 PM", status: "Active" },
-          //   { id: 3, title: "Morning Fitness", students: 12, schedule: "Mon-Fri 6-7 AM", status: "Inactive" },
-          //   { id: 4, title: "Weekend Workshop", students: 20, schedule: "Sat 10-12 AM", status: "Active" }
-          // ],
-          // // Mock data for courses
           // courseList: [
           //   { id: 1, title: "Yoga for Beginners", duration: "8 weeks", level: "Beginner", enrollments: 25, image: "/images/course1.jpg" },
           //   { id: 2, title: "Advanced Meditation Techniques", duration: "4 weeks", level: "Advanced", enrollments: 15, image: "/images/course2.jpg" },
           //   { id: 3, title: "Fitness Fundamentals", duration: "12 weeks", level: "Intermediate", enrollments: 30, image: "/images/course3.jpg" }
           // ],
-          // Mock data for gallery
-          galleryImages: [
-            { id: 1, url: "/images/no image available.jpg", title: "Annual Retreat", date: "May 15, 2024" },
-            { id: 2, url: "/images/no image available.jpg", title: "Outdoor Class", date: "June 3, 2024" },
-            { id: 3, url: "/images/no image available.jpg", title: "Community Event", date: "July 10, 2024" },
-            { id: 4, url: "/images/no image available.jpg", title: "Workshop Session", date: "August 22, 2024" }
-          ]
+          
         };
         
         // Parse personal details
         if (personalDetails) {
-          const data = JSON.parse(personalDetails);
+          const data = personalDetails;
           profileData = {
             ...profileData,
-            id: data.id || 0,
+            //id: data.id || 0,
             email: data.emailId || "",
             joinedDate: data.joinedDate || new Date().toLocaleDateString(),
             phoneNumber: data.phoneNumber || "",
+            dob: data.dob || '',
             location: data.location || "Pune",
             name: data.name || "",
             profession: data.profession || "",
-            profileImage: data.profileImage || "/images/thumb5.png",
+            profileImage: data.profileImage || "/Icons/icons8-user-96.png",
             gender: data.gender || ""
           };
         }
         
         // Parse institute details
-        if (instituteDetails) {
-          const data = JSON.parse(instituteDetails);
+        if (instituteDetails.length) {
+          // const institutedata = instituteDetails[0];
+          const data = instituteDetails[0];
+          setactivityId(data.id);
+          
           profileData = {
             ...profileData,
-            programTitle: data.programTitle || "",
-            instituteName: data.instituteName || "",
+            programTitle: data.title || "",
+            instituteName: data.title || "",
             gstNo: data.gstNo || "",
-            introduction: data.introduction || ""
-          };
-        }
-        
-        // Parse additional info
-        if (additionalInfo) {
-          const data = JSON.parse(additionalInfo);
-          profileData = {
-            ...profileData,
+            introduction: data.description || "",
             websiteName: data.websiteName || "",
             classLevel: data.classLevel || "",
             instagramAccount: data.instagramAccount || "",
             youtubeAccount: data.youtubeAccount || ""
           };
         }
+      
         
         setProfile(profileData);
         setError(null);
@@ -365,45 +365,25 @@ export default function ProfilePage() {
       setIsLoading(true);
 
       // Split data into different sections as per registration form
-      const personalData = {
-        id: profile.id,
-        name: profile.name,
-        emailId: profile.email,
-        phoneNumber: profile.phoneNumber,
-        gender: profile.gender,
-        location: profile.location,
-        profession: profile.profession,
-        profileImage: profile.profileImage
-      };
-
-      const instituteData = {
-        programTitle: profile.programTitle,
-        instituteName: profile.instituteName,
-        gstNo: profile.gstNo,
-        introduction: profile.introduction
-      };
-
-      const additionalData = {
-        websiteName: profile.websiteName,
-        classLevel: profile.classLevel,
-        instagramAccount: profile.instagramAccount,
-        youtubeAccount: profile.youtubeAccount
-      };
-
-      // Update local storage
-      localStorage.setItem("personalDetails", JSON.stringify(personalData));
-      localStorage.setItem("instituteDetails", JSON.stringify(instituteData));
-      localStorage.setItem("additionalInfo", JSON.stringify(additionalData));
-      
-      // Additional data would be saved here
-      // For demo purposes, we're not saving the mock class/course/gallery data
-      
+      const formData = new FormData();
+      // formData.append('id', instituteDetails.instituteName || '');
+      formData.append('name', profile.name || '');
+      formData.append('emailId', profile.email || '');
+      formData.append('phoneNumber', profile.phoneNumber || '');
+      formData.append('gender', profile.gender || '');
+      formData.append('dob', profile.dob||'');
+      formData.append('profileImageFile', profile.profileImage||'');
+    
+            await updateUserProfile(formData);
       setIsEditing(false);
-      setError(null);
+      //setError(null);
+      toast.success('Profile Updated Succesfully');
       setValidationErrors({}); // Clear validation errors on successful update
-    } catch (err) {
+    } catch (err:any) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
-      setError(errorMessage);
+      toast.error(errorMessage);
+      //setError(errorMessage);
+      
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -425,7 +405,7 @@ export default function ProfilePage() {
   },[activeTab]);
 
   const getClasses= async ()=>{
-      const data = await getClassList();
+      const data = await getClassList(activityId);
       setProfile(prev => ({
         ...prev,
         classList: data.data
@@ -434,7 +414,7 @@ export default function ProfilePage() {
   }
 
   const getCourses= async ()=>{
-    const data = await getCourseList();
+    const data = await getCourseList(activityId);
     setProfile(prev => ({
       ...prev,
       courseList: data.data
@@ -443,13 +423,21 @@ export default function ProfilePage() {
 }
 
 const getImages= async ()=>{
-  const data = await getImageList();
+  const data = await getImageList(activityId);
+data.forEach((img: any) => {
+  img.filePath = `${API_BASE_URL_1}${img.filePath.replace(/\\/g, '/')}`;
+});
   setProfile(prev => ({
     ...prev,
-    galleryImages: data.data
+    galleryImages: data
   }));
 
 }
+
+ const handleEditClass =(classItem: any)=> {
+  setIsClassOpen(true);
+       setSelectedClass(classItem);
+ }
 
   // Render different content based on active tab
   const renderTabContent = () => {
@@ -803,7 +791,7 @@ const getImages= async ()=>{
                         {classItem.ageFrom} - {classItem.ageTo} years</td>
                         
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.timingsFrom} - {classItem.timingsTo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>
@@ -818,7 +806,9 @@ const getImages= async ()=>{
                           {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2">
                             View
                           </Button> */}
-                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800">
+                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800" onClick={() =>
+                            handleEditClass(classItem)
+                          }>
                             Edit
                           </Button>
                         </td>
@@ -839,7 +829,7 @@ const getImages= async ()=>{
                 Add New Class
               </Button>
             </div>
-            <AddClassPopup open={isClassOpen} setOpen={setIsClassOpen} onSubmit={()=>{getClasses()}}/>
+            <AddClassPopup open={isClassOpen} classData={selectedClass} activityId={activityId} setOpen={setIsClassOpen} onSubmit={()=>{getClasses()}}/>
           </div>
         );
       case "courses":
@@ -906,7 +896,7 @@ const getImages= async ()=>{
                         {classItem.ageFrom} - {classItem.ageTo} years</td>
                         
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.timingsFrom} - {classItem.timingsTo}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>
@@ -958,16 +948,16 @@ const getImages= async ()=>{
                     <div key={image.id} className="relative group">
                       <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100">
                         <Image
-                          src={image.url || "/images/no image available.jpg"}
-                          alt={image.title}
+                          src={image.filePath || "/images/no image available.jpg"}
+                          alt={image.activityId.toString()}
                           width={400}
                           height={400}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-end justify-start p-3">
                           <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="font-semibold">{image.title}</p>
-                            <p className="text-sm">{image.date}</p>
+                            {/* <p className="font-semibold">{image.title}</p>
+                            <p className="text-sm">{image.date}</p> */}
                           </div>
                         </div>
                       </div>
@@ -1164,3 +1154,5 @@ const getImages= async ()=>{
     </div>
   );
 }
+
+export default withAuth(ProfilePage)

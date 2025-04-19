@@ -99,7 +99,7 @@ export interface VendorActivityResponse {
 
 export interface VendorClassData {
   id: number;
-  vendorId: number;
+  vendorId?: number;
   activityId: number;
   subCategoryID: string;
   title: string;
@@ -112,7 +112,9 @@ export interface VendorClassData {
   sessionFrom: number;
   sessionTo: number;
   gender: string;
-  price: number;
+  price?: number;
+  fromPrice: number;
+  toPrice: number;
 }
 
 export interface VendorCourseData {

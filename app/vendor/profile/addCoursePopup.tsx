@@ -134,8 +134,8 @@ export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenP
         sessionFrom: 1,
         sessionTo: parseInt(formData.noOfSessions) || 1,
         gender: formData.gender || 'both',
-        fromPrice: parseInt(formData.cost) || 0,
-        toPrice: parseInt(formData.cost) || 0
+        fromPrice: parseInt(formData.fromcost) || 0,
+        toPrice: parseInt(formData.tocost) || 0,
       };
 console.log('classForm',courseData)
     try {
