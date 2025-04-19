@@ -220,9 +220,10 @@ function HobbyDetailsPageContent() {
               fill
               className="object-cover"
               priority
+              unoptimized={true}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
+                target.style.display = 'none';
               }}
             />
           </div>
@@ -241,9 +242,10 @@ function HobbyDetailsPageContent() {
               alt="Thumbnail"
               fill
               className="object-cover rounded-lg"
+              unoptimized={true}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
+                target.style.display = 'none';
               }}
             />
           </div>
@@ -260,9 +262,10 @@ function HobbyDetailsPageContent() {
                 alt="Thumbnail"
                 fill
                 className="object-cover rounded-lg"
+                unoptimized={true}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/images/noimg.png';
+                  target.style.display = 'none';
                 }}
               />
             </div>
