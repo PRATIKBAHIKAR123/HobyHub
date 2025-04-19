@@ -216,8 +216,15 @@ export const registerVendor = async (data: FormData): Promise<VendorRegistration
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to register vendor');
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to register vendor');
+      } else {
+        // Handle text response
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to register vendor');
+      }
     }
 
     return await response.json();

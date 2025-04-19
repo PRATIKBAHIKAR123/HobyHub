@@ -49,7 +49,8 @@ const instituteDetailsSchema = yup.object().shape({
   instituteName: yup.string().required("Institute name is required"),
   since: yup.string(),
   gstNo: yup.string(),
-  introduction: yup.string(),
+  thumbnailImageFile: yup.mixed().required("Thumbnail image is required"),
+  introduction: yup.string().required("Introduction is required"),
   firstName: yup.string().required("First name is required"),
   lastName: yup.string().required("Last name is required"),
   phoneNumber: yup.string().required("Phone number is required"),
@@ -62,7 +63,6 @@ const instituteDetailsSchema = yup.object().shape({
     secondary: yup.boolean(),
     billing: yup.boolean(),
   }),
-  
   certifications: yup.mixed().nullable(),
   address: yup.string().required("Address is required"),
   road: yup.string(),
@@ -72,8 +72,8 @@ const instituteDetailsSchema = yup.object().shape({
   state: yup.string(),
   country: yup.string(),
   pincode: yup.string().required("Pincode is required"),
-  latitude: yup.number(),
-  longitude: yup.number(),
+  latitude: yup.number().nullable().transform((value) => value === '' ? null : value),
+  longitude: yup.number().nullable().transform((value) => value === '' ? null : value),
   websiteName: yup.string(),
   classLevel: yup.string(),
   instagramAccount: yup.string(),
@@ -162,7 +162,7 @@ const courseDetailsSchema = yup.object().shape({
 export default function RegistrationForm() {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [isInstDetailsSubmitted] = useState(false);
+  // const [isInstDetailsSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showClassFields, setShowClassFields] = useState(false);
   const [showCourseFields, setShowCourseFields] = useState(false);
@@ -188,6 +188,8 @@ export default function RegistrationForm() {
   const [instituteDetailsData, setInstituteDetailsData] = useState<any>(null);
   const [classDetailsData, setClassDetailsData] = useState<any[]>([]);
   const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (showClassFields) {
@@ -252,6 +254,44 @@ export default function RegistrationForm() {
   const instituteForm = useForm({
     resolver: yupResolver(instituteDetailsSchema),
     mode: "onChange",
+    defaultValues: {
+      programTitle: '',
+      instituteName: '',
+      since: '',
+      gstNo: '',
+      thumbnailImageFile: undefined,
+      introduction: '',
+      firstName: '',
+      lastName: '',
+      phoneNumber: '',
+      whatsappNumber: '',
+      email: '',
+      experience: '',
+      contactIntroduction: '',
+      contactType: {
+        primary: false,
+        secondary: false,
+        billing: false,
+      },
+      certifications: null,
+      address: '',
+      road: '',
+      landmark: '',
+      area: '',
+      city: '',
+      state: '',
+      country: '',
+      pincode: '',
+      latitude: 0,
+      longitude: 0,
+      websiteName: '',
+      classLevel: '',
+      instagramAccount: '',
+      youtubeAccount: '',
+      categoryId: undefined,
+      purchaseMaterialIds: '',
+      itemCarryText: ''
+    }
   });
 
   // Form for class details
@@ -410,8 +450,23 @@ export default function RegistrationForm() {
   // Add a new function to save institute details
   const saveInstituteDetails = async () => {
     try {
+      debugger;
       setIsLoading(true);
       const data = watchInstitute();
+      
+      // Debug: Log the form data
+      console.log('Form data:', data);
+      
+      // Validate the form
+      const isValid = await instituteForm.trigger();
+      
+      // Debug: Log validation errors
+      console.log('Validation errors:', instituteForm.formState.errors);
+      
+      if (!isValid) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
       
       // Store institute details in state
       setInstituteDetailsData(data);
@@ -497,6 +552,9 @@ export default function RegistrationForm() {
         formData.append('activity.description', instituteDetailsData.introduction || '');
         formData.append('activity.sinceYear', instituteDetailsData.since || '');
         formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
+        if (instituteDetailsData.thumbnailImageFile instanceof File) {
+          formData.append('activity.thumbnailImageFile', instituteDetailsData.thumbnailImageFile);
+        }
         if (images.length > 0 && images[0] instanceof File) {
           formData.append('activity.thumbnailImageFile', images[0]);
         }
@@ -507,8 +565,8 @@ export default function RegistrationForm() {
         formData.append('activity.city', instituteDetailsData.city || '');
         formData.append('activity.pincode', instituteDetailsData.pincode || '');
         formData.append('activity.country', instituteDetailsData.country || '');
-        formData.append('activity.longitude', (instituteDetailsData.longitude || '').toString());
-        formData.append('activity.latitute', (instituteDetailsData.latitude || '').toString());
+        formData.append('activity.longitude', (instituteDetailsData.longitude || 0).toString());
+        formData.append('activity.latitute', (instituteDetailsData.latitude || 0).toString());
         formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
         formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
         formData.append('activity.tutorFirstName', instituteDetailsData.firstName);
@@ -582,19 +640,25 @@ export default function RegistrationForm() {
 
       // Call the API only if all required data is present
       if (personalDetailsData && instituteDetailsData) {
+        try {
         const response = await registerVendor(formData);
 
         if (response) {
           setVendorId(response.id.toString());
           setIsSuccessPopupOpen(true);
           toast.success("Registration completed successfully!");
-        } else {
-          toast.error("Failed to register vendor. Please try again.");
+          }
+        } catch (error: any) {
+          // Handle API error response
+          const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
+          toast.error(errorMessage);
+          return;
         }
       } else {
         toast.error("Please complete all required sections before submitting.");
       }
     } catch (error) {
+      debugger;
       console.error("Error submitting form:", error);
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
@@ -678,6 +742,14 @@ export default function RegistrationForm() {
       toast.error("Please complete the previous sections first!"); // Show an error message
     }
   }
+
+  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setValueInstitute("thumbnailImageFile", file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
 
   return (
     <>
@@ -830,7 +902,7 @@ export default function RegistrationForm() {
                       <Input
                         placeholder="Program Title"
                         {...registerInstitute("programTitle")}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${errorsInstitute.programTitle ? 'border-red-500' : ''}`}
                       />
                       {errorsInstitute.programTitle && (
                         <p className="text-red-500 text-xs">{errorsInstitute.programTitle.message}</p>
@@ -843,7 +915,7 @@ export default function RegistrationForm() {
                       <Input
                         placeholder="Institute Name"
                         {...registerInstitute("instituteName")}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${errorsInstitute.instituteName ? 'border-red-500' : ''}`}
                       />
                       {errorsInstitute.instituteName && (
                         <p className="text-red-500 text-xs">{errorsInstitute.instituteName.message}</p>
@@ -867,61 +939,53 @@ export default function RegistrationForm() {
                     </div>
                   </div>
 
-                  <div className="mb-6 mt-[50px]">
-                    <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Thumbnail Image<span className="text-red-500 ml-1 text-sm">*</span></h3>
-                    {images.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4 rounded-[10px]">
-                        {imageUrls.map((src, index) => (
-                          <div key={index} className="relative w-[158px] h-[158px]">
-                            <Image
-                              src={src}
-                              alt="Uploaded"
-                              width={158}
-                              height={158}
-                              className="rounded-md w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Remove both the File and its preview URL
-                                const updatedImages = images.filter((_, i) => i !== index);
-                                const updatedUrls = imageUrls.filter((_, i) => i !== index);
-                                setImages(updatedImages);
-                                setImageUrls(updatedUrls);
-                                // Update localStorage
-                                localStorage.setItem('imageMetadata', JSON.stringify(updatedImages.map(file => ({
-                                  name: file.name,
-                                  type: file.type,
-                                  size: file.size
-                                }))));
-                              }}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
+                  <div className="flex flex-col gap-2 mb-6">
+                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                      Thumbnail Image<span className="text-red-500">*</span>
+                    </Label>
+                    
+                    {thumbnailPreview && (
+                      <div className="relative w-[158px] h-[158px] mb-4">
+                        <Image
+                          src={thumbnailPreview}
+                          alt="Thumbnail Preview"
+                          width={158}
+                          height={158}
+                          className="rounded-md w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setThumbnailPreview(null);
+                            if (thumbnailInputRef.current) {
+                              thumbnailInputRef.current.value = '';
+                            }
+                            setValueInstitute("thumbnailImageFile", new File([], ''));
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
                       </div>
                     )}
 
-                    {(isInstDetailsSubmitted && images.length == 0) && <div className="text-red-500 text-sm mb-2">At least one image is required</div>}
                     <div
                       className="h-[180px] flex flex-col gap-3 justify-center items-center py-4 my-3 rounded-[15px] border border-dashed border-[#05244f] cursor-pointer p-4"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() => thumbnailInputRef.current?.click()}
                     >
                       <div className="flex justify-center">
                         <Image src={"/Icons/file-upload.svg"} alt="file-upload" height={45} width={59} />
@@ -934,9 +998,8 @@ export default function RegistrationForm() {
                       </div>
                       <input
                         type="file"
-                        multiple
-                        onChange={handleImageUpload}
-                        ref={fileInputRef}
+                        onChange={handleThumbnailUpload}
+                        ref={thumbnailInputRef}
                         className="hidden"
                         accept="image/jpeg,image/png,image/avif,.jpg,.jpeg,.png,.avif"
                       />
@@ -944,16 +1007,24 @@ export default function RegistrationForm() {
                     <div className="relative justify-center text-[#cecece] text-[11.6px] font-medium">
                       Only support jpg, png and avif files
                     </div>
+                    {errorsInstitute.thumbnailImageFile && (
+                      <p className="text-red-500 text-xs">{errorsInstitute.thumbnailImageFile.message}</p>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 mb-6">
-                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">Introduction</Label>
+                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                      Introduction<span className="text-red-500">*</span>
+                    </Label>
                     <Textarea
                       placeholder="Introduction"
                       rows={5}
                       {...registerInstitute("introduction")}
-                      className="rounded-[15px] h-[120px] border-[#05244f]"
+                      className={`rounded-[15px] h-[120px] border-[#05244f] ${errorsInstitute.introduction ? 'border-red-500' : ''}`}
                     />
+                    {errorsInstitute.introduction && (
+                      <p className="text-red-500 text-xs">{errorsInstitute.introduction.message}</p>
+                    )}
                   </div>
 
                   {/* Contact Details Section */}
