@@ -117,7 +117,7 @@ function HobbyDetailsPageContent() {
   const [apiImage, setApiImage] = useState("");
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
-  const [thumbnails , setThumbnails] = useState<string[]>([]);
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchActivityData = async () => {
@@ -160,11 +160,16 @@ function HobbyDetailsPageContent() {
         if (activity.thumbnailImage) {
           try {
             // Try to construct the full URL
-            imageUrl = `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
+            const baseImageUrl = activity.thumbnailImage.startsWith('http') 
+              ? activity.thumbnailImage 
+              : `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
+            
             // Test if image exists
-            const response = await fetch(imageUrl);
+            const response = await fetch(baseImageUrl);
             if (!response.ok) {
               imageUrl = '/images/noimg.png';
+            } else {
+              imageUrl = baseImageUrl;
             }
           } catch {
             // If image is not available, use default image
@@ -174,16 +179,26 @@ function HobbyDetailsPageContent() {
           // If no thumbnail image is provided, use default image
           imageUrl = '/images/noimg.png';
         }
+        setApiImage(imageUrl);
+        setSelectedImage(imageUrl);
+
+        // Handle additional images
         if (activity.images) {
-          const uniqueThumbnails = new Set(thumbnails);
+          const uniqueThumbnails = new Set<string>();
+          // Add other images, excluding the thumbnail if it exists in the images array
           activity.images.forEach((img: any) => {
-            const fullImageUrl = `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
+            const fullImageUrl = img.startsWith('http') 
+              ? img 
+              : `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
+            // Only add if it's not the same as the thumbnail
+            if (activity.thumbnailImage && 
+                fullImageUrl === `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`) {
+              return;
+            }
             uniqueThumbnails.add(fullImageUrl);
           });
           setThumbnails(Array.from(uniqueThumbnails));
         }
-        setApiImage(imageUrl);
-        setSelectedImage(imageUrl);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
@@ -205,11 +220,6 @@ function HobbyDetailsPageContent() {
 
   const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
-  const allThumbnails = [
-    apiImage,
-    ...thumbnails
-  ];
-
   return (
     <div className="p-6">
       <div className="flex:col md:flex gap-6 mt-4">
@@ -223,12 +233,37 @@ function HobbyDetailsPageContent() {
               height={557} 
               className="rounded-md object-contain"
               style={{ width: '100%', height: '100%' }}
+              unoptimized={true}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/noimg.png';
+              }}
             />
           </div>
         </div>
         {/* Thumbnail Images */}
         <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
-          {allThumbnails.map((thumb, index) => (
+          <div 
+            className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
+              selectedImage === apiImage ? 'border-blue-500' : 'border-transparent'
+            } hover:border-blue-500`}
+            onClick={() => setSelectedImage(apiImage)}
+          >
+            <Image
+              src={apiImage}
+              alt="Thumbnail"
+              width={120}
+              height={96}
+              className="rounded-lg"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              unoptimized={true}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/noimg.png';
+              }}
+            />
+          </div>
+          {thumbnails.map((thumb, index) => (
             <div 
               key={index}
               className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
@@ -243,6 +278,11 @@ function HobbyDetailsPageContent() {
                 height={96}
                 className="rounded-lg"
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                unoptimized={true}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/images/noimg.png';
+                }}
               />
             </div>
           ))}
