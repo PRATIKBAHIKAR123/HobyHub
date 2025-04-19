@@ -127,29 +127,21 @@ function HobbyDetailsPageContent() {
       }
 
       try {
-        // Check if user is logged in by checking for token
         const token = localStorage.getItem('token');
         let activity: ActivityData;
         activity = await getActivityById(parseInt(activityId));
         if (token) {
-          // If logged in, fetch fresh data from API
-          
-          // Save the activity data in sessionStorage
-           sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
-           sessionStorage.setItem('activity', JSON.stringify(activity));
-          // Increase view count for logged-in users
+          sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
+          sessionStorage.setItem('activity', JSON.stringify(activity));
           try {
             await increaseActivityViewCount(parseInt(activityId));
           } catch (error) {
             console.error('Error increasing view count:', error);
           }
         } else {
-          // If not logged in, try to get data from sessionStorage
           const storedData = sessionStorage.getItem('activityData');
           if (storedData) {
             activity = JSON.parse(storedData);
-          } else {
-            // throw new Error('No activity data available');
           }
         }
       
@@ -159,12 +151,10 @@ function HobbyDetailsPageContent() {
         let imageUrl;
         if (activity.thumbnailImage) {
           try {
-            // Try to construct the full URL
             const baseImageUrl = activity.thumbnailImage.startsWith('http') 
               ? activity.thumbnailImage 
               : `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
             
-            // Test if image exists
             const response = await fetch(baseImageUrl);
             if (!response.ok) {
               imageUrl = '/images/noimg.png';
@@ -172,33 +162,31 @@ function HobbyDetailsPageContent() {
               imageUrl = baseImageUrl;
             }
           } catch {
-            // If image is not available, use default image
             imageUrl = '/images/noimg.png';
           }
         } else {
-          // If no thumbnail image is provided, use default image
           imageUrl = '/images/noimg.png';
         }
         setApiImage(imageUrl);
         setSelectedImage(imageUrl);
 
         // Handle additional images
-        if (activity.images) {
-          const uniqueThumbnails = new Set<string>();
-          // Add other images, excluding the thumbnail if it exists in the images array
+        const allImages = new Set<string>();
+        
+        // Always add the thumbnail image first
+        allImages.add(imageUrl);
+
+        // Add other images from the images array
+        if (activity.images && activity.images.length > 0) {
           activity.images.forEach((img: any) => {
             const fullImageUrl = img.startsWith('http') 
               ? img 
               : `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
-            // Only add if it's not the same as the thumbnail
-            if (activity.thumbnailImage && 
-                fullImageUrl === `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`) {
-              return;
-            }
-            uniqueThumbnails.add(fullImageUrl);
+            allImages.add(fullImageUrl);
           });
-          setThumbnails(Array.from(uniqueThumbnails));
         }
+
+        setThumbnails(Array.from(allImages));
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
@@ -221,11 +209,11 @@ function HobbyDetailsPageContent() {
   const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
 
   return (
-    <div className="p-6">
-      <div className="flex:col md:flex gap-6 mt-4">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 mt-4">
         {/* Main Image */}
         <div className="w-full md:w-[85%] bg-white">
-          <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center">
+          <div className="relative w-full h-[300px] md:h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center">
             <Image 
               src={selectedImage} 
               alt={activityData.title} 
@@ -241,32 +229,13 @@ function HobbyDetailsPageContent() {
             />
           </div>
         </div>
+        
         {/* Thumbnail Images */}
-        <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
-          <div 
-            className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
-              selectedImage === apiImage ? 'border-blue-500' : 'border-transparent'
-            } hover:border-blue-500`}
-            onClick={() => setSelectedImage(apiImage)}
-          >
-            <Image
-              src={apiImage}
-              alt="Thumbnail"
-              width={120}
-              height={96}
-              className="rounded-lg"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              unoptimized={true}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
-              }}
-            />
-          </div>
+        <div className="flex md:flex-col flex-row gap-2 w-full md:w-[14%] overflow-x-auto md:overflow-y-auto md:h-[510px]">
           {thumbnails.map((thumb, index) => (
             <div 
               key={index}
-              className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
+              className={`relative w-[120px] h-[96px] flex-shrink-0 rounded-lg cursor-pointer border-2 ${
                 selectedImage === thumb ? 'border-blue-500' : 'border-transparent'
               } hover:border-blue-500`}
               onClick={() => setSelectedImage(thumb)}
@@ -289,85 +258,44 @@ function HobbyDetailsPageContent() {
         </div>
       </div>
 
-      <div className="flex-col block md:flex md:flex-row justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6">
         <div>
-          <h1 className="text-black text-[32.60px] font-medium font-['Minion_Pro'] mt-[21px]">{activityData.title}</h1>
-          <div className="justify-center text-[#929292] text-[19px] font-medium font-['Minion_Pro'] mt-[10px]">{fullAddress}</div>
+          <h1 className="text-black text-2xl md:text-[32.60px] font-medium font-['Minion_Pro']">{activityData.title}</h1>
+          <div className="text-[#929292] text-base md:text-[19px] font-medium font-['Minion_Pro'] mt-2">{fullAddress}</div>
         </div>
-        <span className="px-[17px] bg-[#d4e1f2] max-h-12 rounded-[28px] border-[7px] content-center border-[#dfe8f2] inline-block mt-2">
-          <div className="justify-left md:justify-center text-[#7a8491] text-md font-bold font-['Trajan_Pro']">
+        <span className="px-4 py-2 bg-[#d4e1f2] rounded-[28px] border-[7px] border-[#dfe8f2] mt-4 md:mt-0">
+          <div className="text-[#7a8491] text-sm md:text-md font-bold font-['Trajan_Pro']">
             {activityData.type}
           </div>
         </span>
       </div>
 
-      <p className={`text-[#ababab] text-sm lg:text-md font-medium md:font-bold font-['Inter'] md:font-['Trajan_Pro'] leading-9 mt-[19px]`}>
+      <p className="text-[#ababab] text-sm md:text-md font-medium md:font-bold font-['Inter'] md:font-['Trajan_Pro'] leading-7 md:leading-9 mt-6">
         {activityData.description}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mt-6">
-        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4]">
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Age Restriction</h3>
           <p className="text-black text-[18px] font-bold font-['Trajan_Pro'] flex items-center justify-center gap-2">
             <Image src={'/Icons/user-details.png'} height={24} width={24} alt={''} />
             {activityData.ageRestrictionFrom} - {activityData.ageRestrictionTo} Years
           </p>
         </Card>
-        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4]">
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Session</h3>
           <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
             <Image src={'/Icons/Calender-ic.png'} height={24} width={24} alt={''} />
             Session {activityData.sessionCountFrom}
           </p>
         </Card>
-        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
+        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4]">
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Location</h3>
           <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
             {activityData.city}
           </p>
         </Card>
-        {/* <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
-          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Rate</h3>
-          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
-            {activityData.currency} {activityData.rate}
-          </p>
-        </Card>
-        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
-          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Tutor</h3>
-          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
-            {activityData.tutorFirstName} {activityData.tutorLastName}
-          </p>
-        </Card>
-        <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4] gap-0">
-          <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Contact</h3>
-          <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
-            {activityData.tutorCountryCode} {activityData.tutorPhoneNo}
-          </p>
-        </Card> */}
       </div>
-
-      {/* Additional Information Section */}
-      {/* <div className="mt-8 p-6 bg-white rounded-2xl border-[1px] border-black/20">
-        <h2 className="text-black text-xl font-bold mb-4">Additional Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="text-black font-semibold mb-2">Items to Carry</h3>
-            <p className="text-gray-600">{activityData.itemCarryText}</p>
-          </div>
-          <div>
-            <h3 className="text-black font-semibold mb-2">Tutor Introduction</h3>
-            <p className="text-gray-600">{activityData.tutorIntro}</p>
-          </div>
-          <div>
-            <h3 className="text-black font-semibold mb-2">Company Name</h3>
-            <p className="text-gray-600">{activityData.companyName}</p>
-          </div>
-          <div>
-            <h3 className="text-black font-semibold mb-2">Activity Type</h3>
-            <p className="text-gray-600">{activityData.iconActivityType}</p>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 }
