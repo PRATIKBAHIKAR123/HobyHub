@@ -68,7 +68,7 @@ export default function PagesNavbar() {
           )}
           onClick={() => routeTo("/hobby-list/hobby-contact-details-page")}>Contact Details</Button>
         {/* <Button variant="ghost" className="w-full md:w-auto">Location</Button> */}
-        <Button variant="ghost" className="w-full md:w-auto">Excellence Score</Button>
+        {/* <Button variant="ghost" className="w-full md:w-auto">Excellence Score</Button> */}
       </div>
     </nav>
   );

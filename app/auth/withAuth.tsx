@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getStoredToken } from "@/utils/localStorage";
 import { AuthDialog } from "./login/authpopup";
+import { httpClient } from "@/utils/httpClient";
 
 const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) => {
   const WithAuthComponent = (props: P) => {
@@ -13,6 +14,11 @@ const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) =>
 
       if (userToken) {
         setIsAuthenticated(true);
+        // Set the auth modal callback for unauthorized responses
+        httpClient.setAuthModalCallback((show) => {
+          setShowAuthModal(show);
+          setIsAuthenticated(!show);
+        });
       } else {
         setShowAuthModal(true);
       }

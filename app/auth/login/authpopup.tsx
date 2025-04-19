@@ -28,9 +28,9 @@ export function AuthDialog({ open, setOpen }: PopupScreenProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} modal={true}>
+    <Dialog open={open} onOpenChange={() => {}} modal={true}>
       <DialogOverlay className="bg-transparent/50 backdrop-blur-[2px] fixed inset-0" />
-      <DialogContent className="sm:max-w-[425px] border rounded-lg shadow-lg p-6" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-[425px] border rounded-lg shadow-lg p-6" onPointerDownOutside={(e) => e.preventDefault()} showCloseButton={false}>
         <div className="flex-col gap-4 py-4 text-center">
           <div className="justify-center text-black text-[28px] font-medium font-['Minion_Pro']">Login and View</div>
           <div className="justify-center text-black text-lg font-medium font-['Minion_Pro']">You have to login first to see details</div>
