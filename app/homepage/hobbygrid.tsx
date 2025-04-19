@@ -174,6 +174,11 @@ export default function HobbyGrid() {
               width={300}
               height={200}
               className="w-full h-48 object-cover rounded-t-lg"
+              unoptimized={true}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/noimg.png';
+              }}
             />
 
             {/* Views Count */}
