@@ -62,6 +62,7 @@ const instituteDetailsSchema = yup.object().shape({
     secondary: yup.boolean(),
     billing: yup.boolean(),
   }),
+  
   certifications: yup.mixed().nullable(),
   address: yup.string().required("Address is required"),
   road: yup.string(),
