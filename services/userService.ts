@@ -67,7 +67,7 @@ export const updateUserProfile = async (profileData: FormData) => {
         const token = getAuthToken();
         const response = await axios.post(`${API_BASE_URL}/update-profile`, profileData, {
             headers: {
-                'Content-Type': 'application/json',
+                
                 'accept': '*/*',
                 'Authorization': token ? `Bearer ${token}` : ''
             }

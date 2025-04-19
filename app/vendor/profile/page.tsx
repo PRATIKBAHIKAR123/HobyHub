@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { API_BASE_URL_1 } from "@/lib/apiConfigs";
 import { VendorClassData } from "@/app/services/vendorService";
 import withAuth from "@/app/auth/withAuth";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
   email: string;
@@ -25,7 +26,7 @@ interface ProfileData {
   dob?:string;
   name: string;
   profession: string;
-  profileImage: string;
+  profileImage: string | File;
   id?: number;
   gender?: string;
   // Additional fields from registration
@@ -41,6 +42,7 @@ interface ProfileData {
   classList?: ClassItem[];
   courseList?: ClassItem[];
   galleryImages?: GalleryImage[];
+  activityType: string;
 }
 
 export interface ClassItem {
@@ -95,6 +97,7 @@ interface PhotoOptionsDialogProps {
   setOpen: (open: boolean) => void;
   onDelete: () => void;
   setProfile: React.Dispatch<React.SetStateAction<ProfileData>>;
+  imagePreview:React.Dispatch<React.SetStateAction<string>>;
 }
 
 function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
@@ -150,7 +153,7 @@ function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
   );
 }
 
-function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOptionsDialogProps) {
+function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }: PhotoOptionsDialogProps) {
   const handleGalleryClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -160,14 +163,15 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
     input.onchange = (e) => {
       const target = e.target as HTMLInputElement;
       if (target.files && target.files[0]) {
+        const file = target.files?.[0];
         // Create a URL for the selected file
         const fileUrl = URL.createObjectURL(target.files[0]);
-        // Here you would typically upload the file to your server
-        // For now, we'll just update the profile image with the local URL
+        // Update the profile image with the local URL
         setProfile((prev) => ({
           ...prev,
-          profileImage: fileUrl
+          profileImage: file
         }));
+        imagePreview(fileUrl);
         setOpen(false);
       }
     };
@@ -215,7 +219,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
     location: "",
     name: "",
     profession: "",
-    profileImage: "/images/thumb5.png",
+    profileImage: "/Icons/icons8-user-96.png",
     instituteName: "",
     programTitle: "",
     gstNo: "",
@@ -226,7 +230,8 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
     youtubeAccount: "",
     classList: [],
     courseList: [],
-    galleryImages: []
+    galleryImages: [],
+    activityType: ""
   });
 
   const [validationErrors, setValidationErrors] = useState<{
@@ -249,6 +254,9 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
   const [isCourseOpen, setIsCourseOpen] = useState(false);
   const [activityId, setactivityId] = useState(0);
   const [selectedClass, setSelectedClass] = useState<VendorClassData |undefined >();
+  const [selectedCourse, setSelectedCourse] = useState<VendorClassData |undefined >();
+  const [imagePreview, setImagePreview] = useState<string>("/Icons/icons8-user-96.png");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile =async () => {
@@ -274,6 +282,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
           classLevel: "",
           instagramAccount: "",
           youtubeAccount: "",
+          activityType:"",
           // courseList: [
           //   { id: 1, title: "Yoga for Beginners", duration: "8 weeks", level: "Beginner", enrollments: 25, image: "/images/course1.jpg" },
           //   { id: 2, title: "Advanced Meditation Techniques", duration: "4 weeks", level: "Advanced", enrollments: 15, image: "/images/course2.jpg" },
@@ -298,6 +307,8 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
             profileImage: data.profileImage || "/Icons/icons8-user-96.png",
             gender: data.gender || ""
           };
+          const profileImage  = `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
+          setImagePreview(profileImage || "/Icons/icons8-user-96.png");
         }
         
         // Parse institute details
@@ -357,6 +368,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
       ...prev,
       profileImage: "/images/thumb5.png"
     }));
+    setImagePreview('/Icons/icons8-user-96.png');
     setIsDeleteOpen(false);
   };
 
@@ -372,7 +384,33 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
       formData.append('phoneNumber', profile.phoneNumber || '');
       formData.append('gender', profile.gender || '');
       formData.append('dob', profile.dob||'');
-      formData.append('profileImageFile', profile.profileImage||'');
+      if (profile.profileImage instanceof File) {
+        formData.append('profileImageFile', profile.profileImage);
+      }
+
+      formData.append('activity.type', profile.activityType || '');
+      formData.append('activity.gstNo', profile.gstNo || '');
+      formData.append('activity.title', profile.programTitle || '');
+      formData.append('activity.companyName', profile.instituteName || '');
+      formData.append('activity.description', profile.dob||'');
+      formData.append('activity.website', profile.websiteName || '');
+      formData.append('activity.instagramAcc', profile.instagramAccount || '');
+      formData.append('activity.youtubeAcc', profile.youtubeAccount || '');
+      formData.append('activity.classLevel', profile.classLevel||'');
+      formData.append('activity.id', activityId.toString());
+    // Add classList as a JSON string in FormData
+    if (profile.classList && profile.classList.length > 0) {
+      formData.append('activity.classDetails', JSON.stringify(profile.classList));
+    } else {
+      formData.append('activity.classDetails', JSON.stringify([]));
+    }
+    
+    // Add courseList as a JSON string in FormData
+    if (profile.courseList && profile.courseList.length > 0) {
+      formData.append('activity.courseDetails', JSON.stringify(profile.courseList));
+    } else {
+      formData.append('activity.courseDetails', JSON.stringify([]));
+    }
     
             await updateUserProfile(formData);
       setIsEditing(false);
@@ -389,6 +427,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile }: PhotoOption
       setIsLoading(false);
     }
   };
+
   
   useEffect(() => {
     if(activeTab==='profile'){
@@ -438,6 +477,33 @@ data.forEach((img: any) => {
   setIsClassOpen(true);
        setSelectedClass(classItem);
  }
+
+ const handleEditCourse =(classItem: any)=> {
+  setIsCourseOpen(true);
+       setSelectedCourse(classItem);
+ }
+
+ // Function to delete a class
+const handleDeleteClass = (classId: number) => {
+  if (profile.classList) {
+    const updatedClassList = profile.classList.filter(classItem => classItem.id !== classId);
+    setProfile(prev => ({
+      ...prev,
+      classList: updatedClassList
+    }));
+  }
+};
+
+// Function to delete a course
+const handleDeleteCourse = (courseId: number) => {
+  if (profile.courseList) {
+    const updatedCourseList = profile.courseList.filter(courseItem => courseItem.id !== courseId);
+    setProfile(prev => ({
+      ...prev,
+      courseList: updatedCourseList
+    }));
+  }
+};
 
   // Render different content based on active tab
   const renderTabContent = () => {
@@ -803,9 +869,9 @@ data.forEach((img: any) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2">
-                            View
-                          </Button> */}
+                          <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2" onClick={() => handleDeleteClass(classItem.id)}>
+                            Delete
+                          </Button>
                           <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800" onClick={() =>
                             handleEditClass(classItem)
                           }>
@@ -908,10 +974,12 @@ data.forEach((img: any) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          {/* <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2">
-                            View
-                          </Button> */}
-                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800">
+                          <Button variant="destructive" size="sm" className="text-blue-600 hover:text-blue-800 mr-2"
+                          onClick={() => handleDeleteCourse(classItem.id)}>
+                            Delete
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800"
+                          onClick={() => handleEditCourse(classItem)}>
                             Edit
                           </Button>
                         </td>
@@ -931,7 +999,7 @@ data.forEach((img: any) => {
                 Add New Course
               </Button>
             </div>
-            <AddCoursePopup open={isCourseOpen} setOpen={setIsCourseOpen} onSubmit={()=>{getCourses()}}/>
+            <AddCoursePopup open={isCourseOpen} classData={selectedCourse} activityId={activityId} setOpen={setIsCourseOpen} onSubmit={()=>{getCourses()}}/>
           </div>
         );
       case "gallery":
@@ -1002,7 +1070,7 @@ data.forEach((img: any) => {
             <div className="relative w-32 h-32">
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
                 <Image
-                  src={profile.profileImage}
+                  src={imagePreview}
                   alt="Profile Picture"
                   width={128}
                   height={128}
@@ -1114,11 +1182,11 @@ data.forEach((img: any) => {
             {renderTabContent()}
             
             {/* Action Buttons - only show for profile tab */}
-            {activeTab === "profile" && (
+            {/* {activeTab === "profile" && ( */}
               <div className="flex justify-end gap-3 mt-8">
                 <Button
                   variant="outline"
-                  onClick={() => isEditing ? setIsEditing(false) : null}
+                  onClick={() => isEditing ? setIsEditing(false) : router.push('/')}
                   className="px-6"
                 >
                   {isEditing ? "Cancel" : "Close"}
@@ -1132,7 +1200,7 @@ data.forEach((img: any) => {
                   {isLoading ? "Loading..." : isEditing ? "Save Changes" : "Edit Profile"}
                 </Button>
               </div>
-            )}
+            {/* )} */}
           </div>
         </div>
 
@@ -1142,6 +1210,7 @@ data.forEach((img: any) => {
           setOpen={setIsPhotoOptionsOpen}
           onDelete={handleDeletePhoto}
           setProfile={setProfile}
+          imagePreview = {setImagePreview}
         />
 
         {/* Delete Photo Dialog */}

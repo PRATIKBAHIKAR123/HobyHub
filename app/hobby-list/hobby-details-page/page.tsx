@@ -114,7 +114,7 @@ function HobbyDetailsPageContent() {
   const [selectedImage, setSelectedImage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
-  const [apiImage, setApiImage] = useState("");
+  //const [apiImage, setApiImage] = useState("");
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -167,7 +167,7 @@ function HobbyDetailsPageContent() {
         } else {
           imageUrl = '/images/noimg.png';
         }
-        setApiImage(imageUrl);
+        //setApiImage(imageUrl);
         setSelectedImage(imageUrl);
 
         // Handle additional images

@@ -23,7 +23,7 @@ const classDetailsSchema = yup.object().shape({
   subCategory: yup.string(),
   location: yup.string(),
   contact: yup.string(),
-  type: yup.string(),
+  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Class type is required"),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -70,6 +70,13 @@ export default function AddClassPopup({ open, setOpen, onSubmit, classData, acti
   const classForm = useForm({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
+    defaultValues: {
+      type: 'OFFLINE',
+      className: '',
+      category: '',
+      time: '',
+      weekdays: []
+    }
   });
 
 
@@ -96,7 +103,7 @@ useEffect(() => {
             classData.timingsFrom === "13:00" ? "afternoon" : 
             classData.timingsFrom === "17:00" ? "evening" : ""
         );
-        setValueClass("type", classData.type || "");
+        setValueClass("type", (classData.type as 'REGULAR' | 'ONLINE' | 'OFFLINE') || "OFFLINE");
         setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
         setValueClass("gender", classData.gender || "both");
         setValueClass("fromage", classData.ageFrom?.toString() || "");
@@ -151,7 +158,7 @@ useEffect(() => {
     const classData: VendorClassData = {
         id: formData.id,
         vendorId: formData.vendorId,
-        activityId: formData.activityId,
+        activityId: activityId,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
         timingsFrom: formData.time === 'morning' ? '09:00' : 
@@ -267,13 +274,14 @@ console.log('classForm',classData)
 
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">Type</Label>
-                        <Select onValueChange={(value) => setValueClass("type", value)} value={watchClass("type") || ""}>
+                        <Select onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueClass("type", value)} 
+                          value={watchClass("type") || "OFFLINE"}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
-                          <SelectItem value="Offline">Offline</SelectItem>
-                            <SelectItem value="Online">Online</SelectItem>
+                          <SelectItem value="OFFLINE">Offline</SelectItem>
+                            <SelectItem value="ONLINE">Online</SelectItem>
                             
                           </SelectContent>
                         </Select>

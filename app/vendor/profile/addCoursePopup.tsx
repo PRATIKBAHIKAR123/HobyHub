@@ -15,11 +15,14 @@ import { createCourse, VendorClassData } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 
 const classDetailsSchema = yup.object().shape({
+      id: yup.number(),
+      activityId: yup.number(),
   className: yup.string().required("Class name is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   location: yup.string(),
   contact: yup.string(),
+    type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Class type is required"),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -48,22 +51,33 @@ const classDetailsSchema = yup.object().shape({
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
   noOfSessions: yup.string(),
+  endDate: yup.string(),
+  startDate: yup.string(),
 });
 
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onSubmit?: (courseForm: VendorClassData) => void;
+  classData?:VendorClassData;
+  activityId?:number;
 }
 
 
-export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenProps) {
+export default function AddCoursePopup({ open, setOpen, onSubmit, classData, activityId }: PopupScreenProps) {
       const [categories, setCategories] = useState<Category[]>([]);
       const [isLoading, setIsLoading] = useState(false);
   // Form for class details
   const classForm = useForm({
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
+    defaultValues: {
+      type: 'OFFLINE',
+      className: '',
+      category: '',
+      time: '',
+      weekdays: []
+    }
   });
 
 
@@ -115,10 +129,37 @@ export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenP
       fetchCategories();
     }, [setIsLoading]);
 
+    useEffect(() => {
+      if (classData) {
+          setValueClass("id", classData.id);
+          setValueClass("activityId", activityId);
+          setValueClass("className", classData.title || "");
+          const parentCategory = categories.find(cat => 
+              cat.subcategories.some(sub => sub.id === Number(classData.subCategoryID))
+          );
+          setValueClass("category", parentCategory?.title || "");
+          setValueClass("subCategory", classData.subCategoryID || "");
+          setValueClass("time", 
+              classData.timingsFrom === "09:00" ? "morning" : 
+              classData.timingsFrom === "13:00" ? "afternoon" : 
+              classData.timingsFrom === "17:00" ? "evening" : ""
+          );
+          setValueClass("type", (classData.type as 'REGULAR' | 'ONLINE' | 'OFFLINE') || "OFFLINE");
+          setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
+          setValueClass("gender", classData.gender || "both");
+          setValueClass("fromage", classData.ageFrom?.toString() || "");
+          setValueClass("toage", classData.ageTo?.toString() || "");
+          setValueClass("fromcost", classData.fromPrice?.toString() || "");
+          setValueClass("tocost", classData.toPrice?.toString() || "");
+          setValueClass("noOfSessions", classData.sessionTo?.toString() || "1");
+          setValueClass("experienceLevel", classData.type || "");
+      }
+  }, [classData, categories, setValueClass]);
+
   const submitCourse = async (formData:any) => {
     const courseData: VendorClassData = {
-        id: 0,
-        activityId: 0,
+        id: formData.id,
+        activityId: activityId,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
         timingsFrom: formData.time === 'morning' ? '09:00' : 
@@ -128,10 +169,10 @@ export default function AddCoursePopup({ open, setOpen, onSubmit }: PopupScreenP
                   formData.time === 'afternoon' ? '16:00' : 
                   formData.time === 'evening' ? '20:00' : '12:00',
         day: formData.weekdays.join(','),
-        type: "REGULAR",
+        type: formData.type,
         ageFrom: parseInt(formData.fromage) || 0,
         ageTo: parseInt(formData.toage) || 0,
-        sessionFrom: 1,
+        sessionFrom: parseInt(formData.noOfSessions)||1,
         sessionTo: parseInt(formData.noOfSessions) || 1,
         gender: formData.gender || 'both',
         fromPrice: parseInt(formData.fromcost) || 0,
@@ -183,7 +224,7 @@ console.log('classForm',courseData)
                           Course Name<span className="text-red-500">*</span>
                         </Label>
                         <Input
-                          placeholder="Class Name"
+                          placeholder="Course Name"
                           {...registerClass("className")}
                           className="h-[52px] border-[#05244f]"
                         />
@@ -228,8 +269,21 @@ console.log('classForm',courseData)
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                      
+                    <div className="grid md:grid-cols-3 sm:grid-cols-1 gap-4 mb-6">
+                    <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">Type</Label>
+                        <Select onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueClass("type", value)} 
+                          value={watchClass("type") || "OFFLINE"}>
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                          <SelectItem value="OFFLINE">Offline</SelectItem>
+                            <SelectItem value="ONLINE">Online</SelectItem>
+                            
+                          </SelectContent>
+                        </Select>
+                      </div>
 
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>

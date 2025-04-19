@@ -171,7 +171,7 @@ export interface VendorActivityResponse {
 export interface VendorClassData {
   id: number;
   vendorId?: number;
-  activityId: number;
+  activityId?: number;
   subCategoryID: string;
   title: string;
   timingsFrom: string;

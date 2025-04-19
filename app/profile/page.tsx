@@ -9,27 +9,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation";
 import withAuth from "../auth/withAuth";
 
-
 interface ProfileData {
   email: string;
   dob: string;
   phoneNumber: string;
   name: string;
-  profileImage: string;
+  profileImage: string | File; // Changed to allow both string path and File object
   id?: number;
   gender: string;
 }
 
 function ProfilePage() {
-      const router = useRouter();
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileData>({
     email: "",
     dob: "",
     phoneNumber: "",
     name: "",
-    profileImage: "/images/thumb5.png",
+    profileImage: "/Icons/icons8-user-96.png",
     gender: ""
   });
+
+  // Add state for image preview URL
+  const [imagePreview, setImagePreview] = useState<string>("/Icons/icons8-user-96.png");
 
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
@@ -55,10 +57,13 @@ function ProfilePage() {
           dob: data.dob || "",
           phoneNumber: data.phoneNumber || "",
           name: data.name || "",
-          profileImage: data.profileImage || "/images/thumb5.png",
+          profileImage: data.profileImage || "/Icons/icons8-user-96.png",
           gender: data.gender || ""
         });
 
+        // Set the image preview as well
+        setImagePreview(data.profileImage || "/Icons/icons8-user-96.png");
+        
         setError(null);
       } catch (err) {
         setError("Failed to load profile data. Please try again later.");
@@ -94,28 +99,24 @@ function ProfilePage() {
     try {
       setIsLoading(true);
 
-      // const updateData = {
-      //   id: profile.id,
-      //   name: profile.name,
-      //   emailId: profile.email,
-      //   phoneNumber: profile.phoneNumber,
-      //   gender: profile.gender,
-      //   dob: profile.dob
-      // };
-
       const formData = new FormData();
-      // formData.append('id', instituteDetails.instituteName || '');
+      
+      // Append basic profile information
       formData.append('name', profile.name || '');
       formData.append('emailId', profile.email || '');
       formData.append('phoneNumber', profile.phoneNumber || '');
       formData.append('gender', profile.gender || '');
-      formData.append('dob', profile.dob||'');
-      formData.append('profileImageFile', profile.profileImage||'');
+      formData.append('dob', profile.dob || '');
+      
+      // Check if profileImage is a File object and append it properly
+      if (profile.profileImage instanceof File) {
+        formData.append('profileImageFile', profile.profileImage);
+      }
 
       await updateUserProfile(formData);
       setIsEditing(false);
       setError(null);
-      setValidationErrors({}); // Clear validation errors on successful update
+      setValidationErrors({});
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
       setError(errorMessage);
@@ -124,6 +125,30 @@ function ProfilePage() {
       setIsLoading(false);
     }
   };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Update profile with the File object
+      setProfile(prev => ({
+        ...prev,
+        profileImage: file
+      }));
+      
+      // Create and set image preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  useEffect(() => {
+    // Clean up object URLs to avoid memory leaks
+    return () => {
+      if (typeof imagePreview === 'string' && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   if (isLoading && !profile.name) {
     return (
@@ -149,7 +174,7 @@ function ProfilePage() {
           <div className="mb-6">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 shadow-md">
               <Image
-                src={profile.profileImage}
+                src={imagePreview}
                 alt="Profile Picture"
                 width={128}
                 height={128}
@@ -159,7 +184,19 @@ function ProfilePage() {
             {isEditing && (
               <div className="mt-2 text-center">
                 <Button variant="outline" size="sm" className="text-xs">
-                  Change Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="profileImageUpload"
+                  />
+                  <label
+                    htmlFor="profileImageUpload"
+                    className="cursor-pointer text-blue-500 hover:underline"
+                  >
+                    Change Photo
+                  </label>
                 </Button>
               </div>
             )}
@@ -202,7 +239,7 @@ function ProfilePage() {
                     <SelectTrigger className="bg-gray-50">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
-                    <SelectContent defaultValue={"Male"}>
+                    <SelectContent>
                       <SelectItem value="Male">Male</SelectItem>
                       <SelectItem value="Female">Female</SelectItem>
                       <SelectItem value="Trans">Trans</SelectItem>
@@ -299,4 +336,4 @@ function ProfilePage() {
   );
 }
 
-export default withAuth(ProfilePage)
+export default withAuth(ProfilePage);
