@@ -169,7 +169,7 @@ export default function HobbyGrid() {
             <Image
               src={activity.thumbnailImage ?
                 `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}` :
-                '/images/noimg.png'}
+                ''}
               alt={activity.title}
               width={300}
               height={200}
@@ -177,7 +177,7 @@ export default function HobbyGrid() {
               unoptimized={true}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = '/images/noimg.png';
+                target.style.display = 'none';
               }}
             />
 

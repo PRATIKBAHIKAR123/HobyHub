@@ -150,7 +150,7 @@ function HobbyDetailsPageContent() {
 
         // Improved image URL handling
         const processImageUrl = async (imagePath: string) => {
-          if (!imagePath) return '/images/noimg.png';
+          if (!imagePath) return '';
           
           try {
             const baseImageUrl = imagePath.startsWith('http') 
@@ -158,9 +158,9 @@ function HobbyDetailsPageContent() {
               : `${API_BASE_URL_1}${imagePath.replace(/\\/g, '/')}`;
             
             const response = await fetch(baseImageUrl);
-            return response.ok ? baseImageUrl : '/images/noimg.png';
+            return response.ok ? baseImageUrl : '';
           } catch {
-            return '/images/noimg.png';
+            return '';
           }
         };
 
