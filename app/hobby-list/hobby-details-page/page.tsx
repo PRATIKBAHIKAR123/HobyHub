@@ -127,71 +127,83 @@ function HobbyDetailsPageContent() {
       }
 
       try {
+        // Check if user is logged in by checking for token
         const token = localStorage.getItem('token');
         let activity: ActivityData;
         activity = await getActivityById(parseInt(activityId));
-        
         if (token) {
-          sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
-          sessionStorage.setItem('activity', JSON.stringify(activity));
+          // If logged in, fetch fresh data from API
+          
+          // Save the activity data in sessionStorage
+           sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
+           sessionStorage.setItem('activity', JSON.stringify(activity));
+          // Increase view count for logged-in users
           try {
             await increaseActivityViewCount(parseInt(activityId));
           } catch (error) {
             console.error('Error increasing view count:', error);
           }
         } else {
+          // If not logged in, try to get data from sessionStorage
           const storedData = sessionStorage.getItem('activityData');
           if (storedData) {
             activity = JSON.parse(storedData);
+          } else {
+            // throw new Error('No activity data available');
           }
         }
       
         setActivityData(activity);
 
-        // Improved image URL handling
-        const processImageUrl = async (imagePath: string) => {
-          if (!imagePath) return '';
-          
+        // Handle image URL with fallback
+        let imageUrl;
+        if (activity.thumbnailImage) {
           try {
-            const baseImageUrl = imagePath.startsWith('http') 
-              ? imagePath 
-              : `${API_BASE_URL_1}${imagePath.replace(/\\/g, '/')}`;
+            // Try to construct the full URL
+            const baseImageUrl = activity.thumbnailImage.startsWith('http') 
+              ? activity.thumbnailImage 
+              : `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`;
             
+            // Test if image exists
             const response = await fetch(baseImageUrl);
-            return response.ok ? baseImageUrl : '';
+            if (!response.ok) {
+              imageUrl = '/images/noimg.png';
+            } else {
+              imageUrl = baseImageUrl;
+            }
           } catch {
-            return '';
+            // If image is not available, use default image
+            imageUrl = '/images/noimg.png';
           }
-        };
-
-        // Process main image
-        const mainImageUrl = await processImageUrl(activity.thumbnailImage);
-        setApiImage(mainImageUrl);
-        setSelectedImage(mainImageUrl);
-
-        // Process additional images
-        if (activity.images && Array.isArray(activity.images)) {
-          const processedImages = await Promise.all(
-            activity.images.map(async (img: string) => {
-              const fullImageUrl = await processImageUrl(img);
-              return fullImageUrl;
-            })
-          );
-          
-          // Filter out duplicates and the main image
-          const uniqueThumbnails = processedImages.filter(
-            (url, index, self) => 
-              url !== mainImageUrl && 
-              self.indexOf(url) === index
-          );
-          
-          setThumbnails(uniqueThumbnails);
+        } else {
+          // If no thumbnail image is provided, use default image
+          imageUrl = '/images/noimg.png';
         }
-        
+        setApiImage(imageUrl);
+        setSelectedImage(imageUrl);
+
+        // Handle additional images
+        if (activity.images) {
+          const uniqueThumbnails = new Set<string>();
+          // Add other images, excluding the thumbnail if it exists in the images array
+          activity.images.forEach((img: any) => {
+            const fullImageUrl = img.startsWith('http') 
+              ? img 
+              : `${API_BASE_URL_1}${img.replace(/\\/g, '/')}`;
+            // Only add if it's not the same as the thumbnail
+            if (activity.thumbnailImage && 
+                fullImageUrl === `${API_BASE_URL_1}${activity.thumbnailImage.replace(/\\/g, '/')}`) {
+              return;
+            }
+            uniqueThumbnails.add(fullImageUrl);
+          });
+          setThumbnails(Array.from(uniqueThumbnails));
+        }
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching activity data:', error);
         setIsLoading(false);
+        throw new Error('No activity data available');
       }
     };
 
@@ -210,29 +222,29 @@ function HobbyDetailsPageContent() {
 
   return (
     <div className="p-6">
-      <div className="flex flex-col md:flex-row gap-6 mt-4">
+      <div className="flex:col md:flex gap-6 mt-4">
         {/* Main Image */}
-        <div className="w-full md:w-[85%]">
-          <div className="relative w-full h-[300px] md:h-[600px] border-[1px] border-black/20 rounded-md overflow-hidden">
+        <div className="w-full md:w-[85%] bg-white">
+          <div className="relative w-full h-[510px] border-[1px] border-black/20 rounded-md flex items-center justify-center">
             <Image 
               src={selectedImage} 
               alt={activityData.title} 
-              fill
-              className="object-cover"
-              priority
+              width={800}
+              height={557} 
+              className="rounded-md object-contain"
+              style={{ width: '100%', height: '100%' }}
               unoptimized={true}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
+                target.src = '/images/noimg.png';
               }}
             />
           </div>
         </div>
-        
         {/* Thumbnail Images */}
-        <div className="flex flex-row md:flex-col gap-2 w-full md:w-[14%] overflow-x-auto md:overflow-x-visible">
+        <div className="md:flex md:flex-col grid grid-cols-3 w-full md:w-[14%] gap-2 overflow-auto h-[557px]">
           <div 
-            className={`relative min-w-[120px] h-[96px] rounded-lg cursor-pointer border-2 ${
+            className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
               selectedImage === apiImage ? 'border-blue-500' : 'border-transparent'
             } hover:border-blue-500`}
             onClick={() => setSelectedImage(apiImage)}
@@ -240,19 +252,21 @@ function HobbyDetailsPageContent() {
             <Image
               src={apiImage}
               alt="Thumbnail"
-              fill
-              className="object-cover rounded-lg"
+              width={120}
+              height={96}
+              className="rounded-lg"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               unoptimized={true}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
+                target.src = '/images/noimg.png';
               }}
             />
           </div>
           {thumbnails.map((thumb, index) => (
             <div 
               key={index}
-              className={`relative min-w-[120px] h-[96px] rounded-lg cursor-pointer border-2 ${
+              className={`relative w-[120px] md:w-45 h-[96px] rounded-lg cursor-pointer border-2 ${
                 selectedImage === thumb ? 'border-blue-500' : 'border-transparent'
               } hover:border-blue-500`}
               onClick={() => setSelectedImage(thumb)}
@@ -260,12 +274,14 @@ function HobbyDetailsPageContent() {
               <Image
                 src={thumb}
                 alt="Thumbnail"
-                fill
-                className="object-cover rounded-lg"
+                width={120}
+                height={96}
+                className="rounded-lg"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 unoptimized={true}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
+                  target.src = '/images/noimg.png';
                 }}
               />
             </div>
