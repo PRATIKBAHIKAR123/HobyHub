@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { getAllActivities } from "@/services/hobbyService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMode } from "@/contexts/ModeContext";
@@ -76,7 +76,28 @@ export default function HobbyGrid() {
   const [favorites, setFavorites] = useState<{ [key: string]: boolean }>({});
   const { isOnline } = useMode();
   const { sortFilter } = useSortFilter();
-  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location } = useFilter();
+  const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location, coordinates } = useFilter();
+  
+  // Pagination state
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize] = useState(16); // Fixed page size of 16 items
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  
+  // Reference to the observer element
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastActivityElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPageNumber(prevPageNumber => prevPageNumber + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loadingMore, hasMore]);
 
   useEffect(() => {
     // Load favorites from localStorage when component mounts
@@ -87,10 +108,28 @@ export default function HobbyGrid() {
   }, []);
 
   useEffect(() => {
+    console.log('coordinates:', coordinates);
+  }, [coordinates]);
+
+  useEffect(() => {
+    // Reset pagination when filters change
+    setActivities([]);
+    setPageNumber(1);
+    setHasMore(true);
+  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location]);
+
+  useEffect(() => {
     const fetchActivities = async () => {
       try {
-        setIsLoading(true);
+        if (pageNumber === 1) {
+          setIsLoading(true);
+        } else {
+          setLoadingMore(true);
+        }
+        
         const data = await getAllActivities({
+          latitude: coordinates?.lat.toString(),
+          longitude: coordinates?.lng.toString(),
           catId: categoryFilter.catId,
           subCatId: categoryFilter.subCatId || undefined,
           mode: isOnline ? "online" : "offline",
@@ -101,19 +140,33 @@ export default function HobbyGrid() {
           time: areFiltersApplied ? time : "",
           gender: areFiltersApplied ? gender : "",
           priceFrom: areFiltersApplied ? priceRange[0] : 0,
-          priceTo: areFiltersApplied ? priceRange[1] : 0
+          priceTo: areFiltersApplied ? priceRange[1] : 0,
+          pageNumber: pageNumber,
+          pageSize: pageSize,
         });
-        setActivities(data as Activity[]);
+        
+        const newActivities = data as Activity[];
+        
+        if (newActivities.length === 0 || newActivities.length < pageSize) {
+          setHasMore(false);
+        }
+        
+        if (pageNumber === 1) {
+          setActivities(newActivities);
+        } else {
+          setActivities(prev => [...prev, ...newActivities]);
+        }
       } catch (error) {
         console.error("Failed to fetch activities:", error);
+        setHasMore(false);
       } finally {
         setIsLoading(false);
+        setLoadingMore(false);
       }
     };
 
     fetchActivities();
-  // }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, age, areFiltersApplied, gender, priceRange, time, location]);
-}, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location]);
+  }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize]);
 
   const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation(); // Prevent card click event
@@ -139,7 +192,7 @@ export default function HobbyGrid() {
     );
   }
 
-  if (activities.length === 0) {
+  if (activities.length === 0 && !isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
         <div className="col-span-full flex items-center justify-center h-[360px]">
@@ -153,13 +206,13 @@ export default function HobbyGrid() {
   }
 
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
-      {activities.map((activity) => (
+      {activities.map((activity, index) => (
         <div
           key={activity.id}
+          ref={index === activities.length - 1 ? lastActivityElementRef : null}
           onClick={() => {
-            // Store the activity data in sessionStorage before navigation
-            //sessionStorage.setItem('activityData', JSON.stringify(activity));
             router.push(`/hobby-list/hobby-details-page?id=${activity.id}`);
           }}
           className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
@@ -248,6 +301,17 @@ export default function HobbyGrid() {
           </div>
         </div>
       ))}
+      
+     
     </div>
+     {/* Loading indicator at the bottom when fetching more data */}
+     {loadingMore && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 py-6">
+            {[...Array(4)].map((_, index) => (
+              <HobbyCardSkeleton key={index} />
+            ))}
+          </div>
+      )}
+    </>
   );
 }

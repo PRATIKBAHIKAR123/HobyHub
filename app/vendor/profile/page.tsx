@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { getActivity, getClassList, getCourseList, getImageList } from "@/services/vendorService";
+import { getActivity, getClassList, getCourseList, getImageList, updateActivity } from "@/services/vendorService";
 import AddClassPopup from "./addClassPopup";
 import AddCoursePopup from "./addCoursePopup";
 import { getUserProfile, updateUserProfile } from "@/services/userService";
@@ -323,13 +323,13 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
           profileData = {
             ...profileData,
             programTitle: data.title || "",
-            instituteName: data.title || "",
+            instituteName: data.companyName || "",
             gstNo: data.gstNo || "",
             introduction: data.description || "",
-            websiteName: data.websiteName || "",
+            websiteName: data.website || "",
             classLevel: data.classLevel || "",
-            instagramAccount: data.instagramAccount || "",
-            youtubeAccount: data.youtubeAccount || ""
+            instagramAccount: data.instagramAcc || "",
+            youtubeAccount: data.youtubeAcc || ""
           };
         }
       
@@ -391,31 +391,34 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
         formData.append('profileImageFile', profile.profileImage);
       }
 
-      formData.append('activity.type', profile.activityType || '');
-      formData.append('activity.gstNo', profile.gstNo || '');
-      formData.append('activity.title', profile.programTitle || '');
-      formData.append('activity.companyName', profile.instituteName || '');
-      formData.append('activity.description', profile.dob||'');
-      formData.append('activity.website', profile.websiteName || '');
-      formData.append('activity.instagramAcc', profile.instagramAccount || '');
-      formData.append('activity.youtubeAcc', profile.youtubeAccount || '');
-      formData.append('activity.classLevel', profile.classLevel||'');
-      formData.append('activity.id', activityId.toString());
+      const activity_formData = new FormData();
+
+      activity_formData.append('type', profile.activityType || '');
+      activity_formData.append('gstNo', profile.gstNo || '');
+      activity_formData.append('title', profile.programTitle || '');
+      activity_formData.append('companyName', profile.instituteName || '');
+      activity_formData.append('description', profile.dob||'');
+      activity_formData.append('website', profile.websiteName || '');
+      activity_formData.append('instagramAcc', profile.instagramAccount || '');
+      activity_formData.append('youtubeAcc', profile.youtubeAccount || '');
+      activity_formData.append('classLevel', profile.classLevel||'');
+      activity_formData.append('id', activityId.toString());
     // Add classList as a JSON string in FormData
     if (profile.classList && profile.classList.length > 0) {
-      formData.append('activity.classDetails', JSON.stringify(profile.classList));
+      activity_formData.append('classDetails', JSON.stringify(profile.classList));
     } else {
-      formData.append('activity.classDetails', JSON.stringify([]));
+      activity_formData.append('classDetails', JSON.stringify([]));
     }
     
     // Add courseList as a JSON string in FormData
     if (profile.courseList && profile.courseList.length > 0) {
-      formData.append('activity.courseDetails', JSON.stringify(profile.courseList));
+      activity_formData.append('courseDetails', JSON.stringify(profile.courseList));
     } else {
-      formData.append('activity.courseDetails', JSON.stringify([]));
+      activity_formData.append('courseDetails', JSON.stringify([]));
     }
     
             await updateUserProfile(formData);
+            await updateActivity(activity_formData);
       setIsEditing(false);
       //setError(null);
       toast.success('Profile Updated Succesfully');

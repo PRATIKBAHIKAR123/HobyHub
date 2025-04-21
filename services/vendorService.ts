@@ -4,7 +4,6 @@ import { getStoredToken } from "@/utils/localStorage";
 import { VendorClassData } from "@/app/services/vendorService";
 
 const getHeaders = () => ({
-  "Content-Type": "application/json",
   Authorization: `Bearer ${getStoredToken()}`,
 });
 
@@ -89,6 +88,19 @@ export const getImageList = async (id:number) => {
 export const getActivity = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/vendor/activity/get-all`, {
+      headers: getHeaders(),
+    });
+    console.log("Response:", response.data);
+    return response.data;
+  } catch (error : any) {
+    console.error("Error:", error);
+    return error.response;
+  }
+};
+
+export const updateActivity = async (formData: FormData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/vendor/activity/edit`,formData, {
       headers: getHeaders(),
     });
     console.log("Response:", response.data);

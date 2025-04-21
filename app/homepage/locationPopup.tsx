@@ -5,9 +5,10 @@ import { useRef, useState } from "react";
 import { Libraries, LoadScript, StandaloneSearchBox } from "@react-google-maps/api";
 import useLocation from "../hooks/useLocation";
 import { useFilter } from "@/contexts/FilterContext";
+import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
 
 const libraries: Libraries = ["places"];
-const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
+// const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
 
 interface PopupScreenProps {
   onLocationChange: (location: string) => void;
@@ -15,9 +16,9 @@ interface PopupScreenProps {
 }
 
 export default function LocationPopup({onLocationChange}: PopupScreenProps) {
-  const { location, setLocation, detectLocation } = useLocation();
+  const { setCoordinates,location,coordinates, setLocation, detectLocation } = useLocation();
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
-  const { triggerFilterUpdate, setLocation: setFilterLocation } = useFilter();
+  const { triggerFilterUpdate, setLocation: setFilterLocation, setCoordinates: setFilterCoordinates } = useFilter();
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
 
@@ -26,6 +27,13 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
     if (places && places.length > 0) {
       const place = places[0];
       setSelectedPlace(place);
+      // if (place.geometry?.location) {
+      //   const newCoordinates = {
+      //     lat: place.geometry.location.lat(),
+      //     lng: place.geometry.location.lng()
+      //   };
+      //   setCoordinates(newCoordinates);
+      // }
       
       // Get the most specific location name available
       const locationName = place.formatted_address || place.name || "";
@@ -37,6 +45,15 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
     if (selectedPlace) {
       // Use the full formatted address
       const fullAddress = selectedPlace.formatted_address || selectedPlace.name || location;
+      const newCoordinates = {
+        lat: selectedPlace.geometry?.location?.lat() ?? 0,
+        lng: selectedPlace.geometry?.location?.lng() ?? 0
+      };
+      
+      // Set coordinates in the hook state
+      setCoordinates(newCoordinates);
+      setFilterCoordinates(newCoordinates);
+
       onLocationChange(fullAddress);
       setFilterLocation(fullAddress);
       triggerFilterUpdate(); // Trigger filter update to refresh activities
@@ -47,6 +64,10 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
     try {
       setIsDetecting(true);
       await detectLocation();
+      //const detectedCoordinates = useLocation().coordinates;
+      if (coordinates) {
+        setFilterCoordinates(coordinates);
+      }
       // The location state will be updated by the useLocation hook
       if (location) {
         onLocationChange(location);
@@ -61,7 +82,7 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
   };
 
   return (
-    <LoadScript googleMapsApiKey={GOOGLE_API_KEY} libraries={libraries}>
+    <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY} libraries={libraries}>
       <PopoverContent 
         className="w-[300px] shadow-md p-4"
         onPointerDownOutside={(e) => {

@@ -1,83 +1,88 @@
+import page from "@/app/hobby-list/page";
 import { API_BASE_URL } from "@/lib/apiConfigs";
 import axios from "axios";
 
 interface SubCategory {
-  categoryId: number;
-  title: string;
-  imagePath: string | null;
-  id: number;
+    categoryId: number;
+    title: string;
+    imagePath: string | null;
+    id: number;
 }
 
 interface Category {
-  title: string;
-  imagePath: string | null;
-  sort: number;
-  id: number;
+    title: string;
+    imagePath: string | null;
+    sort: number;
+    id: number;
 }
 
 interface Activity {
-  id: number;
-  vendorId: number;
-  type: string;
-  categoryId: number;
-  subCategoryId: string;
-  title: string;
-  description: string;
-  thumbnailImage: string;
-  sessionCountFrom: number;
-  sessionCountTo: number;
-  ageRestrictionFrom: number;
-  ageRestrictionTo: number;
-  rate: number;
-  currency: string;
-  address: string;
-  road: string;
-  area: string;
-  state: string;
-  city: string;
-  pincode: string;
-  country: string;
-  longitude: string;
-  latitute: string;
-  purchaseMaterialIds: string;
-  itemCarryText: string;
-  companyName: string;
-  tutorFirstName: string;
-  tutorLastName: string;
-  tutorEmailID: string;
-  tutorCountryCode: string;
-  tutorPhoneNo: string;
-  whatsappCountryCode: string;
-  whatsappNo: string;
-  tutorIntro: string;
-  website: string | null;
-  profileImage: string | null;
-  sinceYear: string | null;
-  iconActivityType: string;
-  approved: string;
-  approvedDateTime: string;
-  isCreatedByAdmin: string;
-  createdDate: string;
-  viewCount: number;
+    id: number;
+    vendorId: number;
+    type: string;
+    categoryId: number;
+    subCategoryId: string;
+    title: string;
+    description: string;
+    thumbnailImage: string;
+    sessionCountFrom: number;
+    sessionCountTo: number;
+    ageRestrictionFrom: number;
+    ageRestrictionTo: number;
+    rate: number;
+    currency: string;
+    address: string;
+    road: string;
+    area: string;
+    state: string;
+    city: string;
+    pincode: string;
+    country: string;
+    longitude: string;
+    latitute: string;
+    purchaseMaterialIds: string;
+    itemCarryText: string;
+    companyName: string;
+    tutorFirstName: string;
+    tutorLastName: string;
+    tutorEmailID: string;
+    tutorCountryCode: string;
+    tutorPhoneNo: string;
+    whatsappCountryCode: string;
+    whatsappNo: string;
+    tutorIntro: string;
+    website: string | null;
+    profileImage: string | null;
+    sinceYear: string | null;
+    iconActivityType: string;
+    approved: string;
+    approvedDateTime: string;
+    isCreatedByAdmin: string;
+    createdDate: string;
+    viewCount: number;
 }
 
 interface ErrorResponse {
-  message: string;
-  error?: string;
+    message: string;
+    error?: string;
 }
 
 interface ActivityFilters {
-  catId: number;
-  subCatId: number;
-  mode: string;
-  sortFilter: string;
-  location: string;
-  age: number;
-  type: string;
-  time: string;
-  gender: string;
-  priceFrom: number;
-  priceTo: number;
+    latitude: string,
+    longitude: string,
+    catId: number;
+    subCatId: number;
+    mode: string;
+    sortFilter: string;
+    location: string;
+    age: number;
+    type: string;
+    time: string;
+    gender: string;
+    priceFrom: number;
+    priceTo: number;
+    pageNumber: number,
+    pageSize: number,
 }
 
 /**
@@ -137,12 +142,16 @@ export const getAllActivities = async (filters: Partial<ActivityFilters> = {}): 
                 mode: filters.mode || "offline",
                 sortFilter: filters.sortFilter || "NearMe",
                 location: filters.location || null,
+                latitude: filters.latitude || null,
+                latitute: filters.longitude || null,
                 age: filters.age || null,
                 type: filters.type || null,
                 time: filters.time || null,
                 gender: filters.gender || null,
                 priceFrom: filters.priceFrom || null,
-                priceTo: filters.priceTo || null
+                priceTo: filters.priceTo || null,
+                pageNumber: filters.pageNumber || 0,
+                pageSize: filters.pageSize || 10
             },
             {
                 headers: {
