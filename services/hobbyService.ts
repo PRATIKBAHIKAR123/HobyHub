@@ -83,6 +83,7 @@ interface ActivityFilters {
     priceTo: number;
     pageNumber: number,
     pageSize: number,
+    distance: string,
 }
 
 /**
@@ -142,8 +143,8 @@ export const getAllActivities = async (filters: Partial<ActivityFilters> = {}): 
                 mode: filters.mode || "offline",
                 sortFilter: filters.sortFilter || "NearMe",
                 location: filters.location || null,
-                latitude: filters.latitude || null,
-                latitute: filters.longitude || null,
+                latitude: filters.latitude || '18.5204',
+                longitude: filters.longitude || '73.8567',
                 age: filters.age || null,
                 type: filters.type || null,
                 time: filters.time || null,
@@ -151,7 +152,8 @@ export const getAllActivities = async (filters: Partial<ActivityFilters> = {}): 
                 priceFrom: filters.priceFrom || null,
                 priceTo: filters.priceTo || null,
                 pageNumber: filters.pageNumber || 0,
-                pageSize: filters.pageSize || 10
+                pageSize: filters.pageSize || 10,
+                distance:  parseInt(filters.distance ?? "10") || 10,
             },
             {
                 headers: {

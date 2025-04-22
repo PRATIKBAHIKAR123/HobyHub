@@ -11,8 +11,8 @@ import { useSortFilter } from "@/contexts/SortFilterContext";
 import HomepageRedirectWithParams from "./params";
 
 export default function Homepage() {
-    const [distance, setDistance] = useState("10");
-    const { sortFilter, setSortFilter } = useSortFilter();
+    //const [distance, setDistance] = useState("10");
+    const { sortFilter, setSortFilter, distance, setDistance } = useSortFilter();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -44,6 +44,8 @@ export default function Homepage() {
                         <SelectItem value="2">2 KM</SelectItem>
                         <SelectItem value="5">5 KM</SelectItem>
                         <SelectItem value="10">10 KM</SelectItem>
+                        <SelectItem value="20">20 KM</SelectItem>
+                        <SelectItem value="50">50 KM</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={sortFilter} onValueChange={setSortFilter}>
@@ -57,8 +59,8 @@ export default function Homepage() {
                         <SelectItem value="NearMe">Near Me</SelectItem>
                         <SelectItem value="Popular">Popular</SelectItem>
                         <SelectItem value="WhatsNew">Whats New</SelectItem>
-                        <SelectItem value="HighToLow">Price (High to Low)</SelectItem>
-                        <SelectItem value="LowToHigh">Price (Low to High)</SelectItem>                      
+                        <SelectItem value="PriceHighToLow">Price (High to Low)</SelectItem>
+                        <SelectItem value="PriceLowToHigh">Price (Low to High)</SelectItem>                      
                     </SelectContent>
                 </Select>
             </div>
