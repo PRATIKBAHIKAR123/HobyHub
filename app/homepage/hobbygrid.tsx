@@ -75,7 +75,7 @@ export default function HobbyGrid() {
   const [isLoading, setIsLoading] = useState(true);
   const [favorites, setFavorites] = useState<{ [key: string]: boolean }>({});
   const { isOnline } = useMode();
-  const { sortFilter } = useSortFilter();
+  const { sortFilter , distance } = useSortFilter();
   const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location, coordinates } = useFilter();
   
   // Pagination state
@@ -116,7 +116,7 @@ export default function HobbyGrid() {
     setActivities([]);
     setPageNumber(1);
     setHasMore(true);
-  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location]);
+  }, [isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location, distance]);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -143,6 +143,7 @@ export default function HobbyGrid() {
           priceTo: areFiltersApplied ? priceRange[1] : 0,
           pageNumber: pageNumber,
           pageSize: pageSize,
+          distance: distance
         });
         
         const newActivities = data as Activity[];
@@ -166,7 +167,7 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize]);
+  }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize, distance]);
 
   const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation(); // Prevent card click event
