@@ -483,8 +483,8 @@ const getImages= async ()=>{
         if (originalPath.startsWith('http')) {
           finalPath = originalPath;
         } else {
-          // Remove any leading slashes and backslashes
-          const cleanPath = originalPath.replace(/^[\\/]+/, '');
+          // Remove any leading slashes and backslashes, and ensure forward slashes
+          const cleanPath = originalPath.replace(/^[\\/]+/, '').replace(/\\/g, '/');
           finalPath = `${API_BASE_URL_1}${cleanPath}`;
         }
       } else {
