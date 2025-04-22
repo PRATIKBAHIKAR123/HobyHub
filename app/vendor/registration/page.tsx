@@ -450,18 +450,11 @@ export default function RegistrationForm() {
   // Add a new function to save institute details
   const saveInstituteDetails = async () => {
     try {
-      debugger;
       setIsLoading(true);
       const data = watchInstitute();
       
-      // Debug: Log the form data
-      console.log('Form data:', data);
-      
       // Validate the form
       const isValid = await instituteForm.trigger();
-      
-      // Debug: Log validation errors
-      console.log('Validation errors:', instituteForm.formState.errors);
       
       if (!isValid) {
         toast.error("Please fill in all required fields");
@@ -473,6 +466,10 @@ export default function RegistrationForm() {
       
       // Mark section as completed
       setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
+      
+      // Open the institute images accordion
+      setActiveAccordion("item-2");
+      
       toast.success(`Institute details saved successfully!`);
     } catch (error) {
       console.error("Error saving institute details:", error);
@@ -635,8 +632,8 @@ export default function RegistrationForm() {
       }));
 
       // Add stringified class and course details
-      formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
-      formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
+      formData.append('classDetails', JSON.stringify(classDetailsArray));
+      formData.append('courseDetails', JSON.stringify(courseDetailsArray));
 
       // Call the API only if all required data is present
       if (personalDetailsData && instituteDetailsData) {
@@ -721,19 +718,18 @@ export default function RegistrationForm() {
 
   const onAccordianClick = (value: string) => {
     console.log("Accordion value changed:", value);
-    if (value === activeAccordion && !completedSections[value as keyof typeof completedSections]) {
-      toast.error("Complete the form first!");
-      return;
-    }
-    // Allow opening only completed sections
+    
+    // Allow opening if the section is already active
     if (value === activeAccordion) {
       setActiveAccordion(""); // Close the accordion
       return;
     }
 
+    // Check if the section can be opened based on completed sections
     if (
       (value === "item-0") || // Personal Details can always be opened
       (value === "item-1" && completedSections.personalDetails) || // Institute Details depends on Personal Details
+      (value === "item-2" && completedSections.instituteDetails) || // Institute Images depends on Institute Details
       (value === "item-4" && completedSections.instituteDetails) || // Class Details depends on Institute Details
       (value === "item-5" && completedSections.instituteDetails) // Course Details depends on Institute Details
     ) {
@@ -1484,8 +1480,13 @@ export default function RegistrationForm() {
                   </Button>
                   <Button
                     onClick={() => {
+                      if (images.length === 0) {
+                        toast.error("Please select at least one image");
+                        return;
+                      }
                       setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
                       setActiveAccordion("");
+                      toast.success("Images saved successfully!");
                     }}
                     className="app-bg-color text-white"
                     disabled={isLoading}
@@ -1505,17 +1506,6 @@ export default function RegistrationForm() {
           >
             + Add Class Details
           </Button>
-
-          {/* Final Submit Button */}
-          <div className="flex justify-center mt-6">
-            <Button
-              onClick={handleFinalSubmit}
-              className="app-bg-color text-white px-8 py-6 text-lg"
-              disabled={isLoading || !completedSections.personalDetails || !completedSections.instituteDetails}
-            >
-              {isLoading ? "Submitting..." : "Submit Registration"}
-            </Button>
-          </div>
 
           <PopupScreen
             open={isOpen}
@@ -1900,19 +1890,33 @@ export default function RegistrationForm() {
 
                     </div>
 
-                    <Button
+                    {/* <Button
                       onClick={saveCourseDetails}
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >
                       {isLoading ? "Saving..." : "Save Course Details"}
-                    </Button>
+                    </Button> */}
                   </form>
                 </AccordionContent>
               </div>
             </AccordionItem>
           )}
         </Accordion>
+
+        {/* Move the Final Submit Button here, after all forms */}
+        {(showClassFields || showCourseFields || courses.length > 0) && (
+          <div className="flex justify-center mt-6">
+            <Button
+              onClick={handleFinalSubmit}
+              className="app-bg-color text-white px-8 py-6 text-lg"
+              disabled={isLoading || !completedSections.personalDetails || !completedSections.instituteDetails}
+            >
+              {isLoading ? "Submitting..." : "Submit Registration"}
+            </Button>
+          </div>
+        )}
+
         {courses.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Classes</div>
           <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
