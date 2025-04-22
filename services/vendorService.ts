@@ -112,4 +112,43 @@ export const updateActivity = async (formData: FormData) => {
   }
 };
 
+export const deleteClass = async (id:number) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/vendor/vendor-class/delete?id=${id}`, {
+      headers: getHeaders(),
+    });
+    // Ensure the response data is an array
+    return response.data;
+  } catch (error : any) {
+    console.error("Error fetching image list:", error);
+    return [];
+  }
+};
+
+export const deleteCourse = async (id:number) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/vendor/vendor-course/delete?id=${id}`, {
+      headers: getHeaders(),
+    });
+    // Ensure the response data is an array
+    return response.data;
+  } catch (error : any) {
+    console.error("Error fetching image list:", error);
+    return [];
+  }
+};
+
+export const uploadImage = async (formData:FormData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/vendor/vendor-file/upload`,formData, {
+      headers: getHeaders(),
+    });
+    // Ensure the response data is an array
+    return response.data;
+  } catch (error : any) {
+    console.error("Error fetching image list:", error);
+    return [];
+  }
+};
+
 export type { VendorClassData };

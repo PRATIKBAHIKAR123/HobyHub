@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Camera, ImageIcon, BookOpen, Users, Image as ImageIcon2, Info } from "lucide-react";
+import { Trash2, Camera, ImageIcon, BookOpen, Users, Image as ImageIcon2, Info, CircleX } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { getActivity, getClassList, getCourseList, getImageList, updateActivity } from "@/services/vendorService";
+import { deleteClass, deleteCourse, getActivity, getClassList, getCourseList, getImageList, updateActivity, uploadImage } from "@/services/vendorService";
 import AddClassPopup from "./addClassPopup";
 import AddCoursePopup from "./addCoursePopup";
 import { getUserProfile, updateUserProfile } from "@/services/userService";
@@ -17,6 +17,8 @@ import { API_BASE_URL_1 } from "@/lib/apiConfigs";
 import { VendorClassData } from "@/app/services/vendorService";
 import withAuth from "@/app/auth/withAuth";
 import { useRouter } from "next/navigation";
+import DeletePopupScreen from "@/app/components/DeletePopupScreen";
+import ConfirmationPopupScreen from "@/app/components/ConfirmationAlert";
 
 interface ProfileData {
   email: string;
@@ -86,11 +88,11 @@ interface GalleryImage {
   number;
 }
 
-interface DeletePopupProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  onDelete: () => void;
-}
+// interface DeletePopupProps {
+//   open: boolean;
+//   setOpen: (open: boolean) => void;
+//   onDelete: () => void;
+// }
 
 interface PhotoOptionsDialogProps {
   open: boolean;
@@ -100,58 +102,58 @@ interface PhotoOptionsDialogProps {
   imagePreview:React.Dispatch<React.SetStateAction<string>>;
 }
 
-function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-[400px] p-6">
-        <div className="flex flex-col items-center">
-          {/* Delete Icon */}
-          <div className="">
-            <Image 
-              src="/images/delete.png" 
-              alt="Delete" 
-              width={60} 
-              height={60}
-              priority
-            />
-          </div>
+// function DeletePopup({ open, setOpen, onDelete }: DeletePopupProps) {
+//   return (
+//     <Dialog open={open} onOpenChange={setOpen}>
+//       <DialogContent className="max-w-[400px] p-6">
+//         <div className="flex flex-col items-center">
+//           {/* Delete Icon */}
+//           <div className="">
+//             <Image 
+//               src="/images/delete.png" 
+//               alt="Delete" 
+//               width={60} 
+//               height={60}
+//               priority
+//             />
+//           </div>
 
-          {/* Title */}
-          <h2 className="text-[24px] font-medium text-center mb-2">
-            Delete Photo
-          </h2>
+//           {/* Title */}
+//           <h2 className="text-[24px] font-medium text-center mb-2">
+//             Delete Photo
+//           </h2>
 
-          {/* Message */}
-          <p className="text-center text-gray-600 mb-6">
-            Are you sure you want to delete your profile photo?
-          </p>
+//           {/* Message */}
+//           <p className="text-center text-gray-600 mb-6">
+//             Are you sure you want to delete your profile photo?
+//           </p>
 
-          {/* Buttons */}
-          <div className="flex gap-4 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="flex-1 border-[#05244f] text-[#05244f] hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                onDelete();
-                setOpen(false);
-              }}
-              className="flex-1 bg-[#05244f] text-white hover:bg-[#03162f]"
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+//           {/* Buttons */}
+//           <div className="flex gap-4 w-full">
+//             <Button
+//               type="button"
+//               variant="outline"
+//               onClick={() => setOpen(false)}
+//               className="flex-1 border-[#05244f] text-[#05244f] hover:bg-gray-50"
+//             >
+//               Cancel
+//             </Button>
+//             <Button
+//               type="button"
+//               onClick={() => {
+//                 onDelete();
+//                 setOpen(false);
+//               }}
+//               className="flex-1 bg-[#05244f] text-white hover:bg-[#03162f]"
+//             >
+//               Delete
+//             </Button>
+//           </div>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// }
 
 function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }: PhotoOptionsDialogProps) {
   const handleGalleryClick = () => {
@@ -248,6 +250,8 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  //const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
+  const [onDeleteCallback, setOnDeleteCallback] = useState<(() => Promise<void>) | null>(null);
   const [isPhotoOptionsOpen, setIsPhotoOptionsOpen] = useState(false);
   const [isClassOpen, setIsClassOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -257,6 +261,11 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
   const [selectedCourse, setSelectedCourse] = useState<VendorClassData |undefined >();
   const [imagePreview, setImagePreview] = useState<string>("/Icons/icons8-user-96.png");
   const router = useRouter();
+  const [deleteMessage, setDeleteMessage] = useState('Are You sure you want to delete?');
+  const [temporaryImages, setTemporaryImages] = useState<{ id: string; file: File | Blob; filePath: string; isTemporary: boolean }[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [onConfirmCallback, setOnConfirmCallback] = useState<(() => Promise<void>) | null>(null);
+  const [confirmMessage, setConfirmMessage] = useState('Are You sure you want to submit?');
 
   useEffect(() => {
     const fetchUserProfile =async () => {
@@ -378,64 +387,131 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
     setIsDeleteOpen(false);
   };
 
-  const handleUpdateProfile = async () => {
-    try {
-      setIsLoading(true);
-
-      // Split data into different sections as per registration form
-      const formData = new FormData();
-      // formData.append('id', instituteDetails.instituteName || '');
-      formData.append('name', profile.name || '');
-      formData.append('emailId', profile.email || '');
-      formData.append('phoneNumber', profile.phoneNumber || '');
-      formData.append('gender', profile.gender || '');
-      formData.append('dob', profile.dob||'');
-      if (profile.profileImage instanceof File) {
-        formData.append('profileImageFile', profile.profileImage);
+  const handleUpdateProfile = () => {
+    setConfirmMessage('Are you sure you want to Update Profile?');
+    setIsConfirmOpen(true);
+  
+    // Set a callback for deletion
+    setOnConfirmCallback(() => async () => {
+      try {
+        setIsLoading(true);
+  
+        // Split data into different sections as per registration form
+        const formData = new FormData();
+        // formData.append('id', instituteDetails.instituteName || '');
+        formData.append('name', profile.name || '');
+        formData.append('emailId', profile.email || '');
+        formData.append('phoneNumber', profile.phoneNumber || '');
+        formData.append('gender', profile.gender || '');
+        formData.append('dob', profile.dob||'');
+        if (profile.profileImage instanceof File) {
+          formData.append('profileImageFile', profile.profileImage);
+        }
+  
+        const activity_formData = new FormData();
+  
+        activity_formData.append('type', profile.activityType || '');
+        activity_formData.append('gstNo', profile.gstNo || '');
+        activity_formData.append('title', profile.programTitle || '');
+        activity_formData.append('companyName', profile.instituteName || '');
+        activity_formData.append('description', profile.introduction||'');
+        activity_formData.append('website', profile.websiteName || '');
+        activity_formData.append('instagramAcc', profile.instagramAccount || '');
+        activity_formData.append('youtubeAcc', profile.youtubeAccount || '');
+        activity_formData.append('classLevel', profile.classLevel||'');
+        activity_formData.append('id', activityId.toString());
+      // Add classList as a JSON string in FormData
+      if (profile.classList && profile.classList.length > 0) {
+        activity_formData.append('classDetails', JSON.stringify(profile.classList));
+      } else {
+        activity_formData.append('classDetails', JSON.stringify([]));
       }
-
-      const activity_formData = new FormData();
-
-      activity_formData.append('type', profile.activityType || '');
-      activity_formData.append('gstNo', profile.gstNo || '');
-      activity_formData.append('title', profile.programTitle || '');
-      activity_formData.append('companyName', profile.instituteName || '');
-      activity_formData.append('description', profile.dob||'');
-      activity_formData.append('website', profile.websiteName || '');
-      activity_formData.append('instagramAcc', profile.instagramAccount || '');
-      activity_formData.append('youtubeAcc', profile.youtubeAccount || '');
-      activity_formData.append('classLevel', profile.classLevel||'');
-      activity_formData.append('id', activityId.toString());
-    // Add classList as a JSON string in FormData
-    if (profile.classList && profile.classList.length > 0) {
-      activity_formData.append('classDetails', JSON.stringify(profile.classList));
-    } else {
-      activity_formData.append('classDetails', JSON.stringify([]));
-    }
-    
-    // Add courseList as a JSON string in FormData
-    if (profile.courseList && profile.courseList.length > 0) {
-      activity_formData.append('courseDetails', JSON.stringify(profile.courseList));
-    } else {
-      activity_formData.append('courseDetails', JSON.stringify([]));
-    }
-    
-            await updateUserProfile(formData);
-            await updateActivity(activity_formData);
-      setIsEditing(false);
-      //setError(null);
-      toast.success('Profile Updated Succesfully');
-      setValidationErrors({}); // Clear validation errors on successful update
-    } catch (err:any) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
-      toast.error(errorMessage);
-      //setError(errorMessage);
       
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+      // Add courseList as a JSON string in FormData
+      if (profile.courseList && profile.courseList.length > 0) {
+        activity_formData.append('courseDetails', JSON.stringify(profile.courseList));
+      } else {
+        activity_formData.append('courseDetails', JSON.stringify([]));
+      }
+      
+              await updateUserProfile(formData);
+              await updateActivity(activity_formData);
+        setIsEditing(false);
+        //setError(null);
+        toast.success('Profile Updated Succesfully');
+        setValidationErrors({}); // Clear validation errors on successful update
+      } catch (err:any) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
+        toast.error(errorMessage);
+        //setError(errorMessage);
+        
+        console.error(err);
+      }  finally {
+          setIsConfirmOpen(false);
+          setIsLoading(false);
+        }
+      });
+    //setIsDeleteConfirm(true);
   };
+
+  // const handleUpdateProfile = async () => {
+  //   try {
+  //     setIsLoading(true);
+
+  //     // Split data into different sections as per registration form
+  //     const formData = new FormData();
+  //     // formData.append('id', instituteDetails.instituteName || '');
+  //     formData.append('name', profile.name || '');
+  //     formData.append('emailId', profile.email || '');
+  //     formData.append('phoneNumber', profile.phoneNumber || '');
+  //     formData.append('gender', profile.gender || '');
+  //     formData.append('dob', profile.dob||'');
+  //     if (profile.profileImage instanceof File) {
+  //       formData.append('profileImageFile', profile.profileImage);
+  //     }
+
+  //     const activity_formData = new FormData();
+
+  //     activity_formData.append('type', profile.activityType || '');
+  //     activity_formData.append('gstNo', profile.gstNo || '');
+  //     activity_formData.append('title', profile.programTitle || '');
+  //     activity_formData.append('companyName', profile.instituteName || '');
+  //     activity_formData.append('description', profile.introduction||'');
+  //     activity_formData.append('website', profile.websiteName || '');
+  //     activity_formData.append('instagramAcc', profile.instagramAccount || '');
+  //     activity_formData.append('youtubeAcc', profile.youtubeAccount || '');
+  //     activity_formData.append('classLevel', profile.classLevel||'');
+  //     activity_formData.append('id', activityId.toString());
+  //   // Add classList as a JSON string in FormData
+  //   if (profile.classList && profile.classList.length > 0) {
+  //     activity_formData.append('classDetails', JSON.stringify(profile.classList));
+  //   } else {
+  //     activity_formData.append('classDetails', JSON.stringify([]));
+  //   }
+    
+  //   // Add courseList as a JSON string in FormData
+  //   if (profile.courseList && profile.courseList.length > 0) {
+  //     activity_formData.append('courseDetails', JSON.stringify(profile.courseList));
+  //   } else {
+  //     activity_formData.append('courseDetails', JSON.stringify([]));
+  //   }
+    
+  //           await updateUserProfile(formData);
+  //           await updateActivity(activity_formData);
+  //     setIsEditing(false);
+  //     //setError(null);
+  //     toast.success('Profile Updated Succesfully');
+  //     setValidationErrors({}); // Clear validation errors on successful update
+  //   } catch (err:any) {
+  //     const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
+  //     toast.error(errorMessage);
+  //     //setError(errorMessage);
+      
+  //     console.error(err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   
   useEffect(() => {
@@ -521,26 +597,113 @@ const getImages= async ()=>{
        setSelectedCourse(classItem);
  }
 
- // Function to delete a class
-const handleDeleteClass = (classId: number) => {
-  if (profile.classList) {
-    const updatedClassList = profile.classList.filter(classItem => classItem.id !== classId);
-    setProfile(prev => ({
-      ...prev,
-      classList: updatedClassList
-    }));
+ const handleDeleteClass = (classId: number) => {
+  setDeleteMessage('Are you sure you want to delete this class?');
+  setIsDeleteOpen(true);
+
+  // Set a callback for deletion
+  setOnDeleteCallback(() => async () => {
+      try {
+        const response = await deleteClass(classId);
+        if (response) {
+          toast.success('Class Deleted Successfully');
+          getClasses(); // Refresh the class list
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to delete the class. Please try again.');
+      } finally {
+        setIsDeleteOpen(false);
+      }
+    });
+//  setIsDeleteConfirm(true);
+};
+
+const handleDeleteCourse = (courseId: number) => {
+  setDeleteMessage('Are you sure you want to delete this course?');
+  setIsDeleteOpen(true);
+
+  setOnDeleteCallback(() => async () => {
+      try {
+        const response = await deleteCourse(courseId);
+        if (response) {
+          toast.success('Course Deleted Successfully');
+          getCourses(); // Refresh the course list
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to delete the course. Please try again.');
+      } finally {
+        setIsDeleteOpen(false);
+      }
+    });
+//  setIsDeleteConfirm(true);
+  
+};
+
+const handleDeleteImage = (id: number) => {
+  setDeleteMessage('Are you sure you want to delete this Image?');
+  setIsDeleteOpen(true);
+console.log(id)
+
+//  setIsDeleteConfirm(true);
+  
+};
+
+const openImagePicker = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.click();
+  
+  input.onchange = (e) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+      const file = target.files?.[0];
+      // Create a URL for the selected file
+      const fileUrl = URL.createObjectURL(target.files[0]);
+      
+      // Add to temporary images array
+      setTemporaryImages([...temporaryImages, {
+        id: `temp-${Date.now()}`, // Temporary ID
+        file: file,
+        filePath: fileUrl,
+        isTemporary: true
+      }]);
+    }
+  };
+};
+
+// Function to handle image upload to server
+const handleImageUpload = async (tempImage: { file: string | Blob; id: any; }) => {
+  try {
+    // Show loading state
+    toast.loading('Uploading image...');
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('activityId', activityId.toString());
+    formData.append('files', tempImage.file);
+    
+    // Call API to upload image (you'll need to implement this in your services)
+     await uploadImage(formData);
+     toast.dismiss();
+    // Remove from temporary images
+    setTemporaryImages(temporaryImages.filter(img => img.id !== tempImage.id));
+    
+    // Refresh the gallery
+    getImages();
+    
+    toast.success('Image uploaded successfully');
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    toast.error('Failed to upload image');
   }
 };
 
-// Function to delete a course
-const handleDeleteCourse = (courseId: number) => {
-  if (profile.courseList) {
-    const updatedCourseList = profile.courseList.filter(courseItem => courseItem.id !== courseId);
-    setProfile(prev => ({
-      ...prev,
-      courseList: updatedCourseList
-    }));
-  }
+// Function to remove temporary image
+const handleRemoveTemp = (tempId: string) => {
+  setTemporaryImages(temporaryImages.filter(img => img.id !== tempId));
 };
 
   // Render different content based on active tab
@@ -907,7 +1070,7 @@ const handleDeleteCourse = (courseId: number) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-800 mr-2" onClick={() => handleDeleteClass(classItem.id)}>
+                          <Button variant="outline" size="sm" className="text-red hover:text-blue-800 mr-2" onClick={() => handleDeleteClass(classItem.id)}>
                             Delete
                           </Button>
                           <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-800" onClick={() =>
@@ -938,7 +1101,7 @@ const handleDeleteCourse = (courseId: number) => {
         );
       case "courses":
         return (
-          <div>
+          <div className="w-250">
             <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-700">My Courses</h3>
             </div>
@@ -977,7 +1140,7 @@ const handleDeleteCourse = (courseId: number) => {
               //     </div>
               //   ))}
               // </div>
-              <div className="overflow-x-scroll">
+              <div className="overflow-x-scroll overflow-y-scroll h-110">
                 <table className="min-w-full bg-white border rounded-lg overflow-hidden">
                   <thead className="bg-gray-50">
                     <tr>
@@ -1012,7 +1175,7 @@ const handleDeleteCourse = (courseId: number) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Button variant="destructive" size="sm" className="text-blue-600 hover:text-blue-800 mr-2"
+                          <Button variant="outline" size="sm" className="text-red hover:text-blue-800 mr-2"
                           onClick={() => handleDeleteCourse(classItem.id)}>
                             Delete
                           </Button>
@@ -1043,48 +1206,78 @@ const handleDeleteCourse = (courseId: number) => {
       case "gallery":
         return (
           <div>
-            <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
-              <h3 className="text-lg font-semibold text-gray-700">Gallery</h3>
+      <div className="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
+        <h3 className="text-lg font-semibold text-gray-700">Gallery</h3>
+      </div>
+        
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* Existing gallery images */}
+        {profile.galleryImages && profile.galleryImages.map((image) => (
+          <div key={image.id} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100">
+              <Image
+                src={image.filePath || "/images/no image available.jpg"}
+                alt={image.activityId.toString()}
+                width={400}
+                height={400}
+                className="w-full h-full object-cover"
+              />
+              <button title="Delete Image" className="absolute top-2 right-2 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 shadow-md group-hover:opacity-100 opacity-0 cursor-pointer transition-opacity duration-200"
+                     onClick={() => handleDeleteImage(image.id)}   >
+                        <CircleX className="w-8 h-8"/>
+                        </button>
             </div>
-            
-            {profile.galleryImages && profile.galleryImages.length > 0 ? (
-              <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {profile.galleryImages.map((image) => (
-                    <div key={image.id} className="relative group">
-                      <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100">
-                        <Image
-                          src={image.filePath || "/images/no image available.jpg"}
-                          alt={image.activityId.toString()}
-                          width={400}
-                          height={400}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-end justify-start p-3">
-                          <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                            {/* <p className="font-semibold">{image.title}</p>
-                            <p className="text-sm">{image.date}</p> */}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          </div>
+        ))}
 
-                  {/* Add image tile */}
-                  {/* <div className="aspect-square rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <div className="flex flex-col items-center text-gray-500">
-                      <ImageIcon2 className="w-10 h-10 mb-2" />
-                      <span>Add Image</span>
-                    </div>
-                  </div> */}
+        {/* Temporary images with upload/remove buttons */}
+        {temporaryImages.map((tempImage) => (
+          <div key={tempImage.id} className="relative group">
+            <div className="aspect-square rounded-lg overflow-hidden border bg-gray-100 opacity-50">
+              <Image
+                src={tempImage.filePath}
+                alt="Temporary image"
+                width={400}
+                height={400}
+                className="w-full h-full object-cover"
+              />
+              <span className="text-black absolute top-1 p-3 text-bolder">This image Not Uploaded Please Click Upload</span>
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    size="sm"
+                    onClick={() => handleImageUpload(tempImage)}
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    Upload
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleRemoveTemp(tempImage.id)}
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                  >
+                    Remove
+                  </Button>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-10 text-gray-500">
-                No images found. Add your first image to get started.
-              </div>
-            )}
+            </div>
           </div>
+        ))}
+
+        {/* Add image tile */}
+        <div 
+          className="aspect-square rounded-lg overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" 
+          onClick={openImagePicker}
+        >
+          <div className="flex flex-col items-center text-gray-500">
+            <ImageIcon2 className="w-10 h-10 mb-2" />
+            <span>Add Image</span>
+          </div>
+        </div>
+      </div>
+    </div>
         );
       default:
         return null;
@@ -1220,7 +1413,7 @@ const handleDeleteCourse = (courseId: number) => {
             {renderTabContent()}
             
             {/* Action Buttons - only show for profile tab */}
-            {/* {activeTab === "profile" && ( */}
+            {activeTab === "profile" && (
               <div className="flex justify-end gap-3 mt-8">
                 <Button
                   variant="outline"
@@ -1238,7 +1431,7 @@ const handleDeleteCourse = (courseId: number) => {
                   {isLoading ? "Loading..." : isEditing ? "Save Changes" : "Edit Profile"}
                 </Button>
               </div>
-            {/* )} */}
+             )} 
           </div>
         </div>
 
@@ -1252,11 +1445,24 @@ const handleDeleteCourse = (courseId: number) => {
         />
 
         {/* Delete Photo Dialog */}
-        <DeletePopup 
+        <DeletePopupScreen 
+          setOpen={setIsDeleteOpen}
           open={isDeleteOpen} 
-          setOpen={setIsDeleteOpen} 
-          onDelete={handleDeletePhoto} 
+          onDelete={async () => {
+            if (onDeleteCallback) {
+              await onDeleteCallback();
+            }
+          }} 
+          message={deleteMessage}      
         />
+        <ConfirmationPopupScreen setOpen={setIsConfirmOpen}
+          open={isConfirmOpen} 
+          onDelete={async () => {
+            if (onConfirmCallback) {
+              await onConfirmCallback();
+            }
+          }} 
+          message={confirmMessage} />
       </div>
     </div>
   );
