@@ -310,8 +310,11 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
           //const profileImage  = `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
           const profileImage = data?.profileImage?.startsWith('http') 
               ? data?.profileImage
-              : `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/').replace(/^\/+/, '')}`;
-          setImagePreview(profileImage || "/Icons/icons8-user-96.png");
+              : data?.profileImage 
+                ? `${API_BASE_URL_1}${data.profileImage.replace(/\\/g, '/').replace(/^\/+/, '')}`
+                : "/Icons/icons8-user-96.png";
+          console.log('Profile Image URL:', profileImage);
+          setImagePreview(profileImage);
         }
         
         // Parse institute details
@@ -468,16 +471,44 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
 }
 
 const getImages= async ()=>{
-  const data = await getImageList(activityId);
-  data.forEach((img: any) => {
-    img.filePath = img.filePath?.startsWith('http') 
-      ? img.filePath
-      : `${API_BASE_URL_1}${img.filePath?.replace(/\\/g, '/').replace(/^\/+/, '')}`;
-  });
-  setProfile(prev => ({
-    ...prev,
-    galleryImages: data
-  }));
+  try {
+    const data = await getImageList(activityId);
+    console.log('Raw gallery data:', data);
+    
+    const processedImages = data.map((img: any) => {
+      const originalPath = img.filePath;
+      let finalPath = originalPath;
+      
+      if (originalPath) {
+        if (originalPath.startsWith('http')) {
+          finalPath = originalPath;
+        } else {
+          // Remove any leading slashes and backslashes
+          const cleanPath = originalPath.replace(/^[\\/]+/, '');
+          finalPath = `${API_BASE_URL_1}${cleanPath}`;
+        }
+      } else {
+        finalPath = "/images/no image available.jpg";
+      }
+      
+      console.log('Processing image:', { originalPath, finalPath });
+      return {
+        ...img,
+        filePath: finalPath
+      };
+    });
+    
+    setProfile(prev => ({
+      ...prev,
+      galleryImages: processedImages
+    }));
+  } catch (error) {
+    console.error('Error processing gallery images:', error);
+    setProfile(prev => ({
+      ...prev,
+      galleryImages: []
+    }));
+  }
 }
 
  const handleEditClass =(classItem: any)=> {

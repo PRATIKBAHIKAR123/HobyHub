@@ -77,11 +77,12 @@ export const getImageList = async (id:number) => {
     const response = await axios.get(`${API_BASE_URL}/vendor/vendor-file/get-all?id=${id}`, {
       headers: getHeaders(),
     });
-    console.log("Response:", response.data);
-    return response.data;
+    console.log("Image List Response:", response.data);
+    // Ensure the response data is an array
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error : any) {
-    console.error("Error:", error);
-    return error.response;
+    console.error("Error fetching image list:", error);
+    return [];
   }
 };
 
