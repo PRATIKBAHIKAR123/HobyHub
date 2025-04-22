@@ -310,7 +310,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
           //const profileImage  = `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
           const profileImage = data?.profileImage?.startsWith('http') 
               ? data?.profileImage
-              : `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/')}`;
+              : `${API_BASE_URL_1}${data?.profileImage?.replace(/\\/g, '/').replace(/^\/+/, '')}`;
           setImagePreview(profileImage || "/Icons/icons8-user-96.png");
         }
         
@@ -469,14 +469,15 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
 
 const getImages= async ()=>{
   const data = await getImageList(activityId);
-data.forEach((img: any) => {
-  img.filePath = `${API_BASE_URL_1}${img.filePath.replace(/\\/g, '/')}`;
-});
+  data.forEach((img: any) => {
+    img.filePath = img.filePath?.startsWith('http') 
+      ? img.filePath
+      : `${API_BASE_URL_1}${img.filePath?.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+  });
   setProfile(prev => ({
     ...prev,
     galleryImages: data
   }));
-
 }
 
  const handleEditClass =(classItem: any)=> {
