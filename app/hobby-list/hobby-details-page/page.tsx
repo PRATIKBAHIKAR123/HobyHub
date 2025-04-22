@@ -62,6 +62,7 @@ interface ActivityData {
   viewCount: number;
   images?: any;
   classDetails?: any;
+  courseDetails?: any;
 }
 
 function HobbyDetailsPageSkeleton() {
@@ -131,7 +132,8 @@ function HobbyDetailsPageContent() {
         let activity: ActivityData;
         activity = await getActivityById(parseInt(activityId));
         if (token) {
-          sessionStorage.setItem('activityClassData', JSON.stringify(activity.classDetails));
+          sessionStorage.setItem('activityClassData', JSON.stringify(activity?.classDetails??[]));
+          sessionStorage.setItem('activityCourseData', JSON.stringify(activity?.courseDetails??[]));
           sessionStorage.setItem('activity', JSON.stringify(activity));
           try {
             await increaseActivityViewCount(parseInt(activityId));
@@ -206,7 +208,7 @@ function HobbyDetailsPageContent() {
     return <div className="p-6 text-center">No activity data available</div>;
   }
 
-  const fullAddress = `${activityData.address}, ${activityData.road}, ${activityData.area}, ${activityData.city}, ${activityData.state} - ${activityData.pincode}, ${activityData.country}`;
+  const fullAddress = `${activityData.address??''}, ${activityData.road??''}, ${activityData.area??''}, ${activityData.city??''}, ${activityData.state??''} - ${activityData.pincode??''}, ${activityData.country??''}`;
 
   return (
     <div className="p-4 md:p-6">
@@ -265,7 +267,7 @@ function HobbyDetailsPageContent() {
         </div>
         <span className="px-4 py-2 bg-[#d4e1f2] rounded-[28px] border-[7px] border-[#dfe8f2] mt-4 md:mt-0">
           <div className="text-[#7a8491] text-sm md:text-md font-bold font-['Trajan_Pro']">
-            {activityData.type}
+            {activityData?.type}
           </div>
         </span>
       </div>

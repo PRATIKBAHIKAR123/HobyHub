@@ -167,7 +167,8 @@ export default function HobbyGrid() {
     };
 
     fetchActivities();
-  }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize, distance]);
+  // }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize, distance]);
+}, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location, coordinates, pageSize, distance]);
 
   const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
     e.stopPropagation(); // Prevent card click event

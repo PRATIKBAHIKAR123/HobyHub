@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import withAuth from "../auth/withAuth";
 import InquiryPopupScreen from "../components/InquiryPopupScreen";
 import DeletePopupScreen from "../components/DeletePopupScreen";
+import { useMode } from "@/contexts/ModeContext";
 
 // const classes = [
 //   {
@@ -173,13 +174,20 @@ function ClassDetails() {
   const [isListView, setIsListView] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [classes, setClasses] = useState([]);
-  const [filterType, setFilterType] = useState('Online');
+  const [courses, setCourses] = useState([]);
+  const { isOnline } = useMode();
+  const [filterType, setFilterType] = useState(isOnline?'Online':'Offline');
+
 
   // Simulate loading
   useEffect(() => {
     const classList = sessionStorage.getItem('activityClassData');
     const parsedClassList = classList ? JSON.parse(classList) : [];
     setClasses(parsedClassList);
+
+    const courseList = sessionStorage.getItem('activityCourseData');
+    const parsedCourseList = courseList ? JSON.parse(courseList) : [];
+    setCourses(parsedCourseList);
     console.log(classes)
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -227,8 +235,16 @@ function ClassDetails() {
           </div>
         </div>
       </div>
+      
       {!isListView && <ClassGridList classes={classes} filterType={filterType} />}
       {isListView && <ClassList classes={classes} filterType={filterType} />}
+
+     {courses.length>0 && <div> <div className="flex justify-between items-center my-6">
+        <h2 className="text-[#767676] text-[22.70px] font-semibold">Courses</h2>
+        
+      </div>
+      {isListView && <CourseList classes={courses} filterType={filterType} />}
+      </div>}
     </div>
   );
 }
@@ -321,6 +337,98 @@ function ClassList({ classes, filterType }:any) {
       <div className="flex items-center justify-center w-full py-8">
         <span className="text-[#767676] text-lg font-semibold">
           No {filterType} Classes Available
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="gap-4 px-[30px] py-[15px] rounded-xl border border-1 border-gray">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>S.No</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Schedule</TableHead>
+            <TableHead>Schedule Time</TableHead>
+            <TableHead>Age Group</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Start Date</TableHead>
+            <TableHead>End Date</TableHead>
+            <TableHead>Sessions</TableHead>
+            <TableHead>Cost</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredClasses.map((item:any, index:number) => (
+            <TableRow key={index}>
+              <TableCell>{index +1}</TableCell>
+              <TableCell>{item.title}</TableCell>
+              <TableCell>{item.day}</TableCell>
+              <TableCell>{item.timingsFrom} - {item.timingsTo}</TableCell>
+              <TableCell>{item.ageFrom} - {item.ageTo}</TableCell>
+              <TableCell>{item.gender}</TableCell>
+              <TableCell>{item.sessionFrom}</TableCell>
+              <TableCell>{item.sessionTo}</TableCell>
+              <TableCell>{item.sessionFrom}</TableCell>
+              <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedClassToDelete(item);
+                      setIsDeleteOpen(true);
+                    }}
+                    className="border-red-500 text-red-500 hover:bg-red-50"
+                  >
+                    Delete
+                  </Button>
+                  <Button 
+                    className="app-bg-color"
+                    onClick={() => setIsInquiryOpen(true)}
+                  >
+                    <div className="text-white text-[14px] font-medium font-['Minion_Pro']">Inquire Now</div>
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <InquiryPopupScreen 
+        isOpen={isInquiryOpen} 
+        onClose={() => setIsInquiryOpen(false)}
+      />
+      <DeletePopupScreen 
+        open={isDeleteOpen}
+        setOpen={setIsDeleteOpen}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
+}
+
+function CourseList({ classes, filterType }:any) {
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+
+  const filteredClasses = classes.filter((item: any) => item.type === filterType);
+
+  const handleDelete = () => {
+    // Handle delete logic here
+    console.log('Deleting class:', selectedClassToDelete);
+    setIsDeleteOpen(false);
+    // After successful deletion, you might want to refresh the list
+  };
+
+  if (filteredClasses.length === 0) {
+    return (
+      <div className="flex items-center justify-center w-full py-8">
+        <span className="text-[#767676] text-lg font-semibold">
+          No {filterType} Courses Available
         </span>
       </div>
     );
