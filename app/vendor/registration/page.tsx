@@ -488,6 +488,61 @@ export default function RegistrationForm() {
       setIsLoading(true);
       const data = watchClass();
       
+      // Validate required fields
+      if (!data.className) {
+        toast.error("Class name is required");
+        return;
+      }
+      
+      if (!data.category) {
+        toast.error("Category is required");
+        return;
+      }
+      
+      if (!data.time) {
+        toast.error("Time is required");
+        return;
+      }
+      
+      if (!data.type) {
+        toast.error("Class type is required");
+        return;
+      }
+      
+      if (!data.weekdays || data.weekdays.length === 0) {
+        toast.error("Please select at least one weekday");
+        return;
+      }
+      
+      // Validate age range if provided
+      if (data.fromage && data.toage) {
+        const fromAge = parseInt(data.fromage);
+        const toAge = parseInt(data.toage);
+        if (fromAge > toAge) {
+          toast.error("From age must be less than or equal to To age");
+          return;
+        }
+      }
+      
+      // Validate cost range if provided
+      if (data.fromcost && data.tocost) {
+        const fromCost = parseFloat(data.fromcost);
+        const toCost = parseFloat(data.tocost);
+        if (fromCost > toCost) {
+          toast.error("From cost must be less than or equal to To cost");
+          return;
+        }
+      }
+      
+      // Validate number of sessions
+      if (data.noOfSessions) {
+        const sessions = parseInt(data.noOfSessions);
+        if (sessions < 1) {
+          toast.error("Number of sessions must be at least 1");
+          return;
+        }
+      }
+      
       // Add class to the list
       setClassDetailsData(prev => [...prev, data]);
       
@@ -544,6 +599,27 @@ export default function RegistrationForm() {
   const handleFinalSubmit = async () => {
     try {
       setIsLoading(true);
+
+      // Validate personal details
+      if (!personalDetailsData) {
+        toast.error("Please complete Personal Details section");
+        setActiveAccordion("item-0");
+        return;
+      }
+
+      // Validate institute details
+      if (!instituteDetailsData) {
+        toast.error("Please complete Institute Details section");
+        setActiveAccordion("item-1");
+        return;
+      }
+
+      // Validate at least one class or course is added
+      if (classDetailsData.length === 0 && courseDetailsData.length === 0) {
+        toast.error("Please add at least one Class or Course");
+        setActiveAccordion("item-4");
+        return;
+      }
 
       // Create FormData object
       const formData = new FormData();
@@ -660,24 +736,19 @@ export default function RegistrationForm() {
       formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
       formData.append('activity.id', '0');
 
-      // Call the API only if all required data is present
-      if (personalDetailsData && instituteDetailsData) {
-        try {
-          const response = await registerVendor(formData);
+      try {
+        const response = await registerVendor(formData);
 
-          if (response) {
-            setVendorId(response.id.toString());
-            setIsSuccessPopupOpen(true);
-            toast.success("Registration completed successfully!");
-          }
-        } catch (error: any) {
-          // Handle API error response
-          const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
-          toast.error(errorMessage);
-          return;
+        if (response) {
+          setVendorId(response.id.toString());
+          setIsSuccessPopupOpen(true);
+          toast.success("Registration completed successfully!");
         }
-      } else {
-        toast.error("Please complete all required sections before submitting.");
+      } catch (error: any) {
+        // Handle API error response
+        const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
+        toast.error(errorMessage);
+        return;
       }
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -1946,18 +2017,17 @@ export default function RegistrationForm() {
         </Accordion>
 
         {/* Move the Final Submit Button here, after all forms */}
-        {(showClassFields || showCourseFields || courses.length > 0) && (
-          <div className="flex justify-center mt-6">
-            <Button
-              onClick={handleFinalSubmit}
-              className="app-bg-color text-white px-8 py-6 text-lg"
-              disabled={isLoading || !completedSections.personalDetails || !completedSections.instituteDetails}
-            >
-              {isLoading ? "Submitting..." : "Submit Registration"}
-            </Button>
-          </div>
-        )}
+        <div className="flex justify-center mt-6">
+          <Button
+            onClick={handleFinalSubmit}
+            className="app-bg-color text-white px-8 py-6 text-lg"
+            disabled={isLoading}
+          >
+            {isLoading ? "Submitting..." : "Submit Registration"}
+          </Button>
+        </div>
 
+        {/* Class Details Section */}
         {courses.length > 0 && <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8 my-4">
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Classes</div>
           <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
