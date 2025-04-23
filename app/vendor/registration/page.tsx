@@ -53,8 +53,11 @@ const instituteDetailsSchema = yup.object().shape({
   introduction: yup.string().required("Introduction is required"),
   firstName: yup.string().required("First name is required"),
   lastName: yup.string().required("Last name is required"),
-  phoneNumber: yup.string().required("Phone number is required"),
-  whatsappNumber: yup.string(),
+  phoneNumber: yup
+    .string()
+    .matches(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
+    .required("Phone number is required"),
+  whatsappNumber: yup.string().nullable(),
   email: yup.string().email("Invalid email").required("Email is required"),
   experience: yup.string(),
   contactIntroduction: yup.string(),
@@ -67,11 +70,11 @@ const instituteDetailsSchema = yup.object().shape({
   address: yup.string().required("Address is required"),
   road: yup.string(),
   landmark: yup.string().required("Landmark is required"),
-  area: yup.string().required("Area is required"),
-  city: yup.string().required("City is required"),
+  area: yup.string(),
+  city: yup.string(),
   state: yup.string(),
   country: yup.string(),
-  pincode: yup.string().required("Pincode is required"),
+  pincode: yup.string(),
   latitude: yup.number().nullable().transform((value) => value === '' ? null : value),
   longitude: yup.number().nullable().transform((value) => value === '' ? null : value),
   websiteName: yup.string(),
@@ -500,7 +503,26 @@ export default function RegistrationForm() {
   };
 
   // Update the saveCourseDetails function
-  const saveCourseDetails = async (data: any) => {
+  // const saveCourseDetails = async (data: any) => {
+  //   try {
+  //     setIsLoading(true);
+      
+  //     // Add course to the list
+  //     setCourseDetailsData(prev => [...prev, data]);
+      
+  //     // Reset form and close
+  //     setShowCourseFields(false);
+  //     toast.success("Course details saved successfully!");
+  //   } catch (error) {
+  //     console.error("Error saving course details:", error);
+  //     toast.error("An error occurred while saving course details. Please try again.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // Update the course form submission
+  const handleCourseSubmit = async (data: any) => {
     try {
       setIsLoading(true);
       
@@ -518,7 +540,7 @@ export default function RegistrationForm() {
     }
   };
 
-  // Update the handleFinalSubmit function to use stored data
+  // Update the handleFinalSubmit function to properly include course details
   const handleFinalSubmit = async () => {
     try {
       setIsLoading(true);
@@ -587,31 +609,33 @@ export default function RegistrationForm() {
         }
       });
 
-      // Prepare class details array
-      const classDetailsArray = classDetailsData.map((course) => ({
-        title: course.className,
-        subCategoryID: course.subCategory,
-        timingsFrom: course.time === 'morning' ? '09:00' :
-          course.time === 'afternoon' ? '13:00' :
-            course.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: course.time === 'morning' ? '12:00' :
-          course.time === 'afternoon' ? '16:00' :
-            course.time === 'evening' ? '20:00' : '12:00',
-        day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : '',
-        type: course.type || 'OFFLINE',
-        ageFrom: course.fromage ? parseInt(course.fromage) : 0,
-        ageTo: course.toage ? parseInt(course.toage) : 0,
+      // Format class details array to match exact structure
+      const classDetailsArray = classDetailsData.map((classItem) => ({
+        title: classItem.className,
+        subCategoryID: parseInt(classItem.subCategory) || 0,
+        categoryID: parseInt(classItem.category) || 0,
+        timingsFrom: classItem.time === 'morning' ? '09:00' :
+          classItem.time === 'afternoon' ? '13:00' :
+            classItem.time === 'evening' ? '17:00' : '09:00',
+        timingsTo: classItem.time === 'morning' ? '12:00' :
+          classItem.time === 'afternoon' ? '16:00' :
+            classItem.time === 'evening' ? '20:00' : '12:00',
+        day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : '',
+        type: classItem.type || 'OFFLINE',
+        ageFrom: classItem.fromage ? parseInt(classItem.fromage) : 0,
+        ageTo: classItem.toage ? parseInt(classItem.toage) : 0,
         sessionFrom: 1,
-        sessionTo: course.noOfSessions ? parseInt(course.noOfSessions) : 1,
-        gender: course.gender || 'both',
-        fromPrice: course.cost ? parseFloat(course.cost) : 0,
-        toPrice: course.cost ? parseFloat(course.cost) : 0
+        sessionTo: classItem.noOfSessions ? parseInt(classItem.noOfSessions) : 1,
+        gender: classItem.gender || 'both',
+        fromPrice: classItem.fromcost ? parseFloat(classItem.fromcost) : 0,
+        toPrice: classItem.tocost ? parseFloat(classItem.tocost) : 0
       }));
 
-      // Prepare course details array
+      // Format course details array to match exact structure
       const courseDetailsArray = courseDetailsData.map((course) => ({
         title: course.className,
-        subCategoryID: course.subCategory,
+        subCategoryID: parseInt(course.subCategory) || 0,
+        categoryID: parseInt(course.category) || 0,
         timingsFrom: course.time === 'morning' ? '09:00' :
           course.time === 'afternoon' ? '13:00' :
             course.time === 'evening' ? '17:00' : '09:00',
@@ -625,25 +649,26 @@ export default function RegistrationForm() {
         sessionFrom: 1,
         sessionTo: course.noOfSessions ? parseInt(course.noOfSessions) : 1,
         gender: course.gender || 'both',
-        fromPrice: course.cost ? parseFloat(course.cost) : 0,
-        toPrice: course.cost ? parseFloat(course.cost) : 0,
+        fromPrice: course.fromcost ? parseFloat(course.fromcost) : 0,
+        toPrice: course.tocost ? parseFloat(course.tocost) : 0,
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       }));
 
-      // Add stringified class and course details
-      formData.append('classDetails', JSON.stringify(classDetailsArray));
-      formData.append('courseDetails', JSON.stringify(courseDetailsArray));
+      // Add class and course details without extra quotes and escaping
+      formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
+      formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
+      formData.append('activity.id', '0');
 
       // Call the API only if all required data is present
       if (personalDetailsData && instituteDetailsData) {
         try {
-        const response = await registerVendor(formData);
+          const response = await registerVendor(formData);
 
-        if (response) {
-          setVendorId(response.id.toString());
-          setIsSuccessPopupOpen(true);
-          toast.success("Registration completed successfully!");
+          if (response) {
+            setVendorId(response.id.toString());
+            setIsSuccessPopupOpen(true);
+            toast.success("Registration completed successfully!");
           }
         } catch (error: any) {
           // Handle API error response
@@ -655,7 +680,6 @@ export default function RegistrationForm() {
         toast.error("Please complete all required sections before submitting.");
       }
     } catch (error) {
-      debugger;
       console.error("Error submitting form:", error);
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
@@ -990,7 +1014,7 @@ export default function RegistrationForm() {
                         Drag your file(s) to start uploading
                       </div>
                       <div>
-                        <Button variant="outline" className="">Browse File</Button>
+                        <Button variant="outline" type="button" className="">Browse File</Button>
                       </div>
                       <input
                         type="file"
@@ -1060,6 +1084,12 @@ export default function RegistrationForm() {
                           </Label>
                           <Input
                             placeholder="Enter Phone No."
+                            maxLength={10}
+                            onKeyPress={(e) => {
+                              if (!/[0-9]/.test(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
                             {...registerInstitute("phoneNumber")}
                             className="h-[52px] border-[#05244f]"
                           />
@@ -1073,9 +1103,18 @@ export default function RegistrationForm() {
                           </Label>
                           <Input
                             placeholder="Enter WhatsApp Number"
+                            maxLength={10}
+                            onKeyPress={(e) => {
+                              if (!/[0-9]/.test(e.key)) {
+                                e.preventDefault();
+                              }
+                            }}
                             {...registerInstitute("whatsappNumber")}
                             className="h-[52px] border-[#05244f]"
                           />
+                          {errorsInstitute.whatsappNumber && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.whatsappNumber.message}</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -1453,7 +1492,7 @@ export default function RegistrationForm() {
                       Drag your file(s) to start uploading
                     </div>
                     <div>
-                      <Button variant="outline" className="">Browse File</Button>
+                      <Button variant="outline" type="button" className="">Browse File</Button>
                     </div>
                     <input
                       type="file"
@@ -1550,7 +1589,9 @@ export default function RegistrationForm() {
                             <SelectValue placeholder="Category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories!.map((item) => (<SelectItem key={item.id} value={item.title.toString()}>{item.title}</SelectItem>))}
+                            {Array.from(new Set(categories.map(item => item.title))).map((title, index) => (
+                              <SelectItem key={index} value={title}>{title}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {errorsClass.category && (
@@ -1720,7 +1761,7 @@ export default function RegistrationForm() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <form onSubmit={handleSubmitCourse(saveCourseDetails)}>
+                  <form onSubmit={handleSubmitCourse(handleCourseSubmit)}>
                     <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4 mb-6">
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -1890,13 +1931,13 @@ export default function RegistrationForm() {
 
                     </div>
 
-                    {/* <Button
-                      onClick={saveCourseDetails}
+                    <Button
+                      type="submit"
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >
                       {isLoading ? "Saving..." : "Save Course Details"}
-                    </Button> */}
+                    </Button>
                   </form>
                 </AccordionContent>
               </div>
