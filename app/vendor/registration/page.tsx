@@ -26,6 +26,8 @@ import AgeRangeInput from "./ageRangeInput";
 import { Checkbox } from "@/components/ui/checkbox";
 // import { createClass, createCourse, VendorClassData } from "../../../services/vendorService";
 import { FormValues } from "./types";
+import ClassCourseTable from "./classCourseTable";
+import DeletePopupScreen from "@/app/components/DeletePopupScreen";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -193,6 +195,9 @@ export default function RegistrationForm() {
   const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [onDeleteCallback, setOnDeleteCallback] = useState<(() => void) | null>(null);
 
   useEffect(() => {
     if (showClassFields) {
@@ -305,8 +310,16 @@ export default function RegistrationForm() {
       type: 'OFFLINE',
       className: '',
       category: '',
+      subCategory: '',
       time: '',
-      weekdays: []
+      weekdays: [],
+      fromage: '',
+      toage: '',
+      fromcost: '',
+      tocost: '',
+      gender: 'both',
+      experienceLevel: 'beginner',
+      noOfSessions: '1'
     }
   });
 
@@ -318,8 +331,16 @@ export default function RegistrationForm() {
       type: 'OFFLINE',
       className: '',
       category: '',
+      subCategory: '',
       time: '',
-      weekdays: []
+      weekdays: [],
+      fromage: '',
+      toage: '',
+      fromcost: '',
+      tocost: '',
+      gender: 'both',
+      experienceLevel: 'beginner',
+      noOfSessions: '1'
     }
   });
 
@@ -346,6 +367,7 @@ export default function RegistrationForm() {
     setValue: setValueClass,
     watch: watchClass,
     formState: { errors: errorsClass },
+    reset: resetClass
   } = classForm;
 
   const {
@@ -354,6 +376,7 @@ export default function RegistrationForm() {
     setValue: setValueCourse,
     watch: watchCourse,
     formState: { errors: errorsCourse },
+    reset: resetCourse
   } = courseForm;
 
   // Load saved data from localStorage on component mount
@@ -414,8 +437,21 @@ export default function RegistrationForm() {
   }, [classCategory, categories, setValueClass]);
 
   const handleDeleteClass = (index: number) => {
-    // Remove the class at the specified index
-    setCourses(prev => prev.filter((item: any, i: number) => i !== index));
+    setDeleteMessage('Are you sure you want to delete this class?');
+    setIsDeleteOpen(true);
+    setOnDeleteCallback(() => () => {
+      setClassDetailsData(prev => prev.filter((_, i) => i !== index));
+      toast.success("Class deleted successfully!");
+    });
+  };
+
+  const handleDeleteCourse = (index: number) => {
+    setDeleteMessage('Are you sure you want to delete this course?');
+    setIsDeleteOpen(true);
+    setOnDeleteCallback(() => () => {
+      setCourseDetailsData(prev => prev.filter((_, i) => i !== index));
+      toast.success("Course deleted successfully!");
+    });
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,10 +519,9 @@ export default function RegistrationForm() {
   };
 
   // Update the saveClassDetails function
-  const saveClassDetails = async () => {
+  const saveClassDetails = async (data: any) => {
     try {
       setIsLoading(true);
-      const data = watchClass();
       
       // Validate required fields
       if (!data.className) {
@@ -513,41 +548,40 @@ export default function RegistrationForm() {
         toast.error("Please select at least one weekday");
         return;
       }
-      
-      // Validate age range if provided
-      if (data.fromage && data.toage) {
-        const fromAge = parseInt(data.fromage);
-        const toAge = parseInt(data.toage);
-        if (fromAge > toAge) {
-          toast.error("From age must be less than or equal to To age");
-          return;
-        }
+
+      // Create a new class object with all the form data
+      const newClass = {
+        className: data.className,
+        category: data.category,
+        subCategory: data.subCategory,
+        time: data.time,
+        type: data.type,
+        gender: data.gender || 'both',
+        fromage: data.fromage || '',
+        toage: data.toage || '',
+        fromcost: data.fromcost || '',
+        tocost: data.tocost || '',
+        weekdays: data.weekdays,
+        experienceLevel: data.experienceLevel || 'beginner',
+        noOfSessions: data.noOfSessions || '1'
+      };
+
+      if (editIndex !== null) {
+        // Update existing class
+        setClassDetailsData(prev => {
+          const newData = [...prev];
+          newData[editIndex] = newClass;
+          return newData;
+        });
+      } else {
+        // Add new class
+        setClassDetailsData(prev => [...prev, newClass]);
       }
       
-      // Validate cost range if provided
-      if (data.fromcost && data.tocost) {
-        const fromCost = parseFloat(data.fromcost);
-        const toCost = parseFloat(data.tocost);
-        if (fromCost > toCost) {
-          toast.error("From cost must be less than or equal to To cost");
-          return;
-        }
-      }
-      
-      // Validate number of sessions
-      if (data.noOfSessions) {
-        const sessions = parseInt(data.noOfSessions);
-        if (sessions < 1) {
-          toast.error("Number of sessions must be at least 1");
-          return;
-        }
-      }
-      
-      // Add class to the list
-      setClassDetailsData(prev => [...prev, data]);
-      
-      // Reset form and close
+      // Reset form and state
       setShowClassFields(false);
+      setEditIndex(null);
+      resetClass();
       toast.success("Class details saved successfully!");
     } catch (error) {
       console.error("Error saving class details:", error);
@@ -557,35 +591,70 @@ export default function RegistrationForm() {
     }
   };
 
-  // Update the saveCourseDetails function
-  // const saveCourseDetails = async (data: any) => {
-  //   try {
-  //     setIsLoading(true);
-      
-  //     // Add course to the list
-  //     setCourseDetailsData(prev => [...prev, data]);
-      
-  //     // Reset form and close
-  //     setShowCourseFields(false);
-  //     toast.success("Course details saved successfully!");
-  //   } catch (error) {
-  //     console.error("Error saving course details:", error);
-  //     toast.error("An error occurred while saving course details. Please try again.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // Update the course form submission
+  // Update the handleCourseSubmit function
   const handleCourseSubmit = async (data: any) => {
     try {
       setIsLoading(true);
       
-      // Add course to the list
-      setCourseDetailsData(prev => [...prev, data]);
+      // Validate required fields
+      if (!data.className) {
+        toast.error("Course name is required");
+        return;
+      }
       
-      // Reset form and close
+      if (!data.category) {
+        toast.error("Category is required");
+        return;
+      }
+      
+      if (!data.time) {
+        toast.error("Time is required");
+        return;
+      }
+      
+      if (!data.type) {
+        toast.error("Course type is required");
+        return;
+      }
+      
+      if (!data.weekdays || data.weekdays.length === 0) {
+        toast.error("Please select at least one weekday");
+        return;
+      }
+
+      // Create a new course object with all the form data
+      const newCourse = {
+        className: data.className,
+        category: data.category,
+        subCategory: data.subCategory,
+        time: data.time,
+        type: data.type,
+        gender: data.gender || 'both',
+        fromage: data.fromage || '',
+        toage: data.toage || '',
+        fromcost: data.fromcost || '',
+        tocost: data.tocost || '',
+        weekdays: data.weekdays,
+        experienceLevel: data.experienceLevel || 'beginner',
+        noOfSessions: data.noOfSessions || '1'
+      };
+
+      if (editIndex !== null) {
+        // Update existing course
+        setCourseDetailsData(prev => {
+          const newData = [...prev];
+          newData[editIndex] = newCourse;
+          return newData;
+        });
+      } else {
+        // Add new course
+        setCourseDetailsData(prev => [...prev, newCourse]);
+      }
+      
+      // Reset form and state
       setShowCourseFields(false);
+      setEditIndex(null);
+      resetCourse();
       toast.success("Course details saved successfully!");
     } catch (error) {
       console.error("Error saving course details:", error);
@@ -778,13 +847,23 @@ export default function RegistrationForm() {
   };
 
   const handleEditClass = (index: number) => {
-    setEditIndex(index); // Set the index of the class being edited
-    const classToEdit = courses[index];
-    console.log(editIndex)
-    setActiveAccordion("item-4");
+    setEditIndex(index);
+    const classToEdit = classDetailsData[index];
     Object.keys(classToEdit).forEach((key) => {
       setValueClass(key as keyof typeof classDetailsSchema.fields, classToEdit[key]);
     });
+    setShowClassFields(true);
+    setActiveAccordion("item-4");
+  };
+
+  const handleEditCourse = (index: number) => {
+    setEditIndex(index);
+    const courseToEdit = courseDetailsData[index];
+    Object.keys(courseToEdit).forEach((key) => {
+      setValueCourse(key as keyof typeof courseDetailsSchema.fields, courseToEdit[key]);
+    });
+    setShowCourseFields(true);
+    setActiveAccordion("item-5");
   };
 
   useEffect(() => {
@@ -1609,13 +1688,13 @@ export default function RegistrationForm() {
           </AccordionItem>
 
           {/* Class Details Button */}
-          <Button
+          {/* <Button
             variant="outline"
             className="border-[#05244f] mt-4"
             onClick={() => setIsOpen(true)}
           >
             + Add Class Details
-          </Button>
+          </Button> */}
 
           <PopupScreen
             open={isOpen}
@@ -1629,7 +1708,7 @@ export default function RegistrationForm() {
           {showClassFields && (
             <AccordionItem value="item-4">
               <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
-                <AccordionTrigger onClick={() => setActiveAccordion('item-4')}>
+                <AccordionTrigger>
                   <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
                     Class Details
                     {completedSections.classDetails && <CircleCheckBig className="text-[#46a758] ml-2" />}
@@ -1809,7 +1888,7 @@ export default function RegistrationForm() {
                     </div>
 
                     <Button
-                      onClick={saveClassDetails}
+                      type="submit"
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >
@@ -1839,7 +1918,7 @@ export default function RegistrationForm() {
                           Course Name<span className="text-red-500">*</span>
                         </Label>
                         <Input
-                          placeholder="Class Name"
+                          placeholder="Course Name"
                           {...registerCourse("className")}
                           className="h-[52px] border-[#05244f]"
                         />
@@ -1885,20 +1964,23 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
+                      <AgeRangeInput
+                        form={courseForm as UseFormReturn<FormValues>}
+                        setValue={setValueCourse}
+                        errors={errorsCourse}
+                      />
+                      <CostRangeInput
+                        form={courseForm as UseFormReturn<FormValues>}
+                        setValue={setValueCourse}
+                        errors={errorsCourse}
+                      />
+                    </div>
 
-
-
-
+                    <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                         <Input type="number" {...registerCourse("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
                       </div>
-                      <CostRangeInput
-                        form={classForm as UseFormReturn<FormValues>}
-                        setValue={setValueClass}
-                        errors={errorsClass}
-                      />
-
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
@@ -1917,48 +1999,26 @@ export default function RegistrationForm() {
                           <p className="text-red-500 text-xs">{errorsCourse.time.message}</p>
                         )}
                       </div>
-
-                      <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Course Type<span className="text-red-500">*</span>
-                        </Label>
-                        <Select 
-                          onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueCourse("type", value)} 
-                          value={watchCourse("type") || "OFFLINE"}
-                        >
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Select Course Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="OFFLINE">Offline</SelectItem>
-                            <SelectItem value="ONLINE">Online</SelectItem>
-                            <SelectItem value="REGULAR">Regular</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {errorsCourse.type && (
-                          <p className="text-red-500 text-xs">{errorsCourse.type.message}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md">
-                        {[
-                          'Monday', 'Tuesday', 'Wednesday',
-                          'Thursday', 'Friday', 'Saturday', 'Sunday'
-                        ].map((day) => (
-                          <div key={day} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={day.toLowerCase()}
-                              className="h-4 w-4 border-[#05244f]"
-                              onChange={() => handleWeekdayChange(day, false)}
-                              checked={(watchCourse('weekdays') || []).includes(day)}
-                            />
-                            <label htmlFor={day.toLowerCase()} className="text-sm">{day}</label>
-                          </div>
-                        ))}
-                      </div>
-
                     </div>
+
+                    <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md mb-6">
+                      {[
+                        'Monday', 'Tuesday', 'Wednesday',
+                        'Thursday', 'Friday', 'Saturday', 'Sunday'
+                      ].map((day) => (
+                        <div key={day} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`course-${day.toLowerCase()}`}
+                            className="h-4 w-4 border-[#05244f]"
+                            onChange={() => handleWeekdayChange(day, false)}
+                            checked={(watchCourse('weekdays') || []).includes(day)}
+                          />
+                          <label htmlFor={`course-${day.toLowerCase()}`} className="text-sm">{day}</label>
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="grid grid-cols-1 gap-2 p-2 border border-[#05244f] rounded-md">
                       <div className="text-[#05244f] text-md font-bold my-4 trajan-pro flex items-center">
                         Course criteria
@@ -2016,7 +2076,45 @@ export default function RegistrationForm() {
           )}
         </Accordion>
 
-        {/* Move the Final Submit Button here, after all forms */}
+        {/* Add Class/Course Tables */}
+        <div className="mt-8">
+          {classDetailsData.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-[#05244f] text-lg font-semibold mb-4">Classes</h3>
+              <ClassCourseTable
+                items={classDetailsData}
+                type="class"
+                onEdit={handleEditClass}
+                onDelete={handleDeleteClass}
+              />
+            </div>
+          )}
+
+          {courseDetailsData.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-[#05244f] text-lg font-semibold mb-4">Courses</h3>
+              <ClassCourseTable
+                items={courseDetailsData}
+                type="course"
+                onEdit={handleEditCourse}
+                onDelete={handleDeleteCourse}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Add Class/Course Button */}
+        <div className="flex justify-center mt-4">
+          <Button
+            variant="outline"
+            className="border-[#05244f]"
+            onClick={() => setIsOpen(true)}
+          >
+            + Add {classDetailsData.length > 0 || courseDetailsData.length > 0 ? 'More' : ''} Class/Course
+          </Button>
+        </div>
+
+        {/* Final Submit Button */}
         <div className="flex justify-center mt-6">
           <Button
             onClick={handleFinalSubmit}
@@ -2032,7 +2130,6 @@ export default function RegistrationForm() {
           <div className="text-[#05244f] text-md trajan-pro font-bold my-4">Classes</div>
           <div className="bg-[#fcfcfd] rounded-[15px] outline-1 outline-offset-[-1px] p-4 outline-black">
             <ClassTable classes={courses} handleDelete={handleDeleteClass} handleEdit={handleEditClass} />
-            <Button variant="outline" className="border-[#05244f] mt-4" onClick={() => setIsOpen(true)}>+ Add More Details</Button>
           </div>
         </div>
         }
@@ -2056,23 +2153,21 @@ export default function RegistrationForm() {
         {/* Success Popup */}
         <SuccessPopupScreen
           open={isSuccessPopupOpen}
-          setOpen={(isOpen) => {
-            setIsSuccessPopupOpen(isOpen);
-            if (!isOpen) {
-              setActiveAccordion("");
-            }
-          }}
+          setOpen={setIsSuccessPopupOpen}
           vendorId={vendorId}
         />
 
-        { }
-        { }
+        <DeletePopupScreen 
+          open={isDeleteOpen}
+          setOpen={setIsDeleteOpen}
+          onDelete={() => {
+            if (onDeleteCallback) {
+              onDeleteCallback();
+            }
+          }}
+          message={deleteMessage}
+        />
       </div>
-
-
-      { }
-      { }
-
     </>
   );
 }
