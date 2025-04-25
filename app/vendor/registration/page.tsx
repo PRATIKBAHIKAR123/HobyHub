@@ -176,6 +176,7 @@ export default function RegistrationForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
   const [vendorId, setVendorId] = useState("");
+  const [username, setUsername] = useState("");
   const [activeAccordion, setActiveAccordion] = useState("item-0");
   const [categories, setCategories] = useState<Category[]>([]);
   const [completedSections, setCompletedSections] = useState({
@@ -810,6 +811,7 @@ export default function RegistrationForm() {
 
         if (response) {
           setVendorId(response.id.toString());
+          setUsername(response.username);
           setIsSuccessPopupOpen(true);
           toast.success("Registration completed successfully!");
         }
@@ -2154,7 +2156,7 @@ export default function RegistrationForm() {
         <SuccessPopupScreen
           open={isSuccessPopupOpen}
           setOpen={setIsSuccessPopupOpen}
-          vendorId={vendorId}
+          username={username}
         />
 
         <DeletePopupScreen 

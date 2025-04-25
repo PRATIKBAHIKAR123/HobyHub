@@ -7,10 +7,10 @@ import Image from "next/image";
 interface SuccessPopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  vendorId: string;
+  username: string;
 }
 
-export default function SuccessPopupScreen({ open, setOpen, vendorId }: SuccessPopupScreenProps) {
+export default function SuccessPopupScreen({ open, setOpen, username }: SuccessPopupScreenProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogOverlay className="bg-[#003161] opacity-[50%] fixed inset-0" />
@@ -37,10 +37,10 @@ export default function SuccessPopupScreen({ open, setOpen, vendorId }: SuccessP
             We will contact within 1 working day for any additional information needed.
           </p>
 
-          {/* Vendor ID */}
+          {/* Username */}
           <div className="bg-gray-100 px-6 py-3 rounded-md w-full">
             <p className="text-center text-gray-700">
-              Vendor ID- {vendorId}
+              Username: {username}
             </p>
           </div>
 
