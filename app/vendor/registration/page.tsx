@@ -921,6 +921,35 @@ export default function RegistrationForm() {
     }
   };
 
+  const handleClearForm = () => {
+    // Clear personal details
+    personalForm.reset();
+    setPersonalDetailsData(null);
+    
+    // Clear institute details
+    instituteForm.reset();
+    setInstituteDetailsData(null);
+    
+    // Clear class and course details
+    setClassDetailsData([]);
+    setCourseDetailsData([]);
+    
+    // Clear images
+    setImages([]);
+    setImageUrls([]);
+    setThumbnailPreview(null);
+    
+    // Reset completion states
+    setCompletedSections({
+      personalDetails: false,
+      instituteDetails: false,
+      classDetails: false
+    });
+    
+    // Reset active accordion
+    setActiveAccordion("item-0");
+  };
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -2155,6 +2184,7 @@ export default function RegistrationForm() {
           open={isSuccessPopupOpen}
           setOpen={setIsSuccessPopupOpen}
           username={username}
+          onClose={handleClearForm}
         />
 
         <DeletePopupScreen 
