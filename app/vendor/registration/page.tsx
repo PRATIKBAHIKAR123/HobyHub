@@ -730,7 +730,7 @@ export default function RegistrationForm() {
         formData.append('activity.pincode', instituteDetailsData.pincode || '');
         formData.append('activity.country', instituteDetailsData.country || '');
         formData.append('activity.longitude', (instituteDetailsData.longitude || 0).toString());
-        formData.append('activity.latitute', (instituteDetailsData.latitude || 0).toString());
+        formData.append('activity.latitude', (instituteDetailsData.latitude || 0).toString());
         formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
         formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
         formData.append('activity.tutorFirstName', instituteDetailsData.firstName);

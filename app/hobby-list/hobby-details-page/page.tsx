@@ -39,7 +39,7 @@ interface ActivityData {
   pincode: string;
   country: string;
   longitude: string;
-  latitute: string;
+  latitude: string;
   purchaseMaterialIds: string;
   itemCarryText: string;
   companyName: string;

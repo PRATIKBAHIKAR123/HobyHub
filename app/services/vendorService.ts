@@ -29,7 +29,7 @@ export interface VendorRegistrationData {
     pincode: string;
     country: string;
     longitude: string;
-    latitute: string;
+    latitude: string;
     purchaseMaterialIds: string;
     itemCarryText: string;
     tutorFirstName: string;
@@ -116,7 +116,7 @@ export interface VendorActivityData {
   pincode: string;
   country: string;
   longitude: string;
-  latitute: string;
+  latitude: string;
   purchaseMaterialIds: string;
   itemCarryText: string;
   tutorFirstName: string;
@@ -151,7 +151,7 @@ export interface VendorActivityResponse {
   pincode: string;
   country: string;
   longitude: string;
-  latitute: string;
+  latitude: string;
   purchaseMaterialIds: string;
   itemCarryText: string;
   tutorFirstName: string;

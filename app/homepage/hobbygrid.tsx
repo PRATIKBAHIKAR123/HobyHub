@@ -31,7 +31,7 @@ interface Activity {
   pincode: string;
   country: string;
   longitude: string;
-  latitute: string;
+  latitude: string;
   viewCount: number;
 }
 

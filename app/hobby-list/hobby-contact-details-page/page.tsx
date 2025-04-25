@@ -42,7 +42,7 @@ interface ActivityData {
   pincode: string;
   country: string;
   longitude: string;
-  latitute: string;
+  latitude: string;
   purchaseMaterialIds: string;
   itemCarryText: string;
   companyName: string;
@@ -173,7 +173,7 @@ function HobbyContactDetailsPageContent() {
 
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Map Location</h2>
       <MapComponent
-        lat={parseFloat(activityData?.latitute??0)}
+        lat={parseFloat(activityData?.latitude??0)}
         lng={parseFloat(activityData?.longitude??0)}
         address={fullAddress}
       />
