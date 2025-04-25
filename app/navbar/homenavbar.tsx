@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useRouter } from "next/navigation";
 import { LogOutConfirmation } from "../auth/logoutConfirmationDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { getAllSubCategories } from "@/services/hobbyService";
+import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
 import { useMode } from "@/contexts/ModeContext";
 import { useFilter } from "@/contexts/FilterContext";
 
@@ -25,14 +25,29 @@ interface SubCategory {
   id: number;
 }
 
+interface Category {
+  title: string;
+  imagePath: string | null;
+  sort: number;
+  id: number;
+}
+
+interface SearchItem {
+  id: number;
+  title: string;
+  type: 'category' | 'subcategory';
+  categoryId?: number;
+}
+
 export default function HomeNavbar() {
 
     const { toggleSidebar } = useSidebar();
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
     const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
     const [searchText, setSearchText] = useState("");
-    const [filteredOptions, setFilteredOptions] = useState<SubCategory[]>([]);
+    const [filteredOptions, setFilteredOptions] = useState<SearchItem[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
     const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
     const { isOnline, setIsOnline } = useMode();
     const { setGender, setPriceRange, setTime, setAge, setAreFiltersApplied, setCategoryFilter } = useFilter();
@@ -47,17 +62,21 @@ export default function HomeNavbar() {
         setSearchText("");
     };
 
-    // Fetch all subcategories when component mounts
+    // Fetch all categories and subcategories when component mounts
     useEffect(() => {
-        const fetchSubCategories = async () => {
+        const fetchData = async () => {
             try {
-                const subCategories = await getAllSubCategories();
+                const [categories, subCategories] = await Promise.all([
+                    getAllCategories(),
+                    getAllSubCategories()
+                ]);
+                setAllCategories(categories);
                 setAllSubCategories(subCategories);
             } catch (error) {
-                console.error("Failed to fetch subcategories:", error);
+                console.error("Failed to fetch data:", error);
             }
         };
-        fetchSubCategories();
+        fetchData();
     }, []);
 
     // Filter results based on input
@@ -66,9 +85,45 @@ export default function HomeNavbar() {
         setSearchText(value);
 
         if (value.length > 1) {
-            const filtered = allSubCategories.filter((subCategory) =>
-                subCategory.title.toLowerCase().includes(value.toLowerCase())
-            );
+            const searchTerm = value.toLowerCase();
+            
+            // Create a Set to store unique titles
+            const uniqueTitles = new Set<string>();
+            
+            // Combine categories and subcategories into a single array of SearchItem
+            const allItems: SearchItem[] = [
+                ...allCategories.map(cat => ({
+                    id: cat.id,
+                    title: cat.title,
+                    type: 'category' as const
+                })),
+                ...allSubCategories.map(subCat => ({
+                    id: subCat.id,
+                    title: subCat.title,
+                    type: 'subcategory' as const,
+                    categoryId: subCat.categoryId
+                }))
+            ];
+
+            // Filter items and ensure uniqueness
+            const filtered = allItems
+                .filter(item => {
+                    const matches = item.title.toLowerCase().includes(searchTerm);
+                    if (matches && !uniqueTitles.has(item.title)) {
+                        uniqueTitles.add(item.title);
+                        return true;
+                    }
+                    return false;
+                })
+                .sort((a, b) => {
+                    // Sort by type first (categories before subcategories)
+                    if (a.type !== b.type) {
+                        return a.type === 'category' ? -1 : 1;
+                    }
+                    // Then sort alphabetically
+                    return a.title.localeCompare(b.title);
+                });
+
             setFilteredOptions(filtered);
             setShowDropdown(filtered.length > 0);
         } else {
@@ -77,9 +132,14 @@ export default function HomeNavbar() {
     };
 
     // Handle selection
-    const handleSelect = (subCategory: SubCategory) => {
-        setSearchText(subCategory.title);
+    const handleSelect = (item: SearchItem) => {
+        setSearchText(item.title);
         setShowDropdown(false);
+        if (item.type === 'category') {
+            setCategoryFilter({ catId: item.id, subCatId: 0 });
+        } else {
+            setCategoryFilter({ catId: item.categoryId!, subCatId: item.id });
+        }
     };
 
     return (
@@ -109,13 +169,18 @@ export default function HomeNavbar() {
                             {showDropdown && (
                                 <div className="absolute left-0 right-0 top-[100%] translate-y-1 bg-white border border-gray-200 rounded-md shadow-lg z-[60] w-full">
                                     <ul className="max-h-[300px] overflow-y-auto w-full">
-                                        {filteredOptions.map((subCategory) => (
+                                        {filteredOptions.map((item) => (
                                             <li
-                                                key={subCategory.id}
+                                                key={`${item.type}-${item.id}`}
                                                 className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                                onClick={() => handleSelect(subCategory)}
+                                                onClick={() => handleSelect(item)}
                                             >
-                                                {subCategory.title}
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">{item.title}</span>
+                                                    <span className="text-xs text-gray-500">
+                                                        ({item.type === 'category' ? 'Category' : 'Subcategory'})
+                                                    </span>
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
@@ -241,8 +306,8 @@ type SearchInputProps = {
     searchText: string;
     handleSearch: (event: React.ChangeEvent<HTMLInputElement>) => void;
     showDropdown: boolean;
-    filteredOptions: SubCategory[];
-    handleSelect: (subCategory: SubCategory) => void;
+    filteredOptions: SearchItem[];
+    handleSelect: (item: SearchItem) => void;
 };
 
 const SearchInput = ({ searchText, handleSearch, showDropdown, filteredOptions, handleSelect }: SearchInputProps) => {
@@ -260,13 +325,18 @@ const SearchInput = ({ searchText, handleSearch, showDropdown, filteredOptions, 
             {showDropdown && (
                 <div className="absolute left-0 right-0 top-[100%] translate-y-1 bg-white border border-gray-200 rounded-md shadow-lg z-[60] w-full">
                     <ul className="max-h-[300px] overflow-y-auto w-full">
-                        {filteredOptions.map((subCategory) => (
+                        {filteredOptions.map((item) => (
                             <li
-                                key={subCategory.id}
+                                key={`${item.type}-${item.id}`}
                                 className="p-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                onClick={() => handleSelect(subCategory)}
+                                onClick={() => handleSelect(item)}
                             >
-                                {subCategory.title}
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">{item.title}</span>
+                                    <span className="text-xs text-gray-500">
+                                        ({item.type === 'category' ? 'Category' : 'Subcategory'})
+                                    </span>
+                                </div>
                             </li>
                         ))}
                     </ul>
