@@ -37,10 +37,10 @@ export default function SuccessPopupScreen({ open, setOpen, username }: SuccessP
             We will contact within 1 working day for any additional information needed.
           </p>
 
-          {/* Username */}
+          {/* Vendor ID */}
           <div className="bg-gray-100 px-6 py-3 rounded-md w-full">
             <p className="text-center text-gray-700">
-              Username: {username}
+              Vendor ID: {username}
             </p>
           </div>
 
