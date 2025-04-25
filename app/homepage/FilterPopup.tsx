@@ -26,7 +26,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
   const clearFilter: () => void = () => {
     setGender("");
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 10000]);
     setTime("");
     setAge('');
     setAreFiltersApplied(false);
@@ -46,7 +46,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
 
   // Function to handle manual input changes for max price
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMax = Math.min(5000, Math.max(parseInt(e.target.value) || 0, priceRange[0]));
+    const newMax = Math.min(10000, Math.max(parseInt(e.target.value) || 0, priceRange[0]));
     setPriceRange([priceRange[0], newMax]);
   };
 
@@ -148,7 +148,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
               </div>
               <Slider
                 min={0}
-                max={5000}
+                max={10000}
                 step={100}
                 value={priceRange}
                 onValueChange={setPriceRange}
@@ -182,7 +182,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
                     onChange={handleMaxPriceChange}
                     className="border-gray-200 rounded-lg focus:ring-[#1E3A8A]/20 focus:border-[#1E3A8A]"
                     min={priceRange[0]}
-                    max={5000}
+                    max={10000}
                   />
                 </div>
               </div>

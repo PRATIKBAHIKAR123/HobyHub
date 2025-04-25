@@ -30,7 +30,7 @@ interface FilterContextType {
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [gender, setGender] = useState("");
   const [age, setAge] = useState('');
   const [time, setTime] = useState("");
