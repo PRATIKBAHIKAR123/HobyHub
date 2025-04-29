@@ -32,7 +32,7 @@ const schema = yup.object().shape({
 
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,7 +125,7 @@ export default function LoginPage() {
   };
 
   // Function to handle date change
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (date: Date | null): void => {
     setSelectedDate(date);
     if (date) {
       const formattedDate = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
