@@ -15,9 +15,9 @@ import { toast } from "sonner";
 import { TermsAndPrivacyContent } from "@/components/TermsAndPrivacyContent";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, CheckCircle, Loader2, XCircle } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -36,7 +36,6 @@ export default function LoginPage() {
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   // Add verification status states
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -259,37 +258,17 @@ export default function LoginPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Date Of Birth</Label>
-
-                    {/* Date Picker (Dial) Implementation */}
-                    <div className="relative">
-                      <div
-                        className="flex items-center justify-between placeholder:text-[#e2e3e5] h-[48px] outline-none rounded-md border border-gray-300 px-3 cursor-pointer"
-                        onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                      >
-                        <span className={selectedDate ? "text-black" : "text-[#e2e3e5]"}>
-                          {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Select Date"}
-                        </span>
-                        <CalendarIcon className="h-4 w-4 text-gray-500" />
-                      </div>
-
-                      {isCalendarOpen && (
-                        <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-                          <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                              handleDateChange(date);
-                              setIsCalendarOpen(false);
-                            }}
-                            initialFocus
-                            captionLayout="dropdown-buttons"
-                            fromYear={1920}
-                            toYear={new Date().getFullYear()}
-                            className="rounded-md"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <DatePicker
+                      selected={selectedDate}
+                      onChange={(date) => handleDateChange(date)}
+                      peekNextMonth
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                      placeholderText="Select your Date Of Birth"
+                      className="w-full h-[48px] border border-gray-300 rounded-md px-3"
+                      dateFormat="dd/MM/yyyy"
+                    />
                     <p className="text-red-500 text-md">{errors.dob?.message}</p>
                   </div>
                   <div>
