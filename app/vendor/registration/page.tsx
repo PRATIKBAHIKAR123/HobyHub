@@ -1893,11 +1893,11 @@ export default function RegistrationForm() {
                           </Select>
                         </div>
 
-                        <AgeRangeInput
+                        {/* <AgeRangeInput
                           form={classForm as UseFormReturn<FormValues>}
                           setValue={setValueClass}
                           errors={errorsClass}
-                        />
+                        /> */}
 
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
