@@ -6,7 +6,6 @@ import { Libraries, LoadScript, StandaloneSearchBox } from "@react-google-maps/a
 import useLocation from "../hooks/useLocation";
 import { useFilter } from "@/contexts/FilterContext";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
-import { on } from "events";
 
 const libraries: Libraries = ["places"];
 // const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
@@ -17,7 +16,7 @@ interface PopupScreenProps {
 }
 
 export default function LocationPopup({onLocationChange}: PopupScreenProps) {
-  const { setCoordinates,location,coordinates, setLocation, detectLocation } = useLocation();
+  const { setCoordinates,location, setLocation, detectLocation } = useLocation();
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const { triggerFilterUpdate, setLocation: setFilterLocation, setCoordinates: setFilterCoordinates } = useFilter();
   const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
