@@ -8,6 +8,7 @@ import { getUserProfile, updateUserProfile } from "@/services/userService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import withAuth from "../auth/withAuth";
+import { toast } from "sonner";
 
 interface ProfileData {
   email: string;
@@ -100,31 +101,38 @@ function ProfilePage() {
       setIsLoading(true);
 
       const formData = new FormData();
-      
+
       // Append basic profile information
       formData.append('name', profile.name || '');
       formData.append('emailId', profile.email || '');
       formData.append('phoneNumber', profile.phoneNumber || '');
       formData.append('gender', profile.gender || '');
       formData.append('dob', profile.dob || '');
-      
+
       // Check if profileImage is a File object and append it properly
       if (profile.profileImage instanceof File) {
         formData.append('profileImageFile', profile.profileImage);
       }
 
       await updateUserProfile(formData);
+
+      // Show success toast
+      toast.success('Profile Updated Successfully');
+
       setIsEditing(false);
       setError(null);
       setValidationErrors({});
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to update profile. Please try again.";
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "Failed to update profile. Please try again.";
       setError(errorMessage);
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
