@@ -1,6 +1,7 @@
 "use client";
 
 import useLocation from '@/app/hooks/useLocation';
+import { set } from 'date-fns';
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface FilterContextType {
@@ -43,25 +44,37 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const locationHook = useLocation();
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   
-  // Update coordinates when they change in the hook
   useEffect(() => {
     if (locationHook.coordinates) {
       console.log("FilterContext: Updating coordinates from hook:", locationHook.coordinates);
-      setCoordinates(locationHook.coordinates);
+      setCoordinates(locationHook.coordinates); // Update coordinates in the filter context
     }
-  }, [locationHook.coordinates]);
-
-  // Update location when it changes in the hook
-  useEffect(() => {
+  
     if (locationHook.location) {
-      setLocation(locationHook.location);
+      console.log("FilterContext: Updating location from hook:", locationHook.location);
+      setLocation(locationHook.location); // Update location in the filter context
     }
-  }, [locationHook.location]);
+  }, [locationHook.coordinates, locationHook.location]);
 
   const triggerFilterUpdate = () => {
     console.log("Triggering filter update. Current coordinates:", coordinates);
     setFilterUpdateTrigger(prev => prev + 1);
   };
+
+  useEffect(() => {
+    const detectAndSetInitialLocation = async () => {
+      try {
+        const { detectLocation } = useLocation(); // Get only the method
+        const result = await detectLocation();
+        setLocation(result.location);
+        setCoordinates(result.coordinates);
+      } catch (err) {
+        console.error("Initial location detection failed:", err);
+      }
+    };
+  
+    detectAndSetInitialLocation();
+  }, []);
 
   return (
     <FilterContext.Provider value={{

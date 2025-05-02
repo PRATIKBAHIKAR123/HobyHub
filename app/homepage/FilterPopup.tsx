@@ -78,7 +78,7 @@ export default function SearchPopup({ open, setOpen }: SearchPopupProps) {
                 <SelectValue placeholder="Search By Age" />
               </SelectTrigger>
               <SelectContent className="max-h-72 rounded-xl">
-                {Array.from({ length: 69 }, (_, i) => i + 1).map((age) => (
+                {Array.from({ length: 100 }, (_, i) => i + 1).map((age) => (
                   <SelectItem key={age} value={age.toString()}>
                     {age}
                   </SelectItem>

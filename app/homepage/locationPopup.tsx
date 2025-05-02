@@ -6,6 +6,7 @@ import { Libraries, LoadScript, StandaloneSearchBox } from "@react-google-maps/a
 import useLocation from "../hooks/useLocation";
 import { useFilter } from "@/contexts/FilterContext";
 import { GOOGLE_MAP_API_KEY } from "@/lib/apiConfigs";
+import { on } from "events";
 
 const libraries: Libraries = ["places"];
 // const GOOGLE_API_KEY = "AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts";
@@ -63,16 +64,19 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
   const handleDetectLocation = async () => {
     try {
       setIsDetecting(true);
-      await detectLocation();
-      //const detectedCoordinates = useLocation().coordinates;
-      if (coordinates) {
-        setFilterCoordinates(coordinates);
+      const result = await detectLocation();
+  
+      if (result.coordinates) {
+        console.log("Detected coordinates:", result.coordinates);
+        setFilterCoordinates(result.coordinates); // Update coordinates in the filter context
       }
-      // The location state will be updated by the useLocation hook
-      if (location) {
-        onLocationChange(location);
-        setFilterLocation(location);
+  
+      if (result.location) {
+        console.log("Detected location:", result.location);
+        setFilterLocation(result.location); // Update location in the filter context
         triggerFilterUpdate(); // Trigger filter update to refresh activities
+        setLocation(result.location); // Update location in the hook state
+        onLocationChange(result.location); // Update location in the parent component
       }
     } catch (error) {
       console.error("Error detecting location:", error);
@@ -80,7 +84,6 @@ export default function LocationPopup({onLocationChange}: PopupScreenProps) {
       setIsDetecting(false);
     }
   };
-
   return (
     <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY} libraries={libraries}>
       <PopoverContent 
