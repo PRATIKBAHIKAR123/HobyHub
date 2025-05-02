@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation";
 import withAuth from "../auth/withAuth";
 import { toast } from "sonner";
+import { formatDate } from "date-fns";
 
 interface ProfileData {
   email: string;
@@ -283,7 +284,7 @@ function ProfilePage() {
                 </div>
               ) : (
                 <div className="col-span-2 bg-gray-50 p-3 rounded">
-                  {profile.dob || "Not specified"}
+                  {formatDate(profile.dob,'dd-MM-yyyy') || "Not specified"}
                 </div>
               )}
             </div>
