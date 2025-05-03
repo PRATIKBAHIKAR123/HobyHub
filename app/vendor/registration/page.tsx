@@ -1524,7 +1524,7 @@ export default function RegistrationForm() {
                         
                       </div>
                       <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 my-4 mb-6">
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                             Road
                           </Label>
@@ -1553,7 +1553,7 @@ export default function RegistrationForm() {
                             {...registerInstitute("itemCarryText")}
                             className="h-[52px] border-[#05244f]"
                           />
-                        </div>
+                        </div> */}
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                             Category<span className="text-red-500">*</span>
