@@ -275,13 +275,13 @@ console.log('classForm',classData)
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">Type</Label>
                         <Select onValueChange={(value: 'Regular' | 'Online' | 'Offline') => setValueClass("type", value)} 
-                          value={watchClass("type") || "OFFLINE"}>
+                          value={watchClass("type") || "Offline"}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
-                          <SelectItem value="OFFLINE">Offline</SelectItem>
-                            <SelectItem value="ONLINE">Online</SelectItem>
+                          <SelectItem value="Offline">Offline</SelectItem>
+                            <SelectItem value="Online">Online</SelectItem>
                             
                           </SelectContent>
                         </Select>
