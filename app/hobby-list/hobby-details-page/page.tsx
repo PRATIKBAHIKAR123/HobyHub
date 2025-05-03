@@ -132,16 +132,16 @@ function HobbyDetailsPageContent() {
         let activity: ActivityData;
         activity = await getActivityById(parseInt(activityId));
         if (token) {
-          sessionStorage.setItem('activityClassData', JSON.stringify(activity?.classDetails??[]));
-          sessionStorage.setItem('activityCourseData', JSON.stringify(activity?.courseDetails??[]));
-          sessionStorage.setItem('activity', JSON.stringify(activity));
+          localStorage.setItem('activityClassData', JSON.stringify(activity?.classDetails??[]));
+          localStorage.setItem('activityCourseData', JSON.stringify(activity?.courseDetails??[]));
+          localStorage.setItem('activity', JSON.stringify(activity));
           try {
             await increaseActivityViewCount(parseInt(activityId));
           } catch (error) {
             console.error('Error increasing view count:', error);
           }
         } else {
-          const storedData = sessionStorage.getItem('activityData');
+          const storedData = localStorage.getItem('activityData');
           if (storedData) {
             activity = JSON.parse(storedData);
           }

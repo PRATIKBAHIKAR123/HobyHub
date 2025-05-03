@@ -181,19 +181,29 @@ function ClassDetails() {
 
   // Simulate loading
   useEffect(() => {
-    const classList = sessionStorage.getItem('activityClassData');
+    const classList = localStorage.getItem('activityClassData');
     const parsedClassList = classList ? JSON.parse(classList) : [];
     setClasses(parsedClassList);
 
-    const courseList = sessionStorage.getItem('activityCourseData');
+    const courseList = localStorage.getItem('activityCourseData');
     const parsedCourseList = courseList ? JSON.parse(courseList) : [];
     setCourses(parsedCourseList);
     console.log(classes)
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // Reduced loading time for better UX
+    }, 2000); // Reduced loading time for better UX
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    // Log the updated classes state
+    console.log("Updated Classes State:", classes);
+  }, [classes]);
+
+  useEffect(() => {
+    // Log the updated classes state
+    console.log("Updated Courses State:", courses);
+  }, [courses]);
 
   if (!classes.length && !isLoading) {
     return (

@@ -18,7 +18,7 @@ export type FormValues = {
   weekdays?: (string | null | undefined)[];
   experienceLevel?: string;
   noOfSessions?: string;
-  type: 'REGULAR' | 'ONLINE' | 'OFFLINE';
+  type: 'Regular' | 'Online' | 'Offline';
 
 };
 

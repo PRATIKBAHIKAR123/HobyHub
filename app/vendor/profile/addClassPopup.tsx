@@ -23,7 +23,7 @@ const classDetailsSchema = yup.object().shape({
   subCategory: yup.string(),
   location: yup.string(),
   contact: yup.string(),
-  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Class type is required"),
+  type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
   time: yup.string().required("Time is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -71,7 +71,7 @@ export default function AddClassPopup({ open, setOpen, onSubmit, classData, acti
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
     defaultValues: {
-      type: 'OFFLINE',
+      type: 'Offline',
       className: '',
       category: '',
       time: '',
@@ -103,7 +103,7 @@ useEffect(() => {
             classData.timingsFrom === "13:00" ? "afternoon" : 
             classData.timingsFrom === "17:00" ? "evening" : ""
         );
-        setValueClass("type", (classData.type as 'REGULAR' | 'ONLINE' | 'OFFLINE') || "OFFLINE");
+        setValueClass("type", (classData.type as 'Regular' | 'Online' | 'Offline') || "Offline");
         setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
         setValueClass("gender", classData.gender || "both");
         setValueClass("fromage", classData.ageFrom?.toString() || "");
@@ -274,7 +274,7 @@ console.log('classForm',classData)
 
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">Type</Label>
-                        <Select onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueClass("type", value)} 
+                        <Select onValueChange={(value: 'Regular' | 'Online' | 'Offline') => setValueClass("type", value)} 
                           value={watchClass("type") || "OFFLINE"}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Type" />

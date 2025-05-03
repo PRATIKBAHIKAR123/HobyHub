@@ -94,7 +94,7 @@ const classDetailsSchema = yup.object().shape({
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   time: yup.string().required("Time is required"),
-  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Class type is required"),
+  type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -132,7 +132,7 @@ const courseDetailsSchema = yup.object().shape({
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
   time: yup.string().required("Time is required"),
-  type: yup.string().oneOf(['REGULAR', 'ONLINE', 'OFFLINE']).required("Course type is required"),
+  type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Course type is required"),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -307,7 +307,7 @@ export default function RegistrationForm() {
     resolver: yupResolver(classDetailsSchema),
     mode: "onChange",
     defaultValues: {
-      type: 'OFFLINE',
+      type: 'Offline',
       className: '',
       category: '',
       subCategory: '',
@@ -328,7 +328,7 @@ export default function RegistrationForm() {
     resolver: yupResolver(courseDetailsSchema),
     mode: "onChange",
     defaultValues: {
-      type: 'OFFLINE',
+      type: 'Offline',
       className: '',
       category: '',
       subCategory: '',
@@ -766,7 +766,7 @@ export default function RegistrationForm() {
           classItem.time === 'afternoon' ? '16:00' :
             classItem.time === 'evening' ? '20:00' : '12:00',
         day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : '',
-        type: classItem.type || 'OFFLINE',
+        type: classItem.type || 'Offline',
         ageFrom: classItem.fromage ? parseInt(classItem.fromage) : 0,
         ageTo: classItem.toage ? parseInt(classItem.toage) : 0,
         sessionFrom: 1,
@@ -788,7 +788,7 @@ export default function RegistrationForm() {
           course.time === 'afternoon' ? '16:00' :
             course.time === 'evening' ? '20:00' : '12:00',
         day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : 'monday',
-        type: course.type || 'OFFLINE',
+        type: course.type || 'Offline',
         ageFrom: course.fromage ? parseInt(course.fromage) : 0,
         ageTo: course.toage ? parseInt(course.toage) : 0,
         sessionFrom: 1,
@@ -1837,16 +1837,16 @@ export default function RegistrationForm() {
                           Class Type<span className="text-red-500">*</span>
                         </Label>
                         <Select 
-                          onValueChange={(value: 'REGULAR' | 'ONLINE' | 'OFFLINE') => setValueClass("type", value)} 
-                          value={watchClass("type") || "OFFLINE"}
+                          onValueChange={(value: 'Regular' | 'Online' | 'Offline') => setValueClass("type", value)} 
+                          value={watchClass("type") || "Offline"}
                         >
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Select Class Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="OFFLINE">Offline</SelectItem>
-                            <SelectItem value="ONLINE">Online</SelectItem>
-                            <SelectItem value="REGULAR">Regular</SelectItem>
+                            <SelectItem value="Offline">Offline</SelectItem>
+                            <SelectItem value="Online">Online</SelectItem>
+                            <SelectItem value="Regular">Regular</SelectItem>
                           </SelectContent>
                         </Select>
                         {errorsClass.type && (
