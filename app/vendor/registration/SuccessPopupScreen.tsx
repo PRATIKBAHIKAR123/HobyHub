@@ -18,7 +18,7 @@ export default function SuccessPopupScreen({ open, setOpen, username, onClose }:
   const handleOkayClick = () => {
     setOpen(false);
     onClose();
-    router.push('/auth/login');
+    router.push('/');
   };
 
   return (

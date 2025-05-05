@@ -28,6 +28,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormValues } from "./types";
 import ClassCourseTable from "./classCourseTable";
 import DeletePopupScreen from "@/app/components/DeletePopupScreen";
+import PreviewPopup from "./preview";
+import TimeRangeInput from "./timeRangeInput";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -93,7 +95,17 @@ const classDetailsSchema = yup.object().shape({
   className: yup.string().required("Class name is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
-  time: yup.string().required("Time is required"),
+  timingsFrom:yup.string(),
+  timingsTo:yup.string().test(
+    'is-greater-than-timingsFrom',
+    'To Time must be greater than or equal to From Time',
+    function (value) {
+      const { timingsFrom } = this.parent;
+      if (!timingsFrom || !value) return true;
+      return timingsFrom <= value;
+    }
+  ),
+  time: yup.string(),
   type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -131,7 +143,17 @@ const courseDetailsSchema = yup.object().shape({
   className: yup.string().required("Course name is required"),
   category: yup.string().required("Category is required"),
   subCategory: yup.string(),
-  time: yup.string().required("Time is required"),
+  time: yup.string(),
+  timingsFrom:yup.string(),
+  timingsTo:yup.string().test(
+    'is-greater-than-timingsFrom',
+    'To Time must be greater than or equal to From Time',
+    function (value) {
+      const { timingsFrom } = this.parent;
+      if (!timingsFrom || !value) return true;
+      return timingsFrom <= value;
+    }
+  ),
   type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Course type is required"),
   gender: yup.string(),
   fromage: yup.string(),
@@ -187,6 +209,7 @@ export default function RegistrationForm() {
   const [courses, setCourses] = useState<any[]>([]);
 
   const [directory, setDirectory] = useState<DirectoryItem[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // Add these state variables at the top with other state declarations
   const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
@@ -312,6 +335,8 @@ export default function RegistrationForm() {
       category: '',
       subCategory: '',
       time: '',
+      timingsFrom:'',
+      timingsTo:'',
       weekdays: [],
       fromage: '',
       toage: '',
@@ -332,6 +357,8 @@ export default function RegistrationForm() {
       className: '',
       category: '',
       subCategory: '',
+      timingsFrom:'',
+      timingsTo:'',
       time: '',
       weekdays: [],
       fromage: '',
@@ -520,6 +547,7 @@ export default function RegistrationForm() {
 
   // Update the saveClassDetails function
   const saveClassDetails = async (data: any) => {
+    console.log(data)
     try {
       setIsLoading(true);
       
@@ -534,7 +562,7 @@ export default function RegistrationForm() {
         return;
       }
       
-      if (!data.time) {
+      if (!data.timingsFrom || !data.timingsTo) {
         toast.error("Time is required");
         return;
       }
@@ -555,6 +583,8 @@ export default function RegistrationForm() {
         category: data.category,
         subCategory: data.subCategory,
         time: data.time,
+        timingsFrom:data.timingsFrom,
+        timingsTo:data.timingsTo,
         type: data.type,
         gender: data.gender || 'both',
         fromage: data.fromage || '',
@@ -607,7 +637,7 @@ export default function RegistrationForm() {
         return;
       }
       
-      if (!data.time) {
+      if (!data.timingsFrom || !data.timingsTo) {
         toast.error("Time is required");
         return;
       }
@@ -627,6 +657,8 @@ export default function RegistrationForm() {
         className: data.className,
         category: data.category,
         subCategory: data.subCategory,
+        timingsFrom:data.timingsFrom,
+        timingsTo:data.timingsTo,
         time: data.time,
         type: data.type,
         gender: data.gender || 'both',
@@ -667,8 +699,6 @@ export default function RegistrationForm() {
   // Update the handleFinalSubmit function to properly include course details
   const handleFinalSubmit = async () => {
     try {
-      setIsLoading(true);
-
       // Validate personal details
       if (!personalDetailsData) {
         toast.error("Please complete Personal Details section");
@@ -690,6 +720,19 @@ export default function RegistrationForm() {
         return;
       }
 
+      // Show preview popup instead of submitting immediately
+      setIsPreviewOpen(true);
+    } catch (error) {
+      console.error("Error preparing preview:", error);
+      toast.error("An error occurred while preparing the preview. Please try again.");
+    }
+  };
+
+  // New function to handle actual form submission after preview confirmation
+  const handleSubmitAfterPreview = async () => {
+    try {
+      setIsLoading(true);
+      
       // Create FormData object
       const formData = new FormData();
 
@@ -759,12 +802,8 @@ export default function RegistrationForm() {
         title: classItem.className,
         subCategoryID: parseInt(classItem.subCategory) || 0,
         categoryID: parseInt(classItem.category) || 0,
-        timingsFrom: classItem.time === 'morning' ? '09:00' :
-          classItem.time === 'afternoon' ? '13:00' :
-            classItem.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: classItem.time === 'morning' ? '12:00' :
-          classItem.time === 'afternoon' ? '16:00' :
-            classItem.time === 'evening' ? '20:00' : '12:00',
+        timingsFrom: classItem.timingsFrom,
+        timingsTo: classItem.timingsTo ,
         day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : '',
         type: classItem.type || 'Offline',
         ageFrom: classItem.fromage ? parseInt(classItem.fromage) : 0,
@@ -824,9 +863,9 @@ export default function RegistrationForm() {
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
+      setIsPreviewOpen(false); // Close the preview popup
     }
   };
-
   const handleWeekdayChange = (day: string, isClassfields: boolean) => {
     const currentWeekdays = isClassfields ? watchClass('weekdays') || [] : watchCourse('weekdays') || []; // Get current weekdays value
 
@@ -1817,16 +1856,9 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        <Select onValueChange={(value) => setValueClass("time", value)} value={watchClass("time") || ""}>
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="morning">Morning</SelectItem>
-                            <SelectItem value="afternoon">Afternoon</SelectItem>
-                            <SelectItem value="evening">Evening</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <TimeRangeInput form={classForm as UseFormReturn<FormValues>}
+                          setValue={setValueClass}
+                          errors={errorsClass}/>
                         {errorsClass.time && (
                           <p className="text-red-500 text-xs">{errorsClass.time.message}</p>
                         )}
@@ -2014,7 +2046,7 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        <Select onValueChange={(value) => setValueCourse("time", value)} value={watchCourse("time") || ""}>
+                        {/* <Select onValueChange={(value) => setValueCourse("time", value)} value={watchCourse("time") || ""}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Time" />
                           </SelectTrigger>
@@ -2023,7 +2055,10 @@ export default function RegistrationForm() {
                             <SelectItem value="afternoon">Afternoon</SelectItem>
                             <SelectItem value="evening">Evening</SelectItem>
                           </SelectContent>
-                        </Select>
+                        </Select> */}
+                        <TimeRangeInput form={courseForm as UseFormReturn<FormValues>}
+                          setValue={setValueCourse}
+                          errors={errorsCourse}/>
                         {errorsCourse.time && (
                           <p className="text-red-500 text-xs">{errorsCourse.time.message}</p>
                         )}
@@ -2179,6 +2214,17 @@ export default function RegistrationForm() {
 
         </div>
         }
+              {/* Preview Popup */}
+      <PreviewPopup
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        personalDetails={personalDetailsData}
+        instituteDetails={instituteDetailsData}
+        classDetails={classDetailsData}
+        courseDetails={courseDetailsData}
+        images={images}
+        onSubmit={handleSubmitAfterPreview}
+      />
         {/* Success Popup */}
         <SuccessPopupScreen
           open={isSuccessPopupOpen}

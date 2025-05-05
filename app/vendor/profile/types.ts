@@ -6,7 +6,9 @@ export type FormValues = {
     subCategory?: string;
     location?: string;
     contact?: string;
-    time: string;
+    timingsFrom?:string;
+    timingsTo?:string;
+    time?: string;
     gender?: string;
     fromage?: string;
     toage?: string;

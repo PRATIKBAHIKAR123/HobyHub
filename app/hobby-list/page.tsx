@@ -12,6 +12,7 @@ import withAuth from "../auth/withAuth";
 import InquiryPopupScreen from "../components/InquiryPopupScreen";
 import DeletePopupScreen from "../components/DeletePopupScreen";
 import { useMode } from "@/contexts/ModeContext";
+import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 
 // const classes = [
 //   {
@@ -177,13 +178,49 @@ function ClassDetails() {
   const [courses, setCourses] = useState([]);
   const { isOnline } = useMode();
   const [filterType, setFilterType] = useState(isOnline?'Online':'Offline');
+  const [ category , setCategory] = useState<string | undefined>();
+  const [groupedClasses, setGroupedClasses] = useState<{ [key: string]: any[] }>({});
+  const [groupedCourses, setGroupedCOursess] = useState<{ [key: string]: any[] }>({});
 
 
+    const fetchCategories = async (catId:any) => {
+      try {
+        const [categoriesData, subCategoriesData] = await Promise.all([
+          getAllCategories(),
+          getAllSubCategories()
+        ]);
+
+        // Combine categories with their subcategories
+        const categoriesWithSubs = categoriesData.map(cat => ({
+          ...cat,
+          subcategories: subCategoriesData.filter(sub => sub.categoryId === cat.id)
+        }));
+
+        if(categoriesWithSubs){
+
+        const cat = categoriesWithSubs.filter(c=>c.id==catId);
+        const catName = cat.length > 0 ? cat[0].title : undefined;
+        setCategory(catName);
+      }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
   // Simulate loading
   useEffect(() => {
     const classList = localStorage.getItem('activityClassData');
     const parsedClassList = classList ? JSON.parse(classList) : [];
     setClasses(parsedClassList);
+
+    const activity = localStorage.getItem('activity');
+    const parsedactivity = activity ? JSON.parse(activity) : {};
+    const catId = parsedactivity.categoryId;
+    console.log(catId);
+    fetchCategories(catId)
+    
 
     const courseList = localStorage.getItem('activityCourseData');
     const parsedCourseList = courseList ? JSON.parse(courseList) : [];
@@ -196,13 +233,33 @@ function ClassDetails() {
   }, []);
 
   useEffect(() => {
-    // Log the updated classes state
-    console.log("Updated Classes State:", classes);
+    if (classes.length === 0) return;
+  
+    const grouped = classes.reduce((acc, curr:any) => {
+      const subCategory = curr.subCategory || "Uncategorized";
+      if (!acc[subCategory]) {
+        acc[subCategory] = [];
+      }
+      acc[subCategory].push(curr);
+      return acc;
+    }, {} as { [key: string]: any[] });
+  
+    setGroupedClasses(grouped);
   }, [classes]);
 
   useEffect(() => {
-    // Log the updated classes state
-    console.log("Updated Courses State:", courses);
+    if (courses.length === 0) return;
+  
+    const grouped = courses.reduce((acc, curr: any) => {
+      const subCategory = curr.subCategory || "Uncategorized"; // Group by subCategory or default to "Uncategorized"
+      if (!acc[subCategory]) {
+        acc[subCategory] = [];
+      }
+      acc[subCategory].push(curr);
+      return acc;
+    }, {} as { [key: string]: any[] });
+  
+    setGroupedCOursess(grouped);
   }, [courses]);
 
   if (!classes.length && !isLoading) {
@@ -219,8 +276,8 @@ function ClassDetails() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[#767676] text-[22.70px] font-semibold">Classes</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-[#767676] text-[22.70px] font-semibold">Classes <div className="text-black text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
         <div className="flex gap-2">
           <ToggleGroup type="single" className="hidden md:block border-2 border-gray-300 rounded-md p-1">
             <ToggleGroupItem
@@ -246,14 +303,31 @@ function ClassDetails() {
         </div>
       </div>
       
-      {!isListView && <ClassGridList classes={classes} filterType={filterType} />}
-      {isListView && <ClassList classes={classes} filterType={filterType} />}
+      {Object.keys(groupedClasses).map((subCat, idx) => (
+  <div key={idx} className="mb-6">
+    <h3 className="text-xl font-bold text-gray-700 mb-2"> {subCat}</h3>
+    {isListView ? (
+      <ClassList classes={groupedClasses[subCat]} filterType={filterType} />
+    ) : (
+      <ClassGridList classes={groupedClasses[subCat]} filterType={filterType} />
+    )}
+  </div>
+))}
 
      {courses.length>0 && <div> <div className="flex justify-between items-center my-6">
-        <h2 className="text-[#767676] text-[22.70px] font-semibold">Courses</h2>
+        <h2 className="text-[#767676] text-[22.70px] font-semibold">Courses <div className="text-black text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
         
       </div>
-      {isListView && <CourseList classes={courses} filterType={filterType} />}
+      {Object.keys(groupedCourses).map((subCat, idx) => (
+  <div key={idx} className="mb-6">
+    <h3 className="text-xl font-bold text-gray-700 mb-2">{subCat}</h3>
+    {isListView ? (
+      <CourseList classes={groupedCourses[subCat]} filterType={filterType} />
+    ) : (
+      null
+    )}
+  </div>
+))}
       </div>}
     </div>
   );

@@ -210,7 +210,7 @@ export default function HomeNavbar() {
                         </div>
                     </div>
                     <div className="flex items-center gap-4 p-4">
-                        <Link onClick={() => setShowAuthModal(true)} href={""}>
+                        <Link href={"/wishlist"}>
                             <Image src="/Icons/heart.svg" alt="Logo" width={25} height={25} />
                         </Link>
                         {/* <Link href={'/vendor/profile'} >
@@ -245,7 +245,7 @@ export default function HomeNavbar() {
                             </Link>
                         </div>
                         <div className="flex gap-2 p-1 items-center">
-                            <Link onClick={() => setShowAuthModal(true)} href={""}>
+                            <Link href={"/wishlist"}>
                                 <Image src="/Icons/heart.svg" alt="Logo" width={24} height={24} />
                             </Link>
 

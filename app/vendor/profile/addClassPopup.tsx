@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { createClass } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 import { VendorClassData } from "@/app/services/vendorService";
+import TimeRangeInput from "../registration/timeRangeInput";
 
 const classDetailsSchema = yup.object().shape({
     id: yup.number(),
@@ -24,7 +25,17 @@ const classDetailsSchema = yup.object().shape({
   location: yup.string(),
   contact: yup.string(),
   type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
-  time: yup.string().required("Time is required"),
+  time: yup.string(),
+    timingsFrom:yup.string(),
+    timingsTo:yup.string().test(
+      'is-greater-than-timingsFrom',
+      'To Time must be greater than or equal to From Time',
+      function (value) {
+        const { timingsFrom } = this.parent;
+        if (!timingsFrom || !value) return true;
+        return timingsFrom <= value;
+      }
+    ),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -75,6 +86,8 @@ export default function AddClassPopup({ open, setOpen, onSubmit, classData, acti
       className: '',
       category: '',
       time: '',
+      timingsFrom:'',
+      timingsTo:'',
       weekdays: []
     }
   });
@@ -98,11 +111,8 @@ useEffect(() => {
         );
         setValueClass("category", parentCategory?.title || "");
         setValueClass("subCategory", classData.subCategoryID || "");
-        setValueClass("time", 
-            classData.timingsFrom === "09:00" ? "morning" : 
-            classData.timingsFrom === "13:00" ? "afternoon" : 
-            classData.timingsFrom === "17:00" ? "evening" : ""
-        );
+        setValueClass("timingsFrom",  classData.timingsFrom || "" );
+        setValueClass("timingsTo",   classData.timingsTo || "" );
         setValueClass("type", (classData.type as 'Regular' | 'Online' | 'Offline') || "Offline");
         setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
         setValueClass("gender", classData.gender || "both");
@@ -161,12 +171,9 @@ useEffect(() => {
         activityId: activityId,
         subCategoryID: formData.subCategory || '',
         title: formData.className,
-        timingsFrom: formData.time === 'morning' ? '09:00' : 
-                    formData.time === 'afternoon' ? '13:00' : 
-                    formData.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: formData.time === 'morning' ? '12:00' : 
-                  formData.time === 'afternoon' ? '16:00' : 
-                  formData.time === 'evening' ? '20:00' : '12:00',
+        timingsFrom: formData.timingsFrom,
+        timingsTo: 
+                  formData.timingsTo,
         day: formData.weekdays.join(','),
         type: formData.type,
         ageFrom: parseInt(formData.fromage) || 0,
@@ -302,7 +309,7 @@ console.log('classForm',classData)
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        <Select onValueChange={(value) => setValueClass("time", value)} value={watchClass("time") || ""}>
+                        {/* <Select onValueChange={(value) => setValueClass("time", value)} value={watchClass("time") || ""}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Time" />
                           </SelectTrigger>
@@ -311,7 +318,10 @@ console.log('classForm',classData)
                             <SelectItem value="afternoon">Afternoon</SelectItem>
                             <SelectItem value="evening">Evening</SelectItem>
                           </SelectContent>
-                        </Select>
+                        </Select> */}
+                        <TimeRangeInput form={classForm}
+                                                  setValue={setValueClass}
+                                                  errors={errorsClass}/>
                         {errorsClass.time && (
                           <p className="text-red-500 text-xs">{errorsClass.time.message}</p>
                         )}

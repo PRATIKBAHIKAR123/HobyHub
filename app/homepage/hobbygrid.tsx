@@ -73,7 +73,7 @@ export default function HobbyGrid() {
   const router = useRouter();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [favorites, setFavorites] = useState<{ [key: string]: boolean }>({});
+  const [favorites, setFavorites] = useState<{ [key: string]: Activity }>({});
   const { isOnline } = useMode();
   const { sortFilter , distance } = useSortFilter();
   const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location, coordinates } = useFilter();
@@ -103,9 +103,16 @@ export default function HobbyGrid() {
     // Load favorites from localStorage when component mounts
     const storedFavorites = localStorage.getItem('hobbyFavorites');
     if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
+      try {
+        const parsedFavorites = JSON.parse(storedFavorites);
+        setFavorites(parsedFavorites);
+      } catch (error) {
+        console.error("Error parsing favorites from localStorage:", error);
+        setFavorites({});
+      }
     }
   }, []);
+
 
   useEffect(() => {
     console.log('coordinates:', coordinates);
@@ -170,19 +177,35 @@ export default function HobbyGrid() {
   // }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, age, gender, priceRange, time, location, coordinates, pageSize, distance]);
 }, [pageNumber, isOnline, sortFilter, filterUpdateTrigger, categoryFilter, areFiltersApplied, location, coordinates, pageSize, distance]);
 
-  const toggleFavorite = (e: React.MouseEvent, activityId: string) => {
-    e.stopPropagation(); // Prevent card click event
+const toggleFavorite = (e: React.MouseEvent, activity: Activity) => {
+  e.stopPropagation(); // Prevent card click event
+  
+  // Get current favorites from localStorage
+  const storedFavorites = localStorage.getItem('hobbyFavorites');
+  let currentFavorites: { [key: string]: Activity } = storedFavorites ? JSON.parse(storedFavorites) : {};
+  
+  const activityId = activity.id.toString();
+  
+  // Check if this activity is already in favorites
+  if (currentFavorites[activityId]) {
+    // Remove from favorites
+    // The '-' is showing unused in lint errors
+    const { [activityId]: _, ...restFavorites } = currentFavorites;
+    console.log(_)
+    currentFavorites = restFavorites;
+  } else {
+    // Add to favorites
+    currentFavorites[activityId] = activity;
+  }
+  
+  // Update state and localStorage
+  setFavorites(currentFavorites);
+  localStorage.setItem('hobbyFavorites', JSON.stringify(currentFavorites));
+};
 
-    const newFavorites = {
-      ...favorites,
-      [activityId]: !favorites[activityId]
-    };
-
-    setFavorites(newFavorites);
-
-    // Save to localStorage
-    localStorage.setItem('hobbyFavorites', JSON.stringify(newFavorites));
-  };
+const isFavorited = (activityId: number): boolean => {
+  return !!favorites[activityId.toString()];
+};
 
   if (isLoading) {
     return (
@@ -244,10 +267,10 @@ export default function HobbyGrid() {
 
             {/* Favorite Button */}
             <button
-              onClick={(e) => toggleFavorite(e, activity.id.toString())}
+              onClick={(e) => toggleFavorite(e, activity)}
               className="absolute top-2 right-2 bg-white bg-opacity-70 rounded-full p-2 transition-all duration-200 hover:bg-opacity-100"
             >
-              {favorites[activity.id] ? (
+              {isFavorited(activity.id) ? (
                 <svg
                   width="20"
                   height="20"
