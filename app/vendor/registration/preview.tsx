@@ -4,7 +4,9 @@ interface PreviewPopupProps {
   isOpen: boolean;
   onClose: () => void;
   personalDetails?: {
-    name: string;
+    firstName: string;
+    lastName: string;
+    //name: string;
     emailId: string;
     phoneNumber: string;
     gender: string;
@@ -117,8 +119,12 @@ const PreviewPopup: React.FC<PreviewPopupProps> = ({
             {personalDetails ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="font-medium">Name:</p>
-                  <p>{personalDetails.name}</p>
+                  <p className="font-medium">First Name:</p>
+                  <p>{personalDetails.firstName}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Last Name:</p>
+                  <p>{personalDetails.lastName}</p>
                 </div>
                 <div>
                   <p className="font-medium">Email:</p>

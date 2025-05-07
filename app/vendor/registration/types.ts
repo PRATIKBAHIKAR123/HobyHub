@@ -21,6 +21,8 @@ export type FormValues = {
   experienceLevel?: string;
   noOfSessions?: string;
   type: 'Regular' | 'Online' | 'Offline';
+  sessionFrom?: string;
+  sessionTo?: string;
 
 };
 

@@ -30,22 +30,49 @@ import ClassCourseTable from "./classCourseTable";
 import DeletePopupScreen from "@/app/components/DeletePopupScreen";
 import PreviewPopup from "./preview";
 import TimeRangeInput from "./timeRangeInput";
+import SessionRangeInput from "./sessionRangeInput";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
-  name: yup.string().required("Name is required"),
+  firstName: yup.string().required("First Name is required"),
+  lastName: yup.string().required("Last Name is required"),
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
     .string()
     .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
   gender: yup.string().required("Gender is required"),
-  dob: yup.date().nullable().transform((value, originalValue) => {
-    if (originalValue === '') return null;
-    return value;
-  }),
+  dob: yup
+    .date()
+    .nullable()
+    .transform((value, originalValue) => {
+      return originalValue === '' ? null : value;
+    })
+    .required("Date of birth is required")
+    .test(
+      'is-16-or-older',
+      'Age must be 16 years or older',
+      function (value) {
+        if (!value) return false; // prevent nulls
+
+        const today = new Date();
+        const birthDate = new Date(value);
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const dayDiff = today.getDate() - birthDate.getDate();
+
+        if (age > 16) return true;
+        if (age === 16) {
+          if (monthDiff > 0) return true;
+          if (monthDiff === 0 && dayDiff >= 0) return true;
+        }
+
+        return false;
+      }
+    ),
   profileImageFile: yup.mixed().nullable(),
 });
+
 
 // Institute details form schema
 const instituteDetailsSchema = yup.object().shape({
@@ -133,6 +160,17 @@ const classDetailsSchema = yup.object().shape({
   classSize: yup.string(),
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
+      sessionFrom: yup.string(),
+      sessionTo: yup.string()
+        .test(
+          'is-greater-than-sessionFrom',
+          'To Session must be greater than or equal to From Session',
+          function(value) {
+            const { sessionFrom } = this.parent;
+            if (!sessionFrom || !value) return true;
+            return Number(value) >= Number(sessionFrom);
+          }
+        ),
   noOfSessions: yup.string(),
   location: yup.string(),
   contact: yup.string()
@@ -181,6 +219,17 @@ const courseDetailsSchema = yup.object().shape({
   classSize: yup.string(),
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
+  sessionFrom: yup.string(),
+  sessionTo: yup.string()
+    .test(
+      'is-greater-than-sessionFrom',
+      'To Session must be greater than or equal to From Session',
+      function(value) {
+        const { sessionFrom } = this.parent;
+        if (!sessionFrom || !value) return true;
+        return Number(value) >= Number(sessionFrom);
+      }
+    ),
   noOfSessions: yup.string(),
   location: yup.string(),
   contact: yup.string()
@@ -217,7 +266,9 @@ export default function RegistrationForm() {
   const [classDetailsData, setClassDetailsData] = useState<any[]>([]);
   const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
   const [onDeleteCallback, setOnDeleteCallback] = useState<(() => void) | null>(null);
@@ -593,7 +644,9 @@ export default function RegistrationForm() {
         tocost: data.tocost || '',
         weekdays: data.weekdays,
         experienceLevel: data.experienceLevel || 'beginner',
-        noOfSessions: data.noOfSessions || '1'
+        noOfSessions: data.noOfSessions || '1',
+        sessionFrom: data.sessionFrom || '0',
+        sessionTo: data.sessionTo || '1'
       };
 
       if (editIndex !== null) {
@@ -668,7 +721,9 @@ export default function RegistrationForm() {
         tocost: data.tocost || '',
         weekdays: data.weekdays,
         experienceLevel: data.experienceLevel || 'beginner',
-        noOfSessions: data.noOfSessions || '1'
+        noOfSessions: data.noOfSessions || '1',
+                sessionFrom: data.sessionFrom || '0',
+        sessionTo: data.sessionTo || '1'
       };
 
       if (editIndex !== null) {
@@ -738,7 +793,7 @@ export default function RegistrationForm() {
 
       // Add personal details
       if (personalDetailsData) {
-        formData.append('name', personalDetailsData.name);
+        formData.append('name', personalDetailsData.firstName +' '+personalDetailsData.lastName);
         formData.append('emailId', personalDetailsData.emailId);
         formData.append('phoneNumber', personalDetailsData.phoneNumber);
         formData.append('gender', personalDetailsData.gender);
@@ -808,8 +863,8 @@ export default function RegistrationForm() {
         type: classItem.type || 'Offline',
         ageFrom: classItem.fromage ? parseInt(classItem.fromage) : 0,
         ageTo: classItem.toage ? parseInt(classItem.toage) : 0,
-        sessionFrom: 1,
-        sessionTo: classItem.noOfSessions ? parseInt(classItem.noOfSessions) : 1,
+        sessionFrom: classItem.sessionFrom? parseInt(classItem.sessionFrom) : 0,
+        sessionTo: classItem.sessionTo ? parseInt(classItem.sessionTo) : 1,
         gender: classItem.gender || 'both',
         fromPrice: classItem.fromcost ? parseFloat(classItem.fromcost) : 0,
         toPrice: classItem.tocost ? parseFloat(classItem.tocost) : 0
@@ -830,8 +885,8 @@ export default function RegistrationForm() {
         type: course.type || 'Offline',
         ageFrom: course.fromage ? parseInt(course.fromage) : 0,
         ageTo: course.toage ? parseInt(course.toage) : 0,
-        sessionFrom: 1,
-        sessionTo: course.noOfSessions ? parseInt(course.noOfSessions) : 1,
+        sessionFrom: course.sessionFrom? parseInt(course.sessionFrom) : 0,
+        sessionTo: course.sessionTo ? parseInt(course.sessionTo) : 1,
         gender: course.gender || 'both',
         fromPrice: course.fromcost ? parseFloat(course.fromcost) : 0,
         toPrice: course.tocost ? parseFloat(course.tocost) : 0,
@@ -960,6 +1015,14 @@ export default function RegistrationForm() {
     }
   };
 
+  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setValuePersonal("profileImageFile", file);
+      setProfileImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleClearForm = () => {
     // Clear personal details
     personalForm.reset();
@@ -1008,7 +1071,7 @@ export default function RegistrationForm() {
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
               <AccordionTrigger onClick={() => onAccordianClick("item-0")}>
                 <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.personalDetails || activeAccordion == 'item-0' ? "accordian-trigger-active" : "accordian-trigger-inactive"}`}>
-                  Personal Details
+                  Profile Details
                   {completedSections.personalDetails && <CircleCheckBig className="text-[#46a758] ml-2" />}
                 </div>
               </AccordionTrigger>
@@ -1017,27 +1080,50 @@ export default function RegistrationForm() {
                   <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                        Full Name<span className="text-red-500">*</span>
+                        First Name<span className="text-red-500">*</span>
                       </Label>
                       <Input
-                        placeholder="Full Name"
-                        {...registerPersonal("name")}
+                        placeholder="Last Name"
+                        {...registerPersonal("firstName")}
                         className="h-[52px] border-[#05244f]"
                       />
-                      {errorsPersonal.name && (
-                        <p className="text-red-500 text-xs">{errorsPersonal.name.message}</p>
+                      {errorsPersonal.firstName && (
+                        <p className="text-red-500 text-xs">{errorsPersonal.firstName.message}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                        Last Name<span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        placeholder="Last Name"
+                        {...registerPersonal("lastName")}
+                        className="h-[52px] border-[#05244f]"
+                      />
+                      {errorsPersonal.lastName && (
+                        <p className="text-red-500 text-xs">{errorsPersonal.lastName.message}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                         Mobile<span className="text-red-500">*</span>
                       </Label>
+                      <div className="flex items-center">
+                      <Select>
+                  <SelectTrigger className="p-0 md:p-4 w-[20%] md:w-[20%]] h-[52px] rounded-l-md rounded-r-none border-[#05244f] border-r-0">
+                    <SelectValue placeholder="+91" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="91">+91</SelectItem>
+                  </SelectContent>
+                </Select>
                       <Input
                         placeholder="Mobile"
                         maxLength={10}
                         {...registerPersonal("phoneNumber")}
-                        className="h-[52px] border-[#05244f]"
+                        className="h-[52px] rounded-l-none border-[#05244f]"
                       />
+                      </div>
                       {errorsPersonal.phoneNumber && (
                         <p className="text-red-500 text-xs">{errorsPersonal.phoneNumber.message}</p>
                       )}
@@ -1088,25 +1174,68 @@ export default function RegistrationForm() {
                         })}
                         className="h-[52px] border-[#05244f]"
                       />
-                      {/* {errorsPersonal.dob && (
+                      {errorsPersonal.dob && (
                         <p className="text-red-500 text-xs">{errorsPersonal.dob.message}</p>
-                      )} */}
+                      )}
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                         Profile Image
                       </Label>
-                      <Input
+                      {!profileImagePreview && (<Input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            setValuePersonal("profileImageFile", file);
-                          }
-                        }}
+                        onChange={
+                          handleProfileImageUpload
+                          // const file = e.target.files?.[0];
+                          // if (file) {
+                          //   setValuePersonal("profileImageFile", file);
+                          // }
+                        }
                         className="h-[52px] border-[#05244f]"
                       />
+                    )}
+                      {profileImagePreview && (
+                      <div className="relative w-[158px] h-[158px] mb-4">
+                        <Image
+                          src={profileImagePreview}
+                          alt="Profile Preview"
+                          width={158}
+                          height={158}
+                          className="rounded-md w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProfileImagePreview(null);
+                            if (profileImageInputRef.current) {
+                              profileImageInputRef.current.value = '';
+                            }
+                            setPersonalDetailsData((prevData: any) => ({
+                              ...prevData,
+                              profileImageFile: new File([], '')
+                            }));
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                     </div>
                   </div>
                   <Button
@@ -1134,11 +1263,11 @@ export default function RegistrationForm() {
                 <form>
                   <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                     <div className="flex flex-col gap-2">
-                      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                        Program Title<span className="text-red-500">*</span>
+                      <Label className="w-[177px] text-black text-[11.6px] font-semibold flex w-full">
+                        Program Title<span className="text-red-500">*</span><span className="text-[#cecece] font-bold text-[10.6px] flex">Displayed on front page. Eg: Ajay Music classes for 7-18 Age</span>
                       </Label>
                       <Input
-                        placeholder="Program Title"
+                        placeholder="Program Title" maxLength={30}
                         {...registerInstitute("programTitle")}
                         className={`h-[52px] border-[#05244f] ${errorsInstitute.programTitle ? 'border-red-500' : ''}`}
                       />
@@ -1161,11 +1290,25 @@ export default function RegistrationForm() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">Since</Label>
-                      <Input
+                      {/* <Input
                         placeholder="Since"
                         {...registerInstitute("since")}
-                        className="h-[52px] border-[#05244f]"
-                      />
+                        className="h-[52px] border-[#05244f]" */}
+                        <Select
+                        onValueChange={(value) => setValueInstitute("since", value)}
+                        value={watchInstitute("since") || ""}
+                        >
+                        <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                          <SelectValue placeholder="Select Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}
+                          </SelectItem>
+                          ))}
+                        </SelectContent>
+                        </Select>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">GST No</Label>
@@ -1840,10 +1983,15 @@ export default function RegistrationForm() {
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                       { }
                       { }
-                      <div className="flex flex-col gap-2">
+                      {/* <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
-                      </div>
+                      </div> */}
+                      <SessionRangeInput 
+                      form={classForm as UseFormReturn<FormValues>}
+                      setValue={setValueClass}
+                      errors={errorsClass}
+                      />
                       <CostRangeInput
                         form={classForm as UseFormReturn<FormValues>}
                         setValue={setValueClass}
@@ -1876,7 +2024,7 @@ export default function RegistrationForm() {
                             <SelectValue placeholder="Select Class Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Offline">Offline</SelectItem>
+                            <SelectItem value="Offline">In Person</SelectItem>
                             <SelectItem value="Online">Online</SelectItem>
                             <SelectItem value="Regular">Regular</SelectItem>
                           </SelectContent>
@@ -2038,10 +2186,11 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                      <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
-                        <Input type="number" {...registerCourse("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
-                      </div>
+                    <SessionRangeInput 
+                       form={courseForm as UseFormReturn<FormValues>}
+                       setValue={setValueCourse}
+                       errors={errorsCourse}
+                      />
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>

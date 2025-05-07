@@ -1058,7 +1058,7 @@ const handleRemoveTemp = (tempId: string) => {
                         {classItem.ageFrom} - {classItem.ageTo} years</td>
                         
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom} - {classItem.sessionTo}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>
@@ -1163,7 +1163,7 @@ const handleRemoveTemp = (tempId: string) => {
                         {classItem.ageFrom} - {classItem.ageTo} years</td>
                         
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.day}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.sessionFrom} - {classItem.sessionTo}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.fromPrice} - {classItem.toPrice}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.subCategoryID}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{classItem.gender}</td>

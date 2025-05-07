@@ -37,7 +37,7 @@ export default function ClassCourseTable({ items, type, onEdit, onDelete }: Clas
             <TableRow key={index}>
               <TableCell>{item.className}</TableCell>
               <TableCell>{item.category}</TableCell>
-              <TableCell>{item.type}</TableCell>
+              <TableCell>{item.type==='Offline'?'In Person':item.type}</TableCell>
               <TableCell>{item.time}</TableCell>
               <TableCell>
                 {item.fromage && item.toage ? `${item.fromage}-${item.toage} years` : '-'}

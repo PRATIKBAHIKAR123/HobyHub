@@ -15,6 +15,7 @@ import { createClass } from "@/services/vendorService";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 import { VendorClassData } from "@/app/services/vendorService";
 import TimeRangeInput from "../registration/timeRangeInput";
+import SessionRangeInput from "../registration/sessionRangeInput";
 
 const classDetailsSchema = yup.object().shape({
     id: yup.number(),
@@ -63,6 +64,17 @@ const classDetailsSchema = yup.object().shape({
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
   noOfSessions: yup.string(),
+  sessionFrom: yup.string(),
+        sessionTo: yup.string()
+          .test(
+            'is-greater-than-sessionFrom',
+            'To Session must be greater than or equal to From Session',
+            function(value) {
+              const { sessionFrom } = this.parent;
+              if (!sessionFrom || !value) return true;
+              return Number(value) >= Number(sessionFrom);
+            }
+          ),
 });
 
 interface PopupScreenProps {
@@ -121,6 +133,8 @@ useEffect(() => {
         setValueClass("fromcost", classData.fromPrice?.toString() || "");
         setValueClass("tocost", classData.toPrice?.toString() || "");
         setValueClass("noOfSessions", classData.sessionTo?.toString() || "1");
+        setValueClass("sessionFrom", classData.sessionFrom?.toString() || '0');
+        setValueClass("sessionTo", classData.sessionTo?.toString() || "1");
         setValueClass("experienceLevel", classData.type || "");
     }
 }, [classData, categories, setValueClass]);
@@ -178,8 +192,8 @@ useEffect(() => {
         type: formData.type,
         ageFrom: parseInt(formData.fromage) || 0,
         ageTo: parseInt(formData.toage) || 0,
-        sessionFrom: 1,
-        sessionTo: parseInt(formData.noOfSessions) || 1,
+        sessionFrom: parseInt(formData.sessionFrom) || 0,
+        sessionTo: parseInt(formData.sessionTo) || 1,
         gender: formData.gender || 'both',
         price: parseInt(formData.cost) || 0,
         fromPrice: parseInt(formData.fromcost) || 0,
@@ -287,16 +301,21 @@ console.log('classForm',classData)
                             <SelectValue placeholder="Type" />
                           </SelectTrigger>
                           <SelectContent>
-                          <SelectItem value="Offline">Offline</SelectItem>
+                          <SelectItem value="Offline">In Person</SelectItem>
                             <SelectItem value="Online">Online</SelectItem>
                             
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="flex flex-col gap-2">
+                      {/* <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
-                      </div>
+                      </div> */}
+                      <SessionRangeInput 
+                                            form={classForm}
+                                            setValue={setValueClass}
+                                            errors={errorsClass}
+                                            />
                       <CostRangeInput
                         form={classForm}
                         setValue={setValueClass}
