@@ -844,9 +844,8 @@ export default function RegistrationForm() {
         formData.append('activity.instagramAcc', instituteDetailsData.instagramAccount || '');
         formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
       }
-
       // Add activity images
-      images.forEach((image) => {
+      [...images].forEach((image) => {
         if (image instanceof File) {
           formData.append('activity.images', image);
         }
