@@ -71,14 +71,14 @@ function HobbyContactDetailsPageContent() {
   const activityId = searchParams.get('id');
 
   useEffect(() => {
-    const savedData = sessionStorage.getItem('activity');
+    const savedData = localStorage.getItem('activity');
     if (savedData) {
       const data = JSON.parse(savedData);
       if (data.id === parseInt(activityId || '')) {
         setActivityData(data);
       }
     } else {
-      console.warn("Activity data not found in sessionStorage");
+      console.warn("Activity data not found in Localstorage");
     }
   }, [activityId]);
 
