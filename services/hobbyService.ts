@@ -1,4 +1,3 @@
-import page from "@/app/hobby-list/page";
 import { API_BASE_URL } from "@/lib/apiConfigs";
 import axios from "axios";
 
@@ -223,12 +222,12 @@ export const getActivityById = async (activityId: number): Promise<Activity> => 
  * Increase view count for an activity
  * @param activityId The ID of the activity to increase view count for
  */
-export const increaseActivityViewCount = async (activityId: number): Promise<void> => {
+export const increaseActivityViewCount = async (id: number): Promise<void> => {
     try {
         const token = getAuthToken();
         await axios.post(
             `${API_BASE_URL}/increase-view`,
-            { activityId },
+            { id },
             {
                 headers: {
                     'accept': '*/*',
