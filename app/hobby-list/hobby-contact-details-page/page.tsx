@@ -65,7 +65,11 @@ interface ActivityData {
   viewCount: number;
 }
 
-function HobbyContactDetailsPageContent() {
+interface HobbyContactDetailsPageContentProps {
+  blurred?: boolean;
+}
+
+function HobbyContactDetailsPageContent({ blurred = false }: HobbyContactDetailsPageContentProps) {
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
@@ -113,7 +117,12 @@ function HobbyContactDetailsPageContent() {
   const whatsappUrl = `https://wa.me/${activityData.whatsappCountryCode}${activityData.whatsappNo}`;
 
   return (
-    <div className="relative p-6 bg-gray-100 min-h-screen pb-20">
+    <div
+      className={`relative p-6 bg-gray-100/60 min-h-screen pb-20 ${blurred ? 'pointer-events-none select-none transition-all duration-300' : 'transition-all duration-300'
+        }`}
+      style={blurred ? { filter: 'blur(1px)' } : {}}
+    >
+
       <div className="flex justify-between items-start mb-4">
         <h2 className="text-2xl font-semibold text-gray-800">Contact Information</h2>
         <div className="bg-gray-200 rounded-full px-2.5 py-1 flex items-center space-x-1.5 text-xs font-medium text-gray-700 mt-1">
@@ -201,4 +210,6 @@ function HobbyContactDetailsPageContent() {
   );
 }
 
-export default withAuth(HobbyContactDetailsPageContent);
+export default withAuth(function Page() {
+  return <HobbyContactDetailsPageContent />;
+});

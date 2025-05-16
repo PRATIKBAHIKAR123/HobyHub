@@ -16,27 +16,26 @@ import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 import { VendorClassData } from "@/app/services/vendorService";
 import TimeRangeInput from "../registration/timeRangeInput";
 import SessionRangeInput from "../registration/sessionRangeInput";
+import { FormValues } from "../registration/types";
 
 const classDetailsSchema = yup.object().shape({
-    id: yup.number(),
-    activityId: yup.number(),
   className: yup.string().required("Class name is required"),
   category: yup.string().required("Category is required"),
-  subCategory: yup.string(),
-  location: yup.string(),
-  contact: yup.string(),
+  subCategory: yup.string().required("Sub category is required"),
+  location: yup.mixed().nullable(),
+  contact: yup.mixed().nullable(),
   type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
   time: yup.string(),
-    timingsFrom:yup.string(),
-    timingsTo:yup.string().test(
-      'is-greater-than-timingsFrom',
-      'To Time must be greater than or equal to From Time',
-      function (value) {
-        const { timingsFrom } = this.parent;
-        if (!timingsFrom || !value) return true;
-        return timingsFrom <= value;
-      }
-    ),
+  timingsFrom: yup.string(),
+  timingsTo: yup.string().test(
+    'is-greater-than-timingsFrom',
+    'To Time must be greater than or equal to From Time',
+    function (value) {
+      const { timingsFrom } = this.parent;
+      if (!timingsFrom || !value) return true;
+      return timingsFrom <= value;
+    }
+  ),
   gender: yup.string(),
   fromage: yup.string(),
   toage: yup.string().test(
@@ -48,7 +47,6 @@ const classDetailsSchema = yup.object().shape({
       return Number(value) >= Number(fromage);
     }
   ),
-  age: yup.string(),
   fromcost: yup.string(),
   tocost: yup.string().test(
     'is-greater-than-fromcost',
@@ -59,51 +57,57 @@ const classDetailsSchema = yup.object().shape({
       return Number(value) >= Number(fromcost);
     }
   ),
-  cost: yup.string(),
-  classSize: yup.string(),
   weekdays: yup.array().of(yup.string().nullable()),
   experienceLevel: yup.string(),
   noOfSessions: yup.string(),
   sessionFrom: yup.string(),
-        sessionTo: yup.string()
-          .test(
-            'is-greater-than-sessionFrom',
-            'To Session must be greater than or equal to From Session',
-            function(value) {
-              const { sessionFrom } = this.parent;
-              if (!sessionFrom || !value) return true;
-              return Number(value) >= Number(sessionFrom);
-            }
-          ),
+  sessionTo: yup.string().test(
+    'is-greater-than-sessionFrom',
+    'To Session must be greater than or equal to From Session',
+    function(value) {
+      const { sessionFrom } = this.parent;
+      if (!sessionFrom || !value) return true;
+      return Number(value) >= Number(sessionFrom);
+    }
+  ),
 });
 
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onSubmit?: (classForm: VendorClassData) => void;
-  classData?:VendorClassData;
-  activityId?:number;
+  classData?: VendorClassData;
+  activityId?: number;
 }
 
-
 export default function AddClassPopup({ open, setOpen, onSubmit, classData, activityId }: PopupScreenProps) {
-      const [categories, setCategories] = useState<Category[]>([]);
-      const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Form for class details
-  const classForm = useForm({
-    resolver: yupResolver(classDetailsSchema),
+  const classForm = useForm<FormValues>({
+    resolver: yupResolver(classDetailsSchema) as any,
     mode: "onChange",
     defaultValues: {
       type: 'Offline',
       className: '',
       category: '',
+      subCategory: '',
       time: '',
-      timingsFrom:'',
-      timingsTo:'',
-      weekdays: []
+      timingsFrom: '',
+      timingsTo: '',
+      weekdays: [],
+      fromage: '',
+      toage: '',
+      fromcost: '',
+      tocost: '',
+      gender: 'both',
+      experienceLevel: 'beginner',
+      noOfSessions: '1',
+      location: null,
+      contact: null
     }
   });
-
 
   const {
     register: registerClass,
@@ -113,31 +117,29 @@ export default function AddClassPopup({ open, setOpen, onSubmit, classData, acti
     formState: { errors: errorsClass },
   } = classForm;
 
-useEffect(() => {
+  useEffect(() => {
     if (classData) {
-        setValueClass("id", classData.id);
-        setValueClass("activityId", activityId);
-        setValueClass("className", classData.title || "");
-        const parentCategory = categories.find(cat => 
-            cat.subcategories.some(sub => sub.id === Number(classData.subCategoryID))
-        );
-        setValueClass("category", parentCategory?.title || "");
-        setValueClass("subCategory", classData.subCategoryID || "");
-        setValueClass("timingsFrom",  classData.timingsFrom || "" );
-        setValueClass("timingsTo",   classData.timingsTo || "" );
-        setValueClass("type", (classData.type as 'Regular' | 'Online' | 'Offline') || "Offline");
-        setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
-        setValueClass("gender", classData.gender || "both");
-        setValueClass("fromage", classData.ageFrom?.toString() || "");
-        setValueClass("toage", classData.ageTo?.toString() || "");
-        setValueClass("fromcost", classData.fromPrice?.toString() || "");
-        setValueClass("tocost", classData.toPrice?.toString() || "");
-        setValueClass("noOfSessions", classData.sessionTo?.toString() || "1");
-        setValueClass("sessionFrom", classData.sessionFrom?.toString() || '0');
-        setValueClass("sessionTo", classData.sessionTo?.toString() || "1");
-        setValueClass("experienceLevel", classData.type || "");
+      setValueClass("className", classData.title || "");
+      const parentCategory = categories.find(cat => 
+        cat.subcategories.some(sub => sub.id === Number(classData.subCategoryID))
+      );
+      setValueClass("category", parentCategory?.title || "");
+      setValueClass("subCategory", classData.subCategoryID || "");
+      setValueClass("timingsFrom", classData.timingsFrom || "");
+      setValueClass("timingsTo", classData.timingsTo || "");
+      setValueClass("type", (classData.type as 'Regular' | 'Online' | 'Offline') || "Offline");
+      setValueClass("weekdays", classData.day ? classData.day.split(",") : []);
+      setValueClass("gender", classData.gender || "both");
+      setValueClass("fromage", classData.ageFrom?.toString() || "");
+      setValueClass("toage", classData.ageTo?.toString() || "");
+      setValueClass("fromcost", classData.fromPrice?.toString() || "");
+      setValueClass("tocost", classData.toPrice?.toString() || "");
+      setValueClass("noOfSessions", classData.sessionTo?.toString() || "1");
+      setValueClass("sessionFrom", classData.sessionFrom?.toString() || '0');
+      setValueClass("sessionTo", classData.sessionTo?.toString() || "1");
+      setValueClass("experienceLevel", classData.type || "");
     }
-}, [classData, categories, setValueClass]);
+  }, [classData, categories, setValueClass]);
 
   const handleWeekdayChange = (day: string) => {
     const currentWeekdays = watchClass('weekdays') || []; // Get current weekdays value
@@ -177,35 +179,36 @@ useEffect(() => {
       fetchCategories();
     }, [setIsLoading]);
 
-  const submitClass = async (formData:any) => {
-    // setIsLoading(true);
-    const classData: VendorClassData = {
-        id: formData.id,
-        vendorId: formData.vendorId,
-        activityId: activityId,
-        subCategoryID: formData.subCategory || '',
-        title: formData.className,
-        timingsFrom: formData.timingsFrom,
-        timingsTo: 
-                  formData.timingsTo,
-        day: formData.weekdays.join(','),
-        type: formData.type,
-        ageFrom: parseInt(formData.fromage) || 0,
-        ageTo: parseInt(formData.toage) || 0,
-        sessionFrom: parseInt(formData.sessionFrom) || 0,
-        sessionTo: parseInt(formData.sessionTo) || 1,
-        gender: formData.gender || 'both',
-        price: parseInt(formData.cost) || 0,
-        fromPrice: parseInt(formData.fromcost) || 0,
-        toPrice: parseInt(formData.tocost) || 0,
-      };
-console.log('classForm',classData)
+  const submitClass = async (formData: FormValues) => {
+    // Ensure we have a valid ID for new classes
+    const classId = classData?.id || 0;
+    
+    const newClassData: VendorClassData = {
+      id: classId,
+      vendorId: classData?.vendorId,
+      activityId: activityId,
+      subCategoryID: formData.subCategory || '',
+      title: formData.className,
+      timingsFrom: formData.timingsFrom || '',
+      timingsTo: formData.timingsTo || '',
+      day: formData.weekdays?.join(',') || '',
+      type: formData.type || 'Offline',
+      ageFrom: parseInt(formData.fromage || '0'),
+      ageTo: parseInt(formData.toage || '0'),
+      sessionFrom: parseInt(formData.sessionFrom || '0'),
+      sessionTo: parseInt(formData.sessionTo || '1'),
+      gender: formData.gender || 'both',
+      price: 0,
+      fromPrice: parseInt(formData.fromcost || '0'),
+      toPrice: parseInt(formData.tocost || '0'),
+    };
+
     try {
-      const data = await createClass([classData]);
+      const data = await createClass([newClassData]);
 
       if (data.status === 200) {
         toast.success("New Class Added!");
-        onSubmit?.(classData);
+        onSubmit?.(newClassData);
         setOpen(false);
       } else {
         toast.error(String(data.data));
@@ -214,8 +217,6 @@ console.log('classForm',classData)
     } catch (err) {
       console.log("err:", String(err));
       toast.error(String(err));
-    } finally {
-      
     }
   };
 
@@ -312,10 +313,10 @@ console.log('classForm',classData)
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
                       </div> */}
                       <SessionRangeInput 
-                                            form={classForm}
-                                            setValue={setValueClass}
-                                            errors={errorsClass}
-                                            />
+                        form={classForm}
+                        setValue={setValueClass}
+                        errors={errorsClass}
+                      />
                       <CostRangeInput
                         form={classForm}
                         setValue={setValueClass}
@@ -328,19 +329,11 @@ console.log('classForm',classData)
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        {/* <Select onValueChange={(value) => setValueClass("time", value)} value={watchClass("time") || ""}>
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="morning">Morning</SelectItem>
-                            <SelectItem value="afternoon">Afternoon</SelectItem>
-                            <SelectItem value="evening">Evening</SelectItem>
-                          </SelectContent>
-                        </Select> */}
-                        <TimeRangeInput form={classForm}
-                                                  setValue={setValueClass}
-                                                  errors={errorsClass}/>
+                        <TimeRangeInput 
+                          form={classForm}
+                          setValue={setValueClass}
+                          errors={errorsClass}
+                        />
                         {errorsClass.time && (
                           <p className="text-red-500 text-xs">{errorsClass.time.message}</p>
                         )}

@@ -1,66 +1,58 @@
+'use client';
+
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+// import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
+import { toast } from "sonner";
 
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onContactSubmit: (contactData: ContactData) => void;
+  onContactSubmit: (contactData: ContactData) => Promise<void>;
 }
 
 // Define the contact data structure
 export interface ContactData {
   id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  whatsappNumber: string;
-  contactType: {
-    primary: boolean;
-    secondary: boolean;
-    billing: boolean;
-  };
-  experience: string;
-  certifications: File | null;
-  email: string;
-  introduction: string;
-  profilePhoto: string | null;
+  tutorFirstName: string;
+  tutorLastName: string;
+  tutorEmailID: string;
+  tutorCountryCode: string;
+  tutorPhoneNo: string;
+  whatsappCountryCode: string;
+  thatsappNo: string;
+  tutorIntro: string;
 }
 
 export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: PopupScreenProps) {
   // State for form data
   const [formData, setFormData] = useState<ContactData>({
     id: '',
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    whatsappNumber: '',
-    contactType: {
-      primary: false,
-      secondary: false,
-      billing: false,
-    },
-    experience: '',
-    certifications: null,
-    email: '',
-    introduction: '',
-    profilePhoto: null,
+    tutorFirstName: '',
+    tutorLastName: '',
+    tutorEmailID: '',
+    tutorCountryCode: '',
+    tutorPhoneNo: '',
+    whatsappCountryCode: '',
+    thatsappNo: '',
+    tutorIntro: '',
   });
 
   // State for validation
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [wasSubmitted, setWasSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State for images
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const certificationRef = useRef<HTMLInputElement>(null);
-  
+  // const certificationRef = useRef<HTMLInputElement>(null);
+
   // Generate unique ID when form opens
   useEffect(() => {
     if (open) {
@@ -71,34 +63,35 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
       // Reset form validation state when reopened
       setErrors({});
       setWasSubmitted(false);
+      setIsSubmitting(false);
     }
   }, [open]);
 
   // Validate the form
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     // Check required fields
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+    if (!formData.tutorFirstName.trim()) {
+      newErrors.tutorFirstName = "First name is required";
     }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+
+    if (!formData.tutorLastName.trim()) {
+      newErrors.tutorLastName = "Last name is required";
     }
-    
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
-      newErrors.phoneNumber = "Please enter a valid phone number";
+
+    if (!formData.tutorPhoneNo.trim()) {
+      newErrors.tutorPhoneNo = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.tutorPhoneNo.replace(/\D/g, ''))) {
+      newErrors.tutorPhoneNo = "Please enter a valid phone number";
     }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+
+    if (!formData.tutorEmailID.trim()) {
+      newErrors.tutorEmailID = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.tutorEmailID)) {
+      newErrors.tutorEmailID = "Please enter a valid email address";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -114,86 +107,93 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
     // Clear error for this field if it exists
     if (errors[name]) {
       setErrors(prev => {
-        const newErrors = {...prev};
+        const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
     }
   };
 
-  // Handle checkbox changes
-  const handleCheckboxChange = (value: boolean, type: 'primary' | 'secondary' | 'billing') => {
-    setFormData(prev => ({
-      ...prev,
-      contactType: {
-        ...prev.contactType,
-        [type]: value
-      }
-    }));
-  };
-
-  // Handle certification upload
-  const handleCertificationUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    setFormData(prev => ({
-      ...prev,
-      certifications: file
-    }));
-  };
-
-  // Handle profile image upload
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length > 0) {
-      const newImages = files.map((file) => URL.createObjectURL(file as Blob));
-      setImages([...images, ...newImages]);
-      
-      // Set the first image as profile photo
-      setFormData(prev => ({
-        ...prev,
-        profilePhoto: newImages[0]
-      }));
-    }
-  };
-
   // Handle form submission
-  const handleSubmit = () => {
-    setWasSubmitted(true);
-    
-    if (!validateForm()) {
-      return; // Don't submit if validation fails
+  const handleSubmit = async () => {
+    try {
+      setWasSubmitted(true);
+      setIsSubmitting(true);
+
+      if (!validateForm()) {
+        return; // Don't submit if validation fails
+      }
+
+      // Prepare contact data
+      const contactData = {
+        ...formData,
+        id: Date.now().toString(),
+        // Ensure all required fields are present
+        tutorFirstName: formData.tutorFirstName.trim(),
+        tutorLastName: formData.tutorLastName.trim(),
+        tutorEmailID: formData.tutorEmailID.trim(),
+        tutorCountryCode: formData.tutorCountryCode.trim() || '+91',
+        tutorPhoneNo: formData.tutorPhoneNo.trim(),
+        whatsappCountryCode: formData.whatsappCountryCode.trim() || '+91',
+        thatsappNo: formData.thatsappNo.trim() || formData.tutorPhoneNo.trim(),
+        tutorIntro: formData.tutorIntro.trim() || '',
+        contactType: {
+          primary: true,
+          secondary: false,
+          billing: false
+        }
+      };
+
+      // Proceed with form submission
+      await onContactSubmit(contactData);
+
+      // Reset form and close dialog
+      setFormData({
+        id: '',
+        tutorFirstName: '',
+        tutorLastName: '',
+        tutorEmailID: '',
+        tutorCountryCode: '',
+        tutorPhoneNo: '',
+        whatsappCountryCode: '',
+        thatsappNo: '',
+        tutorIntro: '',
+      });
+      setImages([]);
+      setOpen(false);
+    } catch (error) {
+      console.error('Error submitting contact:', error);
+      toast.error('Failed to save contact. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Proceed with form submission
-    onContactSubmit(formData);
-    
-    // Reset form and close dialog
-    setFormData({
-      id: '',
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      whatsappNumber: '',
-      contactType: {
-        primary: false,
-        secondary: false,
-        billing: false,
-      },
-      experience: '',
-      certifications: null,
-      email: '',
-      introduction: '',
-      profilePhoto: null,
-    });
-    setImages([]);
-    setOpen(false);
+  };
+
+  // Handle image upload with error handling
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const files = Array.from(event.target.files || []);
+      if (files.length > 0) {
+        const newImages = files.map((file) => URL.createObjectURL(file as Blob));
+        setImages(prev => [...prev, ...newImages]);
+
+        // Set the first image as profile photo
+        setFormData(prev => ({
+          ...prev,
+          profilePhoto: newImages[0]
+        }));
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      // Handle error appropriately
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogOverlay className="bg-[#003161] opacity-50 fixed inset-0" />
-      
-      <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-scroll max-h-[90%] mx-auto text-center">
+
+      <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-auto max-h-[90vh] mx-auto text-center">
         <div className="grid grid-cols-1 gap-6 items-center">
           {/* Form Section */}
           <div className="bg-white p-4 w-full">
@@ -205,136 +205,104 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                   First Name <span className="text-red-500">*</span>
                 </Label>
-                <Input 
-                  name="firstName"
-                  value={formData.firstName}
+                <Input
+                  name="tutorFirstName"
+                  value={formData.tutorFirstName}
                   onChange={handleInputChange}
-                  placeholder="First Name" 
-                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.firstName ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="First Name"
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorFirstName ? 'border-red-500' : ''}`}
                 />
-                {wasSubmitted && errors.firstName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                {wasSubmitted && errors.tutorFirstName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.tutorFirstName}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                   Last Name <span className="text-red-500">*</span>
                 </Label>
-                <Input 
-                  name="lastName"
-                  value={formData.lastName}
+                <Input
+                  name="tutorLastName"
+                  value={formData.tutorLastName}
                   onChange={handleInputChange}
-                  placeholder="Last Name" 
-                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.lastName ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="Last Name"
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorLastName ? 'border-red-500' : ''}`}
                 />
-                {wasSubmitted && errors.lastName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                {wasSubmitted && errors.tutorLastName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.tutorLastName}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Email <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  name="tutorEmailID"
+                  value={formData.tutorEmailID}
+                  onChange={handleInputChange}
+                  placeholder="Email"
+                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorEmailID ? 'border-red-500' : ''}`}
+                />
+                {wasSubmitted && errors.tutorEmailID && (
+                  <p className="text-red-500 text-sm mt-1">{errors.tutorEmailID}</p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                   Phone Number <span className="text-red-500">*</span>
                 </Label>
-                <Input 
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="Enter Phone No." 
-                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.phoneNumber ? 'border-red-500 focus:ring-red-500' : ''}`}
-                />
-                {wasSubmitted && errors.phoneNumber && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+                <div className="flex gap-2">
+                  <Input
+                    name="tutorCountryCode"
+                    value={formData.tutorCountryCode}
+                    onChange={handleInputChange}
+                    placeholder="+91"
+                    className="h-[52px] border-[#05244f] w-20"
+                  />
+                  <Input
+                    name="tutorPhoneNo"
+                    value={formData.tutorPhoneNo}
+                    onChange={handleInputChange}
+                    placeholder="Phone Number"
+                    className={`h-[52px] border-[#05244f] flex-1 ${wasSubmitted && errors.tutorPhoneNo ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {wasSubmitted && errors.tutorPhoneNo && (
+                  <p className="text-red-500 text-sm mt-1">{errors.tutorPhoneNo}</p>
                 )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Whatsapp Number</Label>
-                <Input 
-                  name="whatsappNumber"
-                  value={formData.whatsappNumber}
-                  onChange={handleInputChange}
-                  placeholder="Enter Whatsapp Number" 
-                  className="h-[52px] border-[#05244f]" 
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox id="terms" className="border-black"/>
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold" htmlFor="terms">Please update below</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="primary" 
-                    className="border-black"
-                    checked={formData.contactType.primary}
-                    onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, 'primary')}
-                  />
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold" htmlFor="primary">Primary</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="secondary" 
-                    className="border-black"
-                    checked={formData.contactType.secondary}
-                    onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, 'secondary')}
-                  />
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold" htmlFor="secondary">Secondary</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox 
-                    id="billing" 
-                    className="border-black"
-                    checked={formData.contactType.billing}
-                    onCheckedChange={(checked) => handleCheckboxChange(checked as boolean, 'billing')}
-                  />
-                  <Label className="w-[177px] text-black text-[11.6px] font-semibold" htmlFor="billing">Billing</Label>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Experience</Label>
-                <Input 
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleInputChange}
-                  placeholder="Enter in years" 
-                  className="h-[52px] border-[#05244f]" 
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">Certifications</Label>
-                <Input 
-                  ref={certificationRef}
-                  type="file" 
-                  onChange={handleCertificationUpload}
-                  placeholder="Click to upload (.pdf, .jpg, .png)" 
-                  className="h-[52px] border-[#05244f]" 
-                />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                  Email Address <span className="text-red-500">*</span>
+                  WhatsApp Number
                 </Label>
-                <Input 
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Email Address" 
-                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
-                />
-                {wasSubmitted && errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
+                <div className="flex gap-2">
+                  <Input
+                    name="whatsappCountryCode"
+                    value={formData.whatsappCountryCode}
+                    onChange={handleInputChange}
+                    placeholder="+91"
+                    className="h-[52px] border-[#05244f] w-20"
+                  />
+                  <Input
+                    name="thatsappNo"
+                    value={formData.thatsappNo}
+                    onChange={handleInputChange}
+                    placeholder="WhatsApp Number"
+                    className="h-[52px] border-[#05244f] flex-1"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="w-[177px] text-black text-[11.6px] font-semibold">Contact Introduction</Label>
-              <Textarea 
-                name="introduction"
-                value={formData.introduction}
-                onChange={handleInputChange}
-                placeholder="Contact Introduction" 
-                rows={8} 
-                className="border-[#05244f] h-[90px]" 
-              />
+              <div className="flex flex-col gap-2 col-span-2">
+                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                  Introduction
+                </Label>
+                <Textarea
+                  name="tutorIntro"
+                  value={formData.tutorIntro}
+                  onChange={handleInputChange}
+                  placeholder="Write a brief introduction about yourself"
+                  className="h-[100px] border-[#05244f]"
+                />
+              </div>
             </div>
             <div className="mb-6 mt-[50px] w-full">
               {images.length > 0 && (
@@ -380,17 +348,20 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => setOpen(false)} className="mt-4">
+        {/* Submit Button */}
+        <div className="flex justify-end gap-4">
+          <Button
+            onClick={() => setOpen(false)}
+            className="bg-white text-[#05244f] border border-[#05244f] hover:bg-gray-100"
+          >
             Cancel
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleSubmit} 
-            className="bg-[#05244F] mt-4 text-white"
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-[#05244f] text-white hover:bg-[#05244f]/90"
           >
-            Submit
+            {isSubmitting ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </DialogContent>

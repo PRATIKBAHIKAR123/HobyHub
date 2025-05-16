@@ -1,6 +1,8 @@
+// import { API_BASE_URL_1 } from '@/lib/apiConfigs';
+import { API_BASE_URL } from '@/lib/apiConfigs';
 import axios from 'axios';
 
-const API_BASE_URL = 'https://api.hobyhub.com/api/1';
+// const API_BASE_URL = 'https://api.hobyhub.com/api/1';
 
 // Store access token
 let accessToken: string | null = null;
@@ -210,7 +212,7 @@ export interface VendorCourseData {
 
 export const registerVendor = async (data: FormData): Promise<VendorRegistrationResponse> => {
   try {
-    const response = await fetch('https://api.hobyhub.com/api/1/vendor/register', {
+    const response = await fetch(`${API_BASE_URL}/vendor/register`, {
       method: 'POST',
       body: data,
     });

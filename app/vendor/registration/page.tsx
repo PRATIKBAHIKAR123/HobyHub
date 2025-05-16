@@ -18,19 +18,19 @@ import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
 import SuccessPopupScreen from "./SuccessPopupScreen";
-import { Category } from "@/app/homepage/categories";
 import { getAllSubCategories, getAllCategories } from "@/services/hobbyService";
 import { DirectoryItem } from "./directoryList";
 import CostRangeInput from "./costRangeInput";
 import AgeRangeInput from "./ageRangeInput";
-import { Checkbox } from "@/components/ui/checkbox";
-// import { createClass, createCourse, VendorClassData } from "../../../services/vendorService";
-import { FormValues } from "./types";
 import ClassCourseTable from "./classCourseTable";
 import DeletePopupScreen from "@/app/components/DeletePopupScreen";
 import PreviewPopup from "./preview";
 import TimeRangeInput from "./timeRangeInput";
 import SessionRangeInput from "./sessionRangeInput";
+import LocationPopupScreen from "./locationSelection";
+import ContactPopupScreen from "./contactSelection";
+import { FormValues, Location, Contact, Category } from "./types";
+// import { useRouter } from "next/navigation";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -48,12 +48,11 @@ const personalDetailsSchema = yup.object().shape({
     .transform((value, originalValue) => {
       return originalValue === '' ? null : value;
     })
-    .required("Date of birth is required")
     .test(
       'is-16-or-older',
       'Age must be 16 years or older',
       function (value) {
-        if (!value) return false; // prevent nulls
+        if (!value) return true; // skip validation if not provided
 
         const today = new Date();
         const birthDate = new Date(value);
@@ -70,6 +69,7 @@ const personalDetailsSchema = yup.object().shape({
         return false;
       }
     ),
+
   profileImageFile: yup.mixed().nullable(),
 });
 
@@ -82,210 +82,208 @@ const instituteDetailsSchema = yup.object().shape({
   gstNo: yup.string(),
   thumbnailImageFile: yup.mixed().required("Thumbnail image is required"),
   introduction: yup.string().required("Introduction is required"),
-  firstName: yup.string().required("First name is required"),
-  lastName: yup.string().required("Last name is required"),
-  phoneNumber: yup
-    .string()
-    .matches(/^[0-9]{10}$/, "Phone number must be exactly 10 digits")
-    .required("Phone number is required"),
-  whatsappNumber: yup.string().nullable(),
-  email: yup.string().email("Invalid email").required("Email is required"),
-  experience: yup.string(),
-  contactIntroduction: yup.string(),
-  contactType: yup.object().shape({
-    primary: yup.boolean(),
-    secondary: yup.boolean(),
-    billing: yup.boolean(),
-  }),
-  certifications: yup.mixed().nullable(),
-  address: yup.string().required("Address is required"),
-  road: yup.string(),
-  landmark: yup.string().required("Landmark is required"),
-  area: yup.string(),
-  city: yup.string(),
-  state: yup.string(),
-  country: yup.string(),
-  pincode: yup.string(),
-  latitude: yup.number().nullable().transform((value) => value === '' ? null : value),
-  longitude: yup.number().nullable().transform((value) => value === '' ? null : value),
   websiteName: yup.string(),
   classLevel: yup.string(),
   instagramAccount: yup.string(),
   youtubeAccount: yup.string(),
-  categoryId: yup.number().required("Category is required"),
-  purchaseMaterialIds: yup.string(),
-  itemCarryText: yup.string(),
+  // categoryId: yup.number(),
+  // purchaseMaterialIds: yup.string(),
+  // itemCarryText: yup.string()
 });
 
 // Class details form schema
 const classDetailsSchema = yup.object().shape({
-  className: yup.string().required("Class name is required"),
-  category: yup.string().required("Category is required"),
-  subCategory: yup.string(),
-  timingsFrom:yup.string(),
-  timingsTo:yup.string().test(
-    'is-greater-than-timingsFrom',
-    'To Time must be greater than or equal to From Time',
-    function (value) {
-      const { timingsFrom } = this.parent;
-      if (!timingsFrom || !value) return true;
-      return timingsFrom <= value;
-    }
-  ),
-  time: yup.string(),
-  type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Class type is required"),
-  gender: yup.string(),
-  fromage: yup.string(),
-  toage: yup.string().test(
-    'is-greater-than-fromage',
-    'The age must be greater than or equal to From Age',
-    function (value) {
-      const { fromage } = this.parent;
-      if (!fromage || !value) return true;
-      return Number(value) >= Number(fromage);
-    }
-  ),
-  age: yup.string(),
-  fromcost: yup.string(),
-  tocost: yup.string().test(
-    'is-greater-than-fromcost',
-    'To cost must be greater than or equal to From cost',
-    function (value) {
-      const { fromcost } = this.parent;
-      if (!fromcost || !value) return true;
-      return Number(value) >= Number(fromcost);
-    }
-  ),
-  cost: yup.string(),
-  classSize: yup.string(),
-  weekdays: yup.array().of(yup.string().nullable()),
-  experienceLevel: yup.string(),
-      sessionFrom: yup.string(),
-      sessionTo: yup.string()
-        .test(
-          'is-greater-than-sessionFrom',
-          'To Session must be greater than or equal to From Session',
-          function(value) {
-            const { sessionFrom } = this.parent;
-            if (!sessionFrom || !value) return true;
-            return Number(value) >= Number(sessionFrom);
-          }
-        ),
-  noOfSessions: yup.string(),
-  location: yup.string(),
-  contact: yup.string()
+  type: yup.string().required('Type is required'),
+  className: yup.string().required('Class name is required'),
+  category: yup.string().required('Category is required'),
+  subCategory: yup.string().required('Sub-category is required'),
+  time: yup.string().required('Time is required'),
+  timingsFrom: yup.string().required('Start time is required'),
+  timingsTo: yup.string().required('End time is required'),
+  weekdays: yup.array().of(yup.string().required()).required('Weekdays are required'),
+  fromage: yup.string().required('Minimum age is required'),
+  toage: yup.string().required('Maximum age is required'),
+  fromcost: yup.string().required('Minimum cost is required'),
+  tocost: yup.string().required('Maximum cost is required'),
+  gender: yup.string().required('Gender is required'),
+  experienceLevel: yup.string().required('Experience level is required'),
+  noOfSessions: yup.string().required('Number of sessions is required'),
+  location: yup.object().shape({
+    address: yup.string().required('Address is required'),
+    area: yup.string().required('Area is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    country: yup.string().required('Country is required'),
+    pincode: yup.string().required('Pincode is required'),
+    latitude: yup.string().required('Latitude is required'),
+    longitude: yup.string().required('Longitude is required'),
+    road: yup.string().required('Road is required')
+  }).nullable(),
+  contact: yup.object().shape({
+    id: yup.string().required('Contact ID is required'),
+    tutorFirstName: yup.string().required('First name is required'),
+    tutorLastName: yup.string().required('Last name is required'),
+    phoneNumber: yup.string().required('Phone number is required'),
+    email: yup.string().email('Invalid email').required('Email is required'),
+    contactType: yup.object().shape({
+      primary: yup.boolean().required(),
+      secondary: yup.boolean().required(),
+      billing: yup.boolean().required()
+    }).required()
+  }).nullable()
 });
 
 // Course details form schema
 const courseDetailsSchema = yup.object().shape({
-  className: yup.string().required("Course name is required"),
-  category: yup.string().required("Category is required"),
-  subCategory: yup.string(),
-  time: yup.string(),
-  timingsFrom:yup.string(),
-  timingsTo:yup.string().test(
-    'is-greater-than-timingsFrom',
-    'To Time must be greater than or equal to From Time',
-    function (value) {
-      const { timingsFrom } = this.parent;
-      if (!timingsFrom || !value) return true;
-      return timingsFrom <= value;
-    }
-  ),
-  type: yup.string().oneOf(['Regular', 'Online', 'Offline']).required("Course type is required"),
-  gender: yup.string(),
-  fromage: yup.string(),
-  toage: yup.string().test(
-    'is-greater-than-fromage',
-    'The age must be greater than or equal to From Age',
-    function (value) {
-      const { fromage } = this.parent;
-      if (!fromage || !value) return true;
-      return Number(value) >= Number(fromage);
-    }
-  ),
-  age: yup.string(),
-  fromcost: yup.string(),
-  tocost: yup.string().test(
-    'is-greater-than-fromcost',
-    'To cost must be greater than or equal to From cost',
-    function (value) {
-      const { fromcost } = this.parent;
-      if (!fromcost || !value) return true;
-      return Number(value) >= Number(fromcost);
-    }
-  ),
-  cost: yup.string(),
-  classSize: yup.string(),
-  weekdays: yup.array().of(yup.string().nullable()),
-  experienceLevel: yup.string(),
-  sessionFrom: yup.string(),
-  sessionTo: yup.string()
-    .test(
-      'is-greater-than-sessionFrom',
-      'To Session must be greater than or equal to From Session',
-      function(value) {
-        const { sessionFrom } = this.parent;
-        if (!sessionFrom || !value) return true;
-        return Number(value) >= Number(sessionFrom);
-      }
-    ),
-  noOfSessions: yup.string(),
-  location: yup.string(),
-  contact: yup.string()
+  type: yup.string().required('Type is required'),
+  className: yup.string().required('Course name is required'),
+  category: yup.string().required('Category is required'),
+  subCategory: yup.string().required('Sub-category is required'),
+  time: yup.string().required('Time is required'),
+  timingsFrom: yup.string().required('Start time is required'),
+  timingsTo: yup.string().required('End time is required'),
+  weekdays: yup.array().of(yup.string().required()).required('Weekdays are required'),
+  fromage: yup.string().required('Minimum age is required'),
+  toage: yup.string().required('Maximum age is required'),
+  fromcost: yup.string().required('Minimum cost is required'),
+  tocost: yup.string().required('Maximum cost is required'),
+  gender: yup.string().required('Gender is required'),
+  experienceLevel: yup.string().required('Experience level is required'),
+  noOfSessions: yup.string().required('Number of sessions is required'),
+  location: yup.object().shape({
+    address: yup.string().required('Address is required'),
+    area: yup.string().required('Area is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    country: yup.string().required('Country is required'),
+    pincode: yup.string().required('Pincode is required'),
+    latitude: yup.string().required('Latitude is required'),
+    longitude: yup.string().required('Longitude is required'),
+    road: yup.string().required('Road is required')
+  }).nullable(),
+  contact: yup.object().shape({
+    id: yup.string().required('Contact ID is required'),
+    firstName: yup.string().required('First name is required'),
+    tutorLastName: yup.string().required('Last name is required'),
+    phoneNumber: yup.string().required('Phone number is required'),
+    email: yup.string().email('Invalid email').required('Email is required'),
+    contactType: yup.object().shape({
+      primary: yup.boolean().required(),
+      secondary: yup.boolean().required(),
+      billing: yup.boolean().required()
+    }).required()
+  }).nullable()
 });
 
 export default function RegistrationForm() {
-  const [images, setImages] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  // const [isInstDetailsSubmitted] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showClassFields, setShowClassFields] = useState(false);
-  const [showCourseFields, setShowCourseFields] = useState(false);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
   const [username, setUsername] = useState("");
-  const [activeAccordion, setActiveAccordion] = useState("item-0");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [directory, setDirectory] = useState<DirectoryItem[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [onDeleteCallback, setOnDeleteCallback] = useState<(() => void) | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [isLocationPopupOpen, setIsLocationPopupOpen] = useState(false);
+  const [isContactPopupOpen, setIsContactPopupOpen] = useState(false);
+  const [showClassFields, setShowClassFields] = useState(false);
+  const [showCourseFields, setShowCourseFields] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState("item-0");
+  const [isLoading, setIsLoading] = useState(false);
   const [completedSections, setCompletedSections] = useState({
     personalDetails: false,
     instituteDetails: false,
     classDetails: false
   });
-
-  const [courses, setCourses] = useState<any[]>([]);
-
-  const [directory, setDirectory] = useState<DirectoryItem[]>([]);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  // Add these state variables at the top with other state declarations
-  const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
-  const [instituteDetailsData, setInstituteDetailsData] = useState<any>(null);
   const [classDetailsData, setClassDetailsData] = useState<any[]>([]);
   const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
+  const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
+  const [instituteDetailsData, setInstituteDetailsData] = useState<any>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [savedLocations, setSavedLocations] = useState<string[]>([]);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [deleteMessage, setDeleteMessage] = useState('');
-  const [onDeleteCallback, setOnDeleteCallback] = useState<(() => void) | null>(null);
+
+  // Add back the contacts state
+  const [contacts] = useState<Contact[]>([
+    {
+      id: '1',
+      firstName: 'Ajay',
+      lastName: 'Kumar',
+      phoneNumber: '+919876543210',
+      email: 'ajay@example.com',
+      contactType: { primary: true, secondary: false, billing: false }
+    },
+    {
+      id: '2',
+      firstName: 'Priya',
+      lastName: 'Singh',
+      phoneNumber: '+919876543211',
+      email: 'priya@example.com',
+      contactType: { primary: false, secondary: true, billing: false }
+    },
+    {
+      id: '3',
+      firstName: 'Raj',
+      lastName: 'Sharma',
+      phoneNumber: '+919876543212',
+      email: 'raj@example.com',
+      contactType: { primary: false, secondary: false, billing: true }
+    }
+  ]);
+
+  // const router = useRouter();
+
+  // Remove unused state variables
+  // const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  // Add default location
+  const defaultLocation: Location = {
+    address: "Pune, Maharashtra",
+    area: "Pune",
+    city: "Pune",
+    state: "Maharashtra",
+    country: "India",
+    pincode: "411001",
+    latitude: "18.5204",
+    longitude: "73.8567",
+    road: "Main Road"
+  };
+
+  // Remove duplicate state declarations
+  // const [locationData, setLocationData] = useState<Location | null>(null);
+  // const [contactData, setContactData] = useState<Contact | null>(null);
+
+  // Add default contact
+  // const defaultContact: Contact = {
+  //   id: '1',
+  //   firstName: 'Default',
+  //   tutorLastName: 'Contact',
+  //   phoneNumber: '+919876543210',
+  //   email: 'default@example.com',
+  //   contactType: { primary: true, secondary: false, billing: false }
+  // };
+
+  // Add currentFormType state
+  const [currentFormType] = useState<'class' | 'course'>('class');
 
   useEffect(() => {
     if (showClassFields) {
       setActiveAccordion("item-4"); // Open the class accordion
       setShowCourseFields(false); // Close the course form
     }
-  }, [showClassFields, setShowCourseFields]);
+  }, [showClassFields]);
 
   useEffect(() => {
     if (showCourseFields) {
       setActiveAccordion("item-5"); // Open the course accordion
       setShowClassFields(false); // Close the class form
     }
-  }, [showCourseFields, setShowClassFields]);
+  }, [showCourseFields]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -326,6 +324,17 @@ export default function RegistrationForm() {
     }
   }, [completedSections, showClassFields, showCourseFields]);
 
+  useEffect(() => {
+    const locations = localStorage.getItem('locations');
+    if (locations) {
+      const parsedLocations = JSON.parse(locations);
+      const locationStrings = parsedLocations.map((loc: any) =>
+        `${loc.address}, ${loc.area}, ${loc.city}`
+      );
+      setSavedLocations(locationStrings);
+    }
+  }, [isLocationPopupOpen]); // Reload when location popup opens/closes
+
   // Form for personal details
   const personalForm = useForm({
     resolver: yupResolver(personalDetailsSchema),
@@ -343,42 +352,19 @@ export default function RegistrationForm() {
       gstNo: '',
       thumbnailImageFile: undefined,
       introduction: '',
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      whatsappNumber: '',
-      email: '',
-      experience: '',
-      contactIntroduction: '',
-      contactType: {
-        primary: false,
-        secondary: false,
-        billing: false,
-      },
-      certifications: null,
-      address: '',
-      road: '',
-      landmark: '',
-      area: '',
-      city: '',
-      state: '',
-      country: '',
-      pincode: '',
-      latitude: 18.5204,
-      longitude: 73.8567,
       websiteName: '',
       classLevel: '',
       instagramAccount: '',
       youtubeAccount: '',
-      categoryId: undefined,
-      purchaseMaterialIds: '',
-      itemCarryText: ''
+      // categoryId: undefined,
+      // purchaseMaterialIds: '',
+      // itemCarryText: ''
     }
   });
 
   // Form for class details
   const classForm = useForm<FormValues>({
-    resolver: yupResolver(classDetailsSchema),
+    resolver: yupResolver(classDetailsSchema) as any,
     mode: "onChange",
     defaultValues: {
       type: 'Offline',
@@ -386,8 +372,8 @@ export default function RegistrationForm() {
       category: '',
       subCategory: '',
       time: '',
-      timingsFrom:'',
-      timingsTo:'',
+      timingsFrom: '',
+      timingsTo: '',
       weekdays: [],
       fromage: '',
       toage: '',
@@ -395,22 +381,24 @@ export default function RegistrationForm() {
       tocost: '',
       gender: 'both',
       experienceLevel: 'beginner',
-      noOfSessions: '1'
+      noOfSessions: '1',
+      location: null,
+      contact: null
     }
   });
 
   // Form for course details
   const courseForm = useForm<FormValues>({
-    resolver: yupResolver(courseDetailsSchema),
+    resolver: yupResolver(courseDetailsSchema) as any,
     mode: "onChange",
     defaultValues: {
       type: 'Offline',
       className: '',
       category: '',
       subCategory: '',
-      timingsFrom:'',
-      timingsTo:'',
       time: '',
+      timingsFrom: '',
+      timingsTo: '',
       weekdays: [],
       fromage: '',
       toage: '',
@@ -418,7 +406,9 @@ export default function RegistrationForm() {
       tocost: '',
       gender: 'both',
       experienceLevel: 'beginner',
-      noOfSessions: '1'
+      noOfSessions: '1',
+      location: null,
+      contact: null
     }
   });
 
@@ -444,8 +434,7 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitClass,
     setValue: setValueClass,
     watch: watchClass,
-    formState: { errors: errorsClass },
-    reset: resetClass
+    formState: { errors: errorsClass }
   } = classForm;
 
   const {
@@ -453,8 +442,7 @@ export default function RegistrationForm() {
     handleSubmit: handleSubmitCourse,
     setValue: setValueCourse,
     watch: watchCourse,
-    formState: { errors: errorsCourse },
-    reset: resetCourse
+    formState: { errors: errorsCourse }
   } = courseForm;
 
   // Load saved data from localStorage on component mount
@@ -532,26 +520,14 @@ export default function RegistrationForm() {
     });
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    if (files.length > 0) {
-      // Store the actual File objects
-      setImages(files);
-
-      // Create URLs for preview only
-      const newImageUrls = files.map(file => URL.createObjectURL(file));
-      setImageUrls([...imageUrls, ...newImageUrls]);
-    }
-  };
-
   // Save personal details to localStorage and proceed to the next section
   const savePersonalDetails = async (data: any) => {
     try {
       setIsLoading(true);
-      
+
       // Store personal details in state
       setPersonalDetailsData(data);
-      
+
       // Mark section as completed and move to next
       setCompletedSections(prev => ({ ...prev, personalDetails: true }));
       setActiveAccordion("item-1");
@@ -569,24 +545,25 @@ export default function RegistrationForm() {
     try {
       setIsLoading(true);
       const data = watchInstitute();
-      
+
       // Validate the form
       const isValid = await instituteForm.trigger();
-      
+
       if (!isValid) {
+
         toast.error("Please fill in all required fields");
         return;
       }
-      
+
       // Store institute details in state
       setInstituteDetailsData(data);
-      
+
       // Mark section as completed
       setCompletedSections(prev => ({ ...prev, instituteDetails: true }));
-      
+
       // Open the institute images accordion
       setActiveAccordion("item-2");
-      
+
       toast.success(`Institute details saved successfully!`);
     } catch (error) {
       console.error("Error saving institute details:", error);
@@ -598,188 +575,188 @@ export default function RegistrationForm() {
 
   // Update the saveClassDetails function
   const saveClassDetails = async (data: any) => {
-    console.log(data)
     try {
-      setIsLoading(true);
-      
-      // Validate required fields
-      if (!data.className) {
-        toast.error("Class name is required");
-        return;
-      }
-      
-      if (!data.category) {
-        toast.error("Category is required");
-        return;
-      }
-      
-      if (!data.timingsFrom || !data.timingsTo) {
-        toast.error("Time is required");
-        return;
-      }
-      
-      if (!data.type) {
-        toast.error("Class type is required");
-        return;
-      }
-      
-      if (!data.weekdays || data.weekdays.length === 0) {
-        toast.error("Please select at least one weekday");
-        return;
-      }
-
-      // Create a new class object with all the form data
-      const newClass = {
-        className: data.className,
-        category: data.category,
-        subCategory: data.subCategory,
-        time: data.time,
-        timingsFrom:data.timingsFrom,
-        timingsTo:data.timingsTo,
-        type: data.type,
-        gender: data.gender || 'both',
-        fromage: data.fromage || '',
-        toage: data.toage || '',
-        fromcost: data.fromcost || '',
-        tocost: data.tocost || '',
-        weekdays: data.weekdays,
-        experienceLevel: data.experienceLevel || 'beginner',
-        noOfSessions: data.noOfSessions || '1',
-        sessionFrom: data.sessionFrom || '0',
-        sessionTo: data.sessionTo || '1'
+      const classDetails = {
+        ...data,
+        location: data.location || defaultLocation,
+        contact: data.contact || null
       };
 
-      if (editIndex !== null) {
-        // Update existing class
-        setClassDetailsData(prev => {
-          const newData = [...prev];
-          newData[editIndex] = newClass;
-          return newData;
-        });
-      } else {
-        // Add new class
-        setClassDetailsData(prev => [...prev, newClass]);
-      }
-      
-      // Reset form and state
-      setShowClassFields(false);
-      setEditIndex(null);
-      resetClass();
-      toast.success("Class details saved successfully!");
+      setClassDetailsData(prev => [...prev, classDetails]);
+      classForm.reset();
+      toast.success('Class details saved successfully');
     } catch (error) {
-      console.error("Error saving class details:", error);
-      toast.error("An error occurred while saving class details. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error('Error saving class details:', error);
+      toast.error('Failed to save class details');
     }
   };
 
   // Update the handleCourseSubmit function
   const handleCourseSubmit = async (data: any) => {
     try {
-      setIsLoading(true);
-      
-      // Validate required fields
-      if (!data.className) {
-        toast.error("Course name is required");
-        return;
-      }
-      
-      if (!data.category) {
-        toast.error("Category is required");
-        return;
-      }
-      
-      if (!data.timingsFrom || !data.timingsTo) {
-        toast.error("Time is required");
-        return;
-      }
-      
-      if (!data.type) {
-        toast.error("Course type is required");
-        return;
-      }
-      
-      if (!data.weekdays || data.weekdays.length === 0) {
-        toast.error("Please select at least one weekday");
-        return;
-      }
-
-      // Create a new course object with all the form data
-      const newCourse = {
-        className: data.className,
-        category: data.category,
-        subCategory: data.subCategory,
-        timingsFrom:data.timingsFrom,
-        timingsTo:data.timingsTo,
-        time: data.time,
-        type: data.type,
-        gender: data.gender || 'both',
-        fromage: data.fromage || '',
-        toage: data.toage || '',
-        fromcost: data.fromcost || '',
-        tocost: data.tocost || '',
-        weekdays: data.weekdays,
-        experienceLevel: data.experienceLevel || 'beginner',
-        noOfSessions: data.noOfSessions || '1',
-                sessionFrom: data.sessionFrom || '0',
-        sessionTo: data.sessionTo || '1'
+      const courseDetails = {
+        ...data,
+        location: data.location || defaultLocation,
+        contact: data.contact || null
       };
 
-      if (editIndex !== null) {
-        // Update existing course
-        setCourseDetailsData(prev => {
-          const newData = [...prev];
-          newData[editIndex] = newCourse;
-          return newData;
-        });
-      } else {
-        // Add new course
-        setCourseDetailsData(prev => [...prev, newCourse]);
-      }
-      
-      // Reset form and state
-      setShowCourseFields(false);
-      setEditIndex(null);
-      resetCourse();
-      toast.success("Course details saved successfully!");
+      setCourseDetailsData(prev => [...prev, courseDetails]);
+      courseForm.reset();
+      toast.success('Course details saved successfully');
     } catch (error) {
-      console.error("Error saving course details:", error);
-      toast.error("An error occurred while saving course details. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error('Error saving course details:', error);
+      toast.error('Failed to save course details');
     }
   };
 
-  // Update the handleFinalSubmit function to properly include course details
+  // Update the handleFinalSubmit function
   const handleFinalSubmit = async () => {
     try {
-      // Validate personal details
-      if (!personalDetailsData) {
-        toast.error("Please complete Personal Details section");
-        setActiveAccordion("item-0");
-        return;
+      setIsLoading(true);
+      const formData = new FormData();
+
+      // Add personal details
+      if (personalDetailsData) {
+        formData.append('name', personalDetailsData.firstName + ' ' + personalDetailsData.lastName);
+        formData.append('emailId', personalDetailsData.emailId);
+        formData.append('phoneNumber', personalDetailsData.phoneNumber);
+        formData.append('gender', personalDetailsData.gender);
+        if (personalDetailsData.dob) {
+          formData.append('dob', personalDetailsData.dob.toISOString());
+        }
+        if (personalDetailsData.profileImageFile instanceof File) {
+          formData.append('profileImageFile', personalDetailsData.profileImageFile);
+        }
       }
 
-      // Validate institute details
-      if (!instituteDetailsData) {
-        toast.error("Please complete Institute Details section");
-        setActiveAccordion("item-1");
-        return;
+      // Add institute details
+      if (instituteDetailsData) {
+        formData.append('activity.type', 'INSTITUTE');
+        formData.append('activity.title', instituteDetailsData.programTitle);
+        formData.append('activity.companyName', instituteDetailsData.instituteName);
+        formData.append('activity.description', instituteDetailsData.introduction || '');
+        formData.append('activity.sinceYear', instituteDetailsData.since || '');
+        formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
+
+        // Add thumbnail image
+        if (instituteDetailsData.thumbnailImageFile instanceof File) {
+          formData.append('activity.thumbnailImageFile', instituteDetailsData.thumbnailImageFile);
+        }
+
+        // Add additional images
+        if (images.length > 0) {
+          images.forEach((image) => {
+            if (image instanceof File) {
+              formData.append('activity.images', image);
+            }
+          });
+        }
+
+        // Add tutor details
+        // formData.append('activity.tutorFirstName', personalDetailsData.firstName);
+        // formData.append('activity.tutorLastName', personalDetailsData.lastName);
+        // formData.append('activity.tutorEmailID', personalDetailsData.emailId);
+        // formData.append('activity.tutorCountryCode', '+91');
+        // formData.append('activity.tutorPhoneNo', personalDetailsData.phoneNumber);
+        // formData.append('activity.whatsappCountryCode', '+91');
+        // formData.append('activity.whatsappNo', personalDetailsData.phoneNumber);
+        // formData.append('activity.tutorIntro', instituteDetailsData.introduction || '');
+
+        // Add additional information
+        formData.append('activity.website', instituteDetailsData.websiteName || '');
+        formData.append('activity.classLevel', instituteDetailsData.classLevel || '');
+        formData.append('activity.instagramAcc', instituteDetailsData.instagramAccount || '');
+        formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
       }
 
-      // Validate at least one class or course is added
-      if (classDetailsData.length === 0 && courseDetailsData.length === 0) {
-        toast.error("Please add at least one Class or Course");
-        setActiveAccordion("item-4");
+      // Format class details array
+      const classDetailsArray = classDetailsData.map((classItem) => ({
+        title: classItem.className,
+        subCategoryID: classItem.subCategory || '0',
+        categoryID: classItem.category || '0',
+        timingsFrom: classItem.timingsFrom || '09:00',
+        timingsTo: classItem.timingsTo || '12:00',
+        day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : 'monday',
+        type: classItem.type || 'Offline',
+        ageFrom: parseInt(classItem.fromage) || 0,
+        ageTo: parseInt(classItem.toage) || 0,
+        sessionFrom: parseInt(classItem.sessionFrom) || 0,
+        sessionTo: parseInt(classItem.sessionTo) || 1,
+        gender: classItem.gender || 'both',
+        fromPrice: parseFloat(classItem.fromcost) || 0,
+        toPrice: parseFloat(classItem.tocost) || 0,
+        id: 0,
+        activityId: 0,
+        address: classItem.location?.address || "Pune",
+        area: classItem.location?.area || "Pune",
+        city: classItem.location?.city || "Pune",
+        state: classItem.location?.state || "Maharashtra",
+        country: classItem.location?.country || "India",
+        pincode: classItem.location?.pincode || "411001",
+        latitude: classItem.location?.latitude || "18.5204",
+        longitude: classItem.location?.longitude || "73.8567",
+        road: classItem.location?.road || "Main Road",
+        tutorFirstName:classItem.contact?.tutorFirstName || 'Default',
+        tutorLastName: classItem.contact?.tutorLastName || 'Contact',
+        tutorCountryCode: classItem.contact?.tutorCountryCode || '+91',
+        tutorPhoneNo: classItem.contact?.tutorPhoneNo || '+919876543210',
+        whatsappCountryCode: classItem.contact?.whatsappCountryCode || '+91',
+        whatsappNo: classItem.contact?.whatsappNo || '+919876543210',
+        tutorIntro: classItem.contact?.tutorIntro || 'Default',
+        tutorEmailID: classItem.contact?.tutorEmailID || 'default@example.com',
+        // location: classItem.location || defaultLocation,
+        // contact: classItem.contact || defaultContact,
+      }));
+
+      // Format course details array
+      const courseDetailsArray = courseDetailsData.map((course) => ({
+        title: course.className,
+        subCategoryID: course.subCategory || '0',
+        categoryID: course.category || '0',
+        timingsFrom: course.timingsFrom || '09:00',
+        timingsTo: course.timingsTo || '12:00',
+        day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : 'monday',
+        type: course.type || 'Offline',
+        ageFrom: parseInt(course.fromage) || 0,
+        ageTo: parseInt(course.toage) || 0,
+        sessionFrom: parseInt(course.sessionFrom) || 0,
+        sessionTo: parseInt(course.sessionTo) || 1,
+        gender: course.gender || 'both',
+        fromPrice: parseFloat(course.fromcost) || 0,
+        toPrice: parseFloat(course.tocost) || 0,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        id: 0,
+        activityId: 0,
+        location: course.location || defaultLocation,
+        // contact: course.contact || defaultContact,
+      }));
+
+      // Add class and course details
+      formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
+      formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
+      formData.append('activity.id', '0');
+
+      try {
+        const response = await registerVendor(formData);
+
+        if (response) {
+          setUsername(response.username);
+          setIsSuccessPopupOpen(true);
+          toast.success("Registration completed successfully!");
+        }
+      } catch (error: any) {
+        console.error('API Error:', error);
+        const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
+        toast.error(errorMessage);
         return;
       }
-
-      // Show preview popup instead of submitting immediately
-      setIsPreviewOpen(true);
     } catch (error) {
-      console.error("Error preparing preview:", error);
-      toast.error("An error occurred while preparing the preview. Please try again.");
+      console.error("Error submitting form:", error);
+      toast.error("An error occurred while submitting the form. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setIsPreviewOpen(false);
     }
   };
 
@@ -787,13 +764,13 @@ export default function RegistrationForm() {
   const handleSubmitAfterPreview = async () => {
     try {
       setIsLoading(true);
-      
+
       // Create FormData object
       const formData = new FormData();
 
       // Add personal details
       if (personalDetailsData) {
-        formData.append('name', personalDetailsData.firstName +' '+personalDetailsData.lastName);
+        formData.append('name', personalDetailsData.firstName + ' ' + personalDetailsData.lastName);
         formData.append('emailId', personalDetailsData.emailId);
         formData.append('phoneNumber', personalDetailsData.phoneNumber);
         formData.append('gender', personalDetailsData.gender);
@@ -808,92 +785,93 @@ export default function RegistrationForm() {
       // Add activity details
       if (instituteDetailsData) {
         formData.append('activity.type', 'INSTITUTE');
-        formData.append('activity.categoryId', instituteDetailsData.categoryId.toString());
+        formData.append('activity.categoryId', instituteDetailsData.categoryId?.toString() || '0');
         formData.append('activity.title', instituteDetailsData.programTitle);
         formData.append('activity.companyName', instituteDetailsData.instituteName);
         formData.append('activity.description', instituteDetailsData.introduction || '');
         formData.append('activity.sinceYear', instituteDetailsData.since || '');
         formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
+
+        // Add thumbnail image
         if (instituteDetailsData.thumbnailImageFile instanceof File) {
           formData.append('activity.thumbnailImageFile', instituteDetailsData.thumbnailImageFile);
         }
-        if (images.length > 0 && images[0] instanceof File) {
-          formData.append('activity.thumbnailImageFile', images[0]);
+
+        // Add additional images
+        if (images.length > 0) {
+          images.forEach((image) => {
+            if (image instanceof File) {
+              formData.append('activity.images', image);
+            }
+          });
         }
-        formData.append('activity.address', instituteDetailsData.address || '');
-        formData.append('activity.road', instituteDetailsData.road || '');
-        formData.append('activity.area', instituteDetailsData.area || '');
-        formData.append('activity.state', instituteDetailsData.state || '');
-        formData.append('activity.city', instituteDetailsData.city || '');
-        formData.append('activity.pincode', instituteDetailsData.pincode || '');
-        formData.append('activity.country', instituteDetailsData.country || '');
-        formData.append('activity.longitude', (instituteDetailsData.longitude || 0).toString());
-        formData.append('activity.latitude', (instituteDetailsData.latitude || 0).toString());
-        formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
-        formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
-        formData.append('activity.tutorFirstName', instituteDetailsData.firstName);
-        formData.append('activity.tutorLastName', instituteDetailsData.lastName);
-        formData.append('activity.tutorEmailID', instituteDetailsData.email);
+
+        // Add tutor details
+        formData.append('activity.tutorFirstName', personalDetailsData.firstName);
+        formData.append('activity.tutorLastName', personalDetailsData.tutorLastName);
+        formData.append('activity.tutorEmailID', personalDetailsData.emailId);
         formData.append('activity.tutorCountryCode', '+91');
-        formData.append('activity.tutorPhoneNo', instituteDetailsData.phoneNumber);
+        formData.append('activity.tutorPhoneNo', personalDetailsData.phoneNumber);
         formData.append('activity.whatsappCountryCode', '+91');
-        formData.append('activity.whatsappNo', instituteDetailsData.whatsappNumber || '');
-        formData.append('activity.tutorIntro', instituteDetailsData.contactIntroduction || '');
+        formData.append('activity.whatsappNo', personalDetailsData.phoneNumber);
+        formData.append('activity.tutorIntro', instituteDetailsData.introduction || '');
+
+        // Add additional information
         formData.append('activity.website', instituteDetailsData.websiteName || '');
         formData.append('activity.classLevel', instituteDetailsData.classLevel || '');
         formData.append('activity.instagramAcc', instituteDetailsData.instagramAccount || '');
         formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
+        formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
+        formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
       }
-      // Add activity images
-      [...images].forEach((image) => {
-        if (image instanceof File) {
-          formData.append('activity.images', image);
-        }
-      });
 
-      // Format class details array to match exact structure
+      // Format class details array
       const classDetailsArray = classDetailsData.map((classItem) => ({
         title: classItem.className,
-        subCategoryID: parseInt(classItem.subCategory) || 0,
-        categoryID: parseInt(classItem.category) || 0,
-        timingsFrom: classItem.timingsFrom,
-        timingsTo: classItem.timingsTo ,
-        day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : '',
+        subCategoryID: classItem.subCategory || '0',
+        categoryID: classItem.category || '0',
+        timingsFrom: classItem.timingsFrom || '09:00',
+        timingsTo: classItem.timingsTo || '12:00',
+        day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : 'monday',
         type: classItem.type || 'Offline',
-        ageFrom: classItem.fromage ? parseInt(classItem.fromage) : 0,
-        ageTo: classItem.toage ? parseInt(classItem.toage) : 0,
-        sessionFrom: classItem.sessionFrom? parseInt(classItem.sessionFrom) : 0,
-        sessionTo: classItem.sessionTo ? parseInt(classItem.sessionTo) : 1,
+        ageFrom: parseInt(classItem.fromage) || 0,
+        ageTo: parseInt(classItem.toage) || 0,
+        sessionFrom: parseInt(classItem.sessionFrom) || 0,
+        sessionTo: parseInt(classItem.sessionTo) || 1,
         gender: classItem.gender || 'both',
-        fromPrice: classItem.fromcost ? parseFloat(classItem.fromcost) : 0,
-        toPrice: classItem.tocost ? parseFloat(classItem.tocost) : 0
+        fromPrice: parseFloat(classItem.fromcost) || 0,
+        toPrice: parseFloat(classItem.tocost) || 0,
+        id: 0,
+        activityId: 0,
+        location: classItem.location || defaultLocation,
+        // contact: classItem.contact || defaultContact,
       }));
 
-      // Format course details array to match exact structure
+      // Format course details array
       const courseDetailsArray = courseDetailsData.map((course) => ({
         title: course.className,
-        subCategoryID: parseInt(course.subCategory) || 0,
-        categoryID: parseInt(course.category) || 0,
-        timingsFrom: course.time === 'morning' ? '09:00' :
-          course.time === 'afternoon' ? '13:00' :
-            course.time === 'evening' ? '17:00' : '09:00',
-        timingsTo: course.time === 'morning' ? '12:00' :
-          course.time === 'afternoon' ? '16:00' :
-            course.time === 'evening' ? '20:00' : '12:00',
+        subCategoryID: course.subCategory || '0',
+        categoryID: course.category || '0',
+        timingsFrom: course.timingsFrom || '09:00',
+        timingsTo: course.timingsTo || '12:00',
         day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : 'monday',
         type: course.type || 'Offline',
-        ageFrom: course.fromage ? parseInt(course.fromage) : 0,
-        ageTo: course.toage ? parseInt(course.toage) : 0,
-        sessionFrom: course.sessionFrom? parseInt(course.sessionFrom) : 0,
-        sessionTo: course.sessionTo ? parseInt(course.sessionTo) : 1,
+        ageFrom: parseInt(course.fromage) || 0,
+        ageTo: parseInt(course.toage) || 0,
+        sessionFrom: parseInt(course.sessionFrom) || 0,
+        sessionTo: parseInt(course.sessionTo) || 1,
         gender: course.gender || 'both',
-        fromPrice: course.fromcost ? parseFloat(course.fromcost) : 0,
-        toPrice: course.tocost ? parseFloat(course.tocost) : 0,
+        fromPrice: parseFloat(course.fromcost) || 0,
+        toPrice: parseFloat(course.tocost) || 0,
         startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        id: 0,
+        activityId: 0,
+        location: course.location || defaultLocation,
+        // contact: course.contact || defaultContact,
       }));
 
-      // Add class and course details without extra quotes and escaping
+      // Add class and course details
       formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
       formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
       formData.append('activity.id', '0');
@@ -907,7 +885,7 @@ export default function RegistrationForm() {
           toast.success("Registration completed successfully!");
         }
       } catch (error: any) {
-        // Handle API error response
+        console.error('API Error:', error);
         const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
         toast.error(errorMessage);
         return;
@@ -917,7 +895,7 @@ export default function RegistrationForm() {
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
-      setIsPreviewOpen(false); // Close the preview popup
+      setIsPreviewOpen(false);
     }
   };
   const handleWeekdayChange = (day: string, isClassfields: boolean) => {
@@ -940,21 +918,23 @@ export default function RegistrationForm() {
   };
 
   const handleEditClass = (index: number) => {
-    setEditIndex(index);
     const classToEdit = classDetailsData[index];
-    Object.keys(classToEdit).forEach((key) => {
-      setValueClass(key as keyof typeof classDetailsSchema.fields, classToEdit[key]);
-    });
+    if (classToEdit) {
+      Object.keys(classToEdit).forEach((key) => {
+        setValueClass(key as keyof FormValues, classToEdit[key]);
+      });
+    }
     setShowClassFields(true);
     setActiveAccordion("item-4");
   };
 
   const handleEditCourse = (index: number) => {
-    setEditIndex(index);
     const courseToEdit = courseDetailsData[index];
-    Object.keys(courseToEdit).forEach((key) => {
-      setValueCourse(key as keyof typeof courseDetailsSchema.fields, courseToEdit[key]);
-    });
+    if (courseToEdit) {
+      Object.keys(courseToEdit).forEach((key) => {
+        setValueCourse(key as keyof FormValues, courseToEdit[key]);
+      });
+    }
     setShowCourseFields(true);
     setActiveAccordion("item-5");
   };
@@ -985,7 +965,7 @@ export default function RegistrationForm() {
 
   const onAccordianClick = (value: string) => {
     console.log("Accordion value changed:", value);
-    
+
     // Allow opening if the section is already active
     if (value === activeAccordion) {
       setActiveAccordion(""); // Close the accordion
@@ -1013,7 +993,6 @@ export default function RegistrationForm() {
       setThumbnailPreview(URL.createObjectURL(file));
     }
   };
-
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -1026,29 +1005,161 @@ export default function RegistrationForm() {
     // Clear personal details
     personalForm.reset();
     setPersonalDetailsData(null);
-    
+
     // Clear institute details
     instituteForm.reset();
     setInstituteDetailsData(null);
-    
+
     // Clear class and course details
     setClassDetailsData([]);
     setCourseDetailsData([]);
-    
+
     // Clear images
     setImages([]);
-    setImageUrls([]);
+    // setImageUrls([]);
     setThumbnailPreview(null);
-    
+
     // Reset completion states
     setCompletedSections({
       personalDetails: false,
       instituteDetails: false,
       classDetails: false
     });
-    
+
     // Reset active accordion
     setActiveAccordion("item-0");
+  };
+
+  // Update the handleLocationSubmit function
+  const handleLocationSubmit = async (locationData: Location) => {
+    debugger;
+    try {
+      // Store the location in localStorage for persistence
+      const savedLocations = JSON.parse(localStorage.getItem('locations') || '[]');
+      savedLocations.push(locationData);
+      localStorage.setItem('locations', JSON.stringify(savedLocations));
+
+      // Update the form value based on current form type
+      if (currentFormType === 'class') {
+        setValueClass('location', locationData);
+      } else {
+        setValueCourse('location', locationData);
+      }
+
+      // Update saved locations state
+      setSavedLocations(prev => [...prev, `${locationData.address}, ${locationData.area}, ${locationData.city}`]);
+      
+      // Close the popup
+      setIsLocationPopupOpen(false);
+      
+      toast.success('Location saved successfully');
+    } catch (error) {
+      console.error('Error setting location:', error);
+      toast.error('Failed to set location');
+    }
+  };
+
+  // Update the handleContactSubmit function
+  const handleContactSubmit = async (contactData: any) => {
+    try {
+      // Store the contact in localStorage for persistence
+      const savedContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+      savedContacts.push(contactData);
+      localStorage.setItem('contacts', JSON.stringify(savedContacts));
+
+      // Update the form value based on current form type
+      if (currentFormType === 'class') {
+        setValueClass('contact', contactData);
+      } else {
+        setValueCourse('contact', contactData);
+      }
+
+      // Close the popup
+      setIsContactPopupOpen(false);
+      
+      toast.success('Contact saved successfully');
+    } catch (error) {
+      console.error('Error setting contact:', error);
+      toast.error('Failed to set contact');
+    }
+  };
+
+  // Update the contact select options
+  const renderContactSelect = (formType: 'class' | 'course') => {
+    const watch = formType === 'class' ? watchClass : watchCourse;
+    const errors = formType === 'class' ? errorsClass : errorsCourse;
+    const contact = watch('contact');
+
+    return (
+      <div className="flex flex-col gap-2">
+        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+          Contact<span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={contact ? `${contact.firstName} ${contact.lastName}` : ''}
+          onValueChange={(value) => handleContactSelect(value, formType)}
+        >
+          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+            <SelectValue placeholder="Select contact" />
+          </SelectTrigger>
+          <SelectContent>
+            {contacts.map(contact => (
+              <SelectItem
+                key={`${contact.firstName}-${contact.lastName}`}
+                value={`${contact.firstName} ${contact.lastName}`}
+              >
+                {`${contact.firstName} ${contact.lastName}`} ({Object.entries(contact.contactType)
+                  .filter(([, value]) => value)
+                  .map(([key]) => key)
+                  .join(', ')})
+              </SelectItem>
+            ))}
+            <div className="p-2 border-t border-gray-200">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => setIsContactPopupOpen(true)}
+              >
+                + Add Contact
+              </Button>
+            </div>
+          </SelectContent>
+        </Select>
+        {errors.contact && (
+          <p className="text-red-500 text-xs">{errors.contact.message}</p>
+        )}
+      </div>
+    );
+  };
+
+  // Add this function to handle location selection
+  const handleLocationSelect = (value: string, formType: 'class' | 'course') => {
+    if (formType === 'class') {
+      setValueClass('location', defaultLocation);
+    } else {
+      setValueCourse('location', defaultLocation);
+    }
+  };
+
+  // Add handleContactSelect function
+  const handleContactSelect = (value: string, formType: 'class' | 'course') => {
+    const selectedContact = contacts.find(contact =>
+      `${contact.firstName} ${contact.lastName}` === value
+    );
+
+    if (selectedContact) {
+      if (formType === 'class') {
+        setValueClass('contact', selectedContact);
+      } else {
+        setValueCourse('contact', selectedContact);
+      }
+    }
+  };
+
+  // Update the location select value handling
+  const getLocationValue = (location: Location | null | undefined): string => {
+    if (!location) return '';
+    return typeof location === 'string' ? location : location.address;
   };
 
   return (
@@ -1108,20 +1219,20 @@ export default function RegistrationForm() {
                         Mobile<span className="text-red-500">*</span>
                       </Label>
                       <div className="flex items-center">
-                      <Select>
-                  <SelectTrigger className="p-0 md:p-4 w-[20%] md:w-[20%]] h-[52px] rounded-l-md rounded-r-none border-[#05244f] border-r-0">
-                    <SelectValue placeholder="+91" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="91">+91</SelectItem>
-                  </SelectContent>
-                </Select>
-                      <Input
-                        placeholder="Mobile"
-                        maxLength={10}
-                        {...registerPersonal("phoneNumber")}
-                        className="h-[52px] rounded-l-none border-[#05244f]"
-                      />
+                        <Select>
+                          <SelectTrigger className="p-0 md:p-4 w-[20%] md:w-[20%]] h-[52px] rounded-l-md rounded-r-none border-[#05244f] border-r-0">
+                            <SelectValue placeholder="+91" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="91">+91</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Mobile"
+                          maxLength={10}
+                          {...registerPersonal("phoneNumber")}
+                          className="h-[52px] rounded-l-none border-[#05244f]"
+                        />
                       </div>
                       {errorsPersonal.phoneNumber && (
                         <p className="text-red-500 text-xs">{errorsPersonal.phoneNumber.message}</p>
@@ -1193,48 +1304,48 @@ export default function RegistrationForm() {
                         }
                         className="h-[52px] border-[#05244f]"
                       />
-                    )}
+                      )}
                       {profileImagePreview && (
-                      <div className="relative w-[158px] h-[158px] mb-4">
-                        <Image
-                          src={profileImagePreview}
-                          alt="Profile Preview"
-                          width={158}
-                          height={158}
-                          className="rounded-md w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setProfileImagePreview(null);
-                            if (profileImageInputRef.current) {
-                              profileImageInputRef.current.value = '';
-                            }
-                            setPersonalDetailsData((prevData: any) => ({
-                              ...prevData,
-                              profileImageFile: new File([], '')
-                            }));
-                          }}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                        <div className="relative w-[158px] h-[158px] mb-4">
+                          <Image
+                            src={profileImagePreview}
+                            alt="Profile Preview"
+                            width={158}
+                            height={158}
+                            className="rounded-md w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setProfileImagePreview(null);
+                              if (profileImageInputRef.current) {
+                                profileImageInputRef.current.value = '';
+                              }
+                              setPersonalDetailsData((prevData: any) => ({
+                                ...prevData,
+                                profileImageFile: new File([], '')
+                              }));
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
                           >
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
-                      </div>
-                    )}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -1289,25 +1400,21 @@ export default function RegistrationForm() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">Since</Label>
-                      {/* <Input
-                        placeholder="Since"
-                        {...registerInstitute("since")}
-                        className="h-[52px] border-[#05244f]" */}
-                        <Select
+                      <Select
                         onValueChange={(value) => setValueInstitute("since", value)}
                         value={watchInstitute("since") || ""}
-                        >
+                      >
                         <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                           <SelectValue placeholder="Select Year" />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
                           ))}
                         </SelectContent>
-                        </Select>
+                      </Select>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">GST No</Label>
@@ -1321,9 +1428,9 @@ export default function RegistrationForm() {
 
                   <div className="flex flex-col gap-2 mb-6">
                     <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                      Thumbnail Image<span className="text-red-500">*</span>
+                      Photos<span className="text-red-500">*</span>
                     </Label>
-                    
+
                     {thumbnailPreview && (
                       <div className="relative w-[158px] h-[158px] mb-4">
                         <Image
@@ -1407,265 +1514,6 @@ export default function RegistrationForm() {
                     )}
                   </div>
 
-                  {/* Contact Details Section */}
-                  <div className="mt-8">
-                    <h3 className="text-[#05244f] text-lg font-semibold mb-4">Contact Details</h3>
-                    <div className="border border-[#05244f] rounded-md p-4">
-                      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            First Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="First Name"
-                            {...registerInstitute("firstName")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.firstName && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.firstName.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Last Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Last Name"
-                            {...registerInstitute("lastName")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.lastName && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.lastName.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Phone Number <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Enter Phone No."
-                            maxLength={10}
-                            onKeyPress={(e) => {
-                              if (!/[0-9]/.test(e.key)) {
-                                e.preventDefault();
-                              }
-                            }}
-                            {...registerInstitute("phoneNumber")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.phoneNumber && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.phoneNumber.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            WhatsApp Number
-                          </Label>
-                          <Input
-                            placeholder="Enter WhatsApp Number"
-                            maxLength={10}
-                            onKeyPress={(e) => {
-                              if (!/[0-9]/.test(e.key)) {
-                                e.preventDefault();
-                              }
-                            }}
-                            {...registerInstitute("whatsappNumber")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.whatsappNumber && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.whatsappNumber.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Email Address <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Email Address"
-                            {...registerInstitute("email")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.email && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.email.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Experience
-                          </Label>
-                          <Input
-                            placeholder="Enter in years"
-                            {...registerInstitute("experience")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Certifications
-                          </Label>
-                          <Input
-                            type="file"
-                            accept=".pdf,.jpg,.png"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setValueInstitute("certifications", file);
-                              }
-                            }}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mb-6">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Contact Introduction
-                        </Label>
-                        <Textarea
-                          placeholder="Contact Introduction"
-                          rows={8}
-                          {...registerInstitute("contactIntroduction")}
-                          className="border-[#05244f] h-[90px]"
-                        />
-                      </div>
-
-                      <div className="mb-6">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Contact Type
-                        </Label>
-                        <div className="flex items-center gap-4 mt-2">
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="primary"
-                              className="border-black"
-                              {...registerInstitute("contactType.primary")}
-                            />
-                            <Label htmlFor="primary">Primary</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="secondary"
-                              className="border-black"
-                              {...registerInstitute("contactType.secondary")}
-                            />
-                            <Label htmlFor="secondary">Secondary</Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="billing"
-                              className="border-black"
-                              {...registerInstitute("contactType.billing")}
-                            />
-                            <Label htmlFor="billing">Billing</Label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location Details Section */}
-                  <div className="mt-8">
-                    <h3 className="text-[#05244f] text-lg font-semibold mb-4">Location Details</h3>
-                    <div className="border border-[#05244f] rounded-md p-4">
-                      <h3 className="text-[#05244f] trajan-pro text-md font-semibold mb-4">Location Details</h3>
-
-                      {/* Location Fields */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Address<span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Address"
-                            {...registerInstitute("address")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.address && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.address.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Landmark <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Near by landmark"
-                            {...registerInstitute("landmark")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.landmark && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.landmark.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Area <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="Area"
-                            {...registerInstitute("area")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.area && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.area.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            City <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            placeholder="City"
-                            {...registerInstitute("city")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                          {errorsInstitute.city && (
-                            <p className="text-red-500 text-xs">{errorsInstitute.city.message}</p>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">State</Label>
-                          <Input
-                            placeholder="State"
-                            {...registerInstitute("state")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Country</Label>
-                          <Input
-                            placeholder="Country"
-                            {...registerInstitute("country")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Pincode</Label>
-                          <Input
-                            placeholder="Pincode"
-                            {...registerInstitute("pincode")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Latitude</Label>
-                          <Input
-                            placeholder="Latitude"
-                            {...registerInstitute("latitude")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">Longitude</Label>
-                          <Input
-                            placeholder="Longitude"
-                            {...registerInstitute("longitude")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                   <div className="mt-8">
                     <h3 className="text-[#05244f] text-lg font-semibold mb-4">Additional Information</h3>
                     <div className="border border-[#05244f] rounded-md p-4">
@@ -1673,68 +1521,49 @@ export default function RegistrationForm() {
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Website Name</Label>
                           <Input
-                            placeholder="Website Name"
+                            placeholder="Enter website name"
                             {...registerInstitute("websiteName")}
                             className="h-[52px] border-[#05244f]"
                           />
+                          {errorsInstitute.websiteName && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.websiteName.message}</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Level</Label>
                           <Input
-                            placeholder="Class Level"
+                            placeholder="Enter class level"
                             {...registerInstitute("classLevel")}
                             className="h-[52px] border-[#05244f]"
                           />
+                          {errorsInstitute.classLevel && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.classLevel.message}</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Instagram Account</Label>
                           <Input
-                            placeholder="Instagram Account"
+                            placeholder="Enter Instagram account"
                             {...registerInstitute("instagramAccount")}
                             className="h-[52px] border-[#05244f]"
                           />
+                          {errorsInstitute.instagramAccount && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.instagramAccount.message}</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">YouTube Account</Label>
                           <Input
-                            placeholder="YouTube Account"
+                            placeholder="Enter YouTube account"
                             {...registerInstitute("youtubeAccount")}
                             className="h-[52px] border-[#05244f]"
                           />
+                          {errorsInstitute.youtubeAccount && (
+                            <p className="text-red-500 text-xs">{errorsInstitute.youtubeAccount.message}</p>
+                          )}
                         </div>
-                        
                       </div>
-                      <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 my-4 mb-6">
-                        {/* <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Road
-                          </Label>
-                          <Input
-                            placeholder="Road"
-                            {...registerInstitute("road")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Purchase Material IDs
-                          </Label>
-                          <Input
-                            placeholder="Purchase Material IDs"
-                            {...registerInstitute("purchaseMaterialIds")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                            Item Carry Text
-                          </Label>
-                          <Input
-                            placeholder="Item Carry Text"
-                            {...registerInstitute("itemCarryText")}
-                            className="h-[52px] border-[#05244f]"
-                          />
-                        </div> */}
+                      {/* <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 my-4 mb-6">
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                             Category<span className="text-red-500">*</span>
@@ -1758,11 +1587,9 @@ export default function RegistrationForm() {
                             <p className="text-red-500 text-xs">{errorsInstitute.categoryId.message}</p>
                           )}
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
-
-                
 
                   <div className="flex justify-end mt-4">
                     <Button
@@ -1788,7 +1615,7 @@ export default function RegistrationForm() {
           </AccordionItem>
 
           {/* Institute Images Section */}
-          <AccordionItem value="item-2">
+          {/* <AccordionItem value="item-2">
             <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-2 px-8 mb-3">
               <AccordionTrigger onClick={() => onAccordianClick("item-2")}>
                 <div className={`text-[#05244f] text-md trajan-pro font-bold mb-2 flex items-center ${completedSections.instituteDetails || activeAccordion == 'item-2' ? "accordian-trigger-active" : "accordian-trigger-inactive"}`}>
@@ -1895,7 +1722,7 @@ export default function RegistrationForm() {
                 </div>
               </AccordionContent>
             </div>
-          </AccordionItem>
+          </AccordionItem> */}
 
           {/* Class Details Button */}
           {/* <Button
@@ -1944,13 +1771,19 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Category<span className="text-red-500">*</span>
                         </Label>
-                        <Select onValueChange={(value) => setValueClass("category", value)} value={watchClass("category") || ""}>
+                        <Select onValueChange={(value) => {
+                          setValueClass("category", value);
+                          // Reset subcategory when category changes
+                          setValueClass("subCategory", "");
+                        }} value={watchClass("category") || ""}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from(new Set(categories.map(item => item.title))).map((title, index) => (
-                              <SelectItem key={index} value={title}>{title}</SelectItem>
+                            {categories.map((item) => (
+                              <SelectItem key={item.id} value={item.title.toString()}>
+                                {item.title}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -1959,23 +1792,30 @@ export default function RegistrationForm() {
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Sub Category<span className="text-red-500">*</span>
+                        </Label>
                         <Select
                           onValueChange={(value) => setValueClass("subCategory", value)}
                           value={watchClass("subCategory") || ""}
+                          disabled={!watchClass("category")}
                         >
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Sub Category" />
                           </SelectTrigger>
                           <SelectContent>
                             {categories
-                              .find((category) => category.title.toString() === watchClass("category"))?.subcategories.map((subCategory) => (
+                              .find((category) => category.title.toString() === watchClass("category"))
+                              ?.subcategories.map((subCategory) => (
                                 <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
                                   {subCategory.title}
                                 </SelectItem>
                               ))}
                           </SelectContent>
                         </Select>
+                        {errorsClass.subCategory && (
+                          <p className="text-red-500 text-xs">{errorsClass.subCategory.message}</p>
+                        )}
                       </div>
                     </div>
 
@@ -1986,48 +1826,46 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">No. of Sessions</Label>
                         <Input type="number" {...registerClass("noOfSessions")} min="1" defaultValue="1" placeholder="Enter number of sessions" className="h-[52px] border-[#05244f]" />
                       </div> */}
-                      <SessionRangeInput 
-                      form={classForm as UseFormReturn<FormValues>}
-                      setValue={setValueClass}
-                      errors={errorsClass}
-                      />
-                      <CostRangeInput
-                        form={classForm as UseFormReturn<FormValues>}
+                      <SessionRangeInput
+                        form={classForm as unknown as UseFormReturn<FormValues>}
                         setValue={setValueClass}
                         errors={errorsClass}
                       />
-
-
-
+                      <CostRangeInput
+                        form={classForm as unknown as UseFormReturn<FormValues>}
+                        setValue={setValueClass}
+                        errors={errorsClass}
+                      />
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        <TimeRangeInput form={classForm as UseFormReturn<FormValues>}
+                        <TimeRangeInput
+                          form={classForm as unknown as UseFormReturn<FormValues>}
                           setValue={setValueClass}
-                          errors={errorsClass}/>
+                          errors={errorsClass}
+                        />
                         {errorsClass.time && (
                           <p className="text-red-500 text-xs">{errorsClass.time.message}</p>
                         )}
                       </div>
-
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Class Type<span className="text-red-500">*</span>
                         </Label>
-                        <Select 
-                          onValueChange={(value: 'Regular' | 'Online' | 'Offline') => setValueClass("type", value)} 
-                          value={watchClass("type") || "Offline"}
+                        <Select
+                          onValueChange={(value: 'Regular' | 'Online' | 'Offline') => setValueClass("type", value)}
+                          value={watchClass("type") || "Offline"} // Default to "Offline" if undefined/null
                         >
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Select Class Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Offline">In Person</SelectItem>
                             <SelectItem value="Online">Online</SelectItem>
-                            <SelectItem value="Regular">Regular</SelectItem>
+                            <SelectItem value="Offline">Offline</SelectItem>
                           </SelectContent>
                         </Select>
+
                         {errorsClass.type && (
                           <p className="text-red-500 text-xs">{errorsClass.type.message}</p>
                         )}
@@ -2095,6 +1933,54 @@ export default function RegistrationForm() {
 
                     </div>
 
+                    <div className="grid md:grid-cols-2 sm:grid-cols-1 mt-4 gap-4 mb-6">
+                      <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Location<span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={getLocationValue(watchClass("location")) || ''}
+                          onValueChange={(value) => handleLocationSelect(value, 'class')}
+                        >
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {savedLocations.map((location, index) => (
+                              <SelectItem
+                                key={`location-${index}-${location.replace(/[^a-zA-Z0-9]/g, '-')}`}
+                                value={location}
+                              >
+                                {location}
+                              </SelectItem>
+                            ))}
+                            <div className="p-2 border-t border-gray-200">
+                              <Button
+                                className="w-full"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setIsLocationPopupOpen(true);
+                                }}
+                              >
+                                + Add New Location
+                              </Button>
+                            </div>
+                          </SelectContent>
+                        </Select>
+                        {errorsClass.location && (
+                          <p className="text-red-500 text-xs">{errorsClass.location.message}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {/* <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Contact<span className="text-red-500">*</span>
+                        </Label> */}
+                        {renderContactSelect('class')}
+                      </div>
+                    </div>
+
                     <Button
                       type="submit"
                       className="my-4 app-bg-color text-white flex justify-end"
@@ -2138,12 +2024,20 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Category<span className="text-red-500">*</span>
                         </Label>
-                        <Select onValueChange={(value) => setValueCourse("category", value)} value={watchCourse("category") || ""}>
+                        <Select onValueChange={(value) => {
+                          setValueCourse("category", value);
+                          // Reset subcategory when category changes
+                          setValueCourse("subCategory", "");
+                        }} value={watchCourse("category") || ""}>
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories!.map((item) => (<SelectItem key={item.id} value={item.title.toString()}>{item.title}</SelectItem>))}
+                            {categories.map((item) => (
+                              <SelectItem key={item.id} value={item.title.toString()}>
+                                {item.title}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {errorsCourse.category && (
@@ -2151,23 +2045,30 @@ export default function RegistrationForm() {
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">Sub Category</Label>
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Sub Category<span className="text-red-500">*</span>
+                        </Label>
                         <Select
                           onValueChange={(value) => setValueCourse("subCategory", value)}
                           value={watchCourse("subCategory") || ""}
+                          disabled={!watchCourse("category")}
                         >
                           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
                             <SelectValue placeholder="Sub Category" />
                           </SelectTrigger>
                           <SelectContent>
                             {categories
-                              .find((category) => category.title.toString() === watchCourse("category"))?.subcategories.map((subCategory) => (
+                              .find((category) => category.title.toString() === watchCourse("category"))
+                              ?.subcategories.map((subCategory) => (
                                 <SelectItem key={subCategory.id} value={subCategory.id.toString()}>
                                   {subCategory.title}
                                 </SelectItem>
                               ))}
                           </SelectContent>
                         </Select>
+                        {errorsCourse.subCategory && (
+                          <p className="text-red-500 text-xs">{errorsCourse.subCategory.message}</p>
+                        )}
                       </div>
                     </div>
 
@@ -2185,10 +2086,10 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
-                    <SessionRangeInput 
-                       form={courseForm as UseFormReturn<FormValues>}
-                       setValue={setValueCourse}
-                       errors={errorsCourse}
+                      <SessionRangeInput
+                        form={courseForm as UseFormReturn<FormValues>}
+                        setValue={setValueCourse}
+                        errors={errorsCourse}
                       />
                       <div className="flex flex-col gap-2">
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
@@ -2206,7 +2107,7 @@ export default function RegistrationForm() {
                         </Select> */}
                         <TimeRangeInput form={courseForm as UseFormReturn<FormValues>}
                           setValue={setValueCourse}
-                          errors={errorsCourse}/>
+                          errors={errorsCourse} />
                         {errorsCourse.time && (
                           <p className="text-red-500 text-xs">{errorsCourse.time.message}</p>
                         )}
@@ -2250,13 +2151,6 @@ export default function RegistrationForm() {
                             </SelectContent>
                           </Select>
                         </div>
-
-                        {/* <AgeRangeInput
-                          form={classForm as UseFormReturn<FormValues>}
-                          setValue={setValueClass}
-                          errors={errorsClass}
-                        /> */}
-
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Prior Knowledge</Label>
                           <Select value={watchClass("experienceLevel") || ""} onValueChange={(value) => setValueCourse("experienceLevel", value)}>
@@ -2272,6 +2166,54 @@ export default function RegistrationForm() {
                         </div>
                       </div>
 
+                    </div>
+
+                    <div className="grid md:grid-cols-2 sm:grid-cols-1 mt-4 gap-4 mb-6">
+                      <div className="flex flex-col gap-2">
+                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Location<span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={getLocationValue(watchCourse("location")) || ''}
+                          onValueChange={(value) => handleLocationSelect(value, 'course')}
+                        >
+                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {savedLocations.map((location, index) => (
+                              <SelectItem
+                                key={`location-${index}-${location.replace(/[^a-zA-Z0-9]/g, '-')}`}
+                                value={location}
+                              >
+                                {location}
+                              </SelectItem>
+                            ))}
+                            <div className="p-2 border-t border-gray-200">
+                              <Button
+                                className="w-full"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setIsLocationPopupOpen(true);
+                                }}
+                              >
+                                + Add New Location
+                              </Button>
+                            </div>
+                          </SelectContent>
+                        </Select>
+                        {errorsCourse.location && (
+                          <p className="text-red-500 text-xs">{errorsCourse.location.message}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {/* <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                          Contact<span className="text-red-500">*</span>
+                        </Label> */}
+                        {renderContactSelect('course')}
+                      </div>
                     </div>
 
                     <Button
@@ -2362,17 +2304,17 @@ export default function RegistrationForm() {
 
         </div>
         }
-              {/* Preview Popup */}
-      <PreviewPopup
-        isOpen={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
-        personalDetails={personalDetailsData}
-        instituteDetails={instituteDetailsData}
-        classDetails={classDetailsData}
-        courseDetails={courseDetailsData}
-        images={images}
-        onSubmit={handleSubmitAfterPreview}
-      />
+        {/* Preview Popup */}
+        <PreviewPopup
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          personalDetails={personalDetailsData}
+          instituteDetails={instituteDetailsData}
+          classDetails={classDetailsData}
+          courseDetails={courseDetailsData}
+          images={images}
+          onSubmit={handleSubmitAfterPreview}
+        />
         {/* Success Popup */}
         <SuccessPopupScreen
           open={isSuccessPopupOpen}
@@ -2381,7 +2323,7 @@ export default function RegistrationForm() {
           onClose={handleClearForm}
         />
 
-        <DeletePopupScreen 
+        <DeletePopupScreen
           open={isDeleteOpen}
           setOpen={setIsDeleteOpen}
           onDelete={() => {
@@ -2390,6 +2332,12 @@ export default function RegistrationForm() {
             }
           }}
           message={deleteMessage}
+        />
+        <LocationPopupScreen open={isLocationPopupOpen} setOpen={setIsLocationPopupOpen} onLocationSubmit={handleLocationSubmit} />
+        <ContactPopupScreen
+          open={isContactPopupOpen}
+          setOpen={setIsContactPopupOpen}
+          onContactSubmit={(contactData: any) => handleContactSubmit(contactData)}
         />
       </div>
     </>

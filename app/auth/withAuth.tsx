@@ -26,8 +26,10 @@ const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) =>
 
     return (
       <>
+        <div className={showAuthModal && !isAuthenticated ? "blur-sm pointer-events-none select-none transition-all duration-300" : "transition-all duration-300"}>
+          <WrappedComponent {...props} blurred={showAuthModal && !isAuthenticated} />
+        </div>
         <AuthDialog open={showAuthModal} setOpen={setShowAuthModal} />
-        {isAuthenticated ? <WrappedComponent {...props} /> : null}
       </>
     );
   };
