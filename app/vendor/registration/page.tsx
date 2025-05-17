@@ -1118,7 +1118,14 @@ export default function RegistrationForm() {
               <Button
                 className="w-full"
                 variant="outline"
-                onClick={() => setIsContactPopupOpen(true)}
+                onClick={(e) => {
+                   e.preventDefault();
+                                  const escapeEvent = new KeyboardEvent('keydown', {
+                                    key: 'Escape',
+                                    bubbles: true,
+                                  });
+                                   document.dispatchEvent(escapeEvent);
+                  setIsContactPopupOpen(true)}}
               >
                 + Add Contact
               </Button>
@@ -1959,8 +1966,14 @@ export default function RegistrationForm() {
                                 className="w-full"
                                 variant="outline"
                                 onClick={(e) => {
+                                  // e.preventDefault();
+                                  // e.stopPropagation();
                                   e.preventDefault();
-                                  e.stopPropagation();
+                                  const escapeEvent = new KeyboardEvent('keydown', {
+                                    key: 'Escape',
+                                    bubbles: true,
+                                  });
+                                   document.dispatchEvent(escapeEvent);
                                   setIsLocationPopupOpen(true);
                                 }}
                               >
