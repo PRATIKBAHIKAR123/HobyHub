@@ -1,82 +1,68 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Edit, Trash } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ClassCourseTableProps, ClassCourseItem } from '@/types/classCourse';
 
-interface ClassCourseTableProps {
-  items: any[];
-  type: 'class' | 'course';
-  onEdit: (index: number) => void;
-  onDelete: (index: number) => void;
-}
-
-export default function ClassCourseTable({ items, type, onEdit, onDelete }: ClassCourseTableProps) {
+export default function ClassCourseTable({ items, onEdit, onDelete }: ClassCourseTableProps) {
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Age Range</TableHead>
-            <TableHead>Cost Range</TableHead>
-            <TableHead>Weekdays</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>{item.className}</TableCell>
-              <TableCell>{item.category}</TableCell>
-              <TableCell>{item.type==='Offline'?'In Person':item.type}</TableCell>
-              <TableCell>{item.time}</TableCell>
-              <TableCell>
-                {item.fromage && item.toage ? `${item.fromage}-${item.toage} years` : '-'}
-              </TableCell>
-              <TableCell>
-                {item.fromcost && item.tocost ? `₹${item.fromcost}-₹${item.tocost}` : '-'}
-              </TableCell>
-              <TableCell>
-                {item.weekdays?.length > 0 ? item.weekdays.join(', ') : '-'}
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(index)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(index)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timings</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age Range</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {items.map((item: ClassCourseItem, index: number) => (
+            <tr key={`${item.className}-${index}`}>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.className}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.category}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.type}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {item.timingsFrom} - {item.timingsTo}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {item.fromage} - {item.toage} years
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                ₹{item.fromcost} - ₹{item.tocost}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.location?.address}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.location?.city}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {item.contact ? `${item.contact.tutorFirstName} ${item.contact.tutorLastName}` : 'N/A'}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button
+                  onClick={() => onEdit(index)}
+                  className="text-indigo-600 hover:text-indigo-900 mr-4"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(index)}
+                  className="text-red-600 hover:text-red-900"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
           ))}
           {items.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center py-4">
-                No {type}s added yet
-              </TableCell>
-            </TableRow>
+            <tr>
+              <td colSpan={10} className="text-center py-4">
+                No items added yet
+              </td>
+            </tr>
           )}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 } 

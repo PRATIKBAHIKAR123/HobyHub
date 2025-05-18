@@ -118,19 +118,23 @@ const classDetailsSchema = yup.object().shape({
     latitude: yup.string().required('Latitude is required'),
     longitude: yup.string().required('Longitude is required'),
     road: yup.string().required('Road is required')
-  }).nullable(),
+  }).required('Location is required'),
   contact: yup.object().shape({
     id: yup.string().required('Contact ID is required'),
     tutorFirstName: yup.string().required('First name is required'),
     tutorLastName: yup.string().required('Last name is required'),
-    phoneNumber: yup.string().required('Phone number is required'),
-    email: yup.string().email('Invalid email').required('Email is required'),
+    tutorEmailID: yup.string().email('Invalid email').required('Email is required'),
+    tutorCountryCode: yup.string().required('Country code is required'),
+    tutorPhoneNo: yup.string().required('Phone number is required'),
+    whatsappCountryCode: yup.string().required('WhatsApp country code is required'),
+    whatsappNo: yup.string().required('WhatsApp number is required'),
+    tutorIntro: yup.string().required('Introduction is required'),
     contactType: yup.object().shape({
       primary: yup.boolean().required(),
       secondary: yup.boolean().required(),
       billing: yup.boolean().required()
     }).required()
-  }).nullable()
+  }).required('Contact is required')
 });
 
 // Course details form schema
@@ -160,19 +164,23 @@ const courseDetailsSchema = yup.object().shape({
     latitude: yup.string().required('Latitude is required'),
     longitude: yup.string().required('Longitude is required'),
     road: yup.string().required('Road is required')
-  }).nullable(),
+  }).required('Location is required'),
   contact: yup.object().shape({
     id: yup.string().required('Contact ID is required'),
-    firstName: yup.string().required('First name is required'),
+    tutorFirstName: yup.string().required('First name is required'),
     tutorLastName: yup.string().required('Last name is required'),
-    phoneNumber: yup.string().required('Phone number is required'),
-    email: yup.string().email('Invalid email').required('Email is required'),
+    tutorEmailID: yup.string().email('Invalid email').required('Email is required'),
+    tutorCountryCode: yup.string().required('Country code is required'),
+    tutorPhoneNo: yup.string().required('Phone number is required'),
+    whatsappCountryCode: yup.string().required('WhatsApp country code is required'),
+    whatsappNo: yup.string().required('WhatsApp number is required'),
+    tutorIntro: yup.string().required('Introduction is required'),
     contactType: yup.object().shape({
       primary: yup.boolean().required(),
       secondary: yup.boolean().required(),
       billing: yup.boolean().required()
     }).required()
-  }).nullable()
+  }).required('Contact is required')
 });
 
 export default function RegistrationForm() {
@@ -204,7 +212,7 @@ export default function RegistrationForm() {
   const [images, setImages] = useState<File[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [savedLocations, setSavedLocations] = useState<string[]>([]);
+  const [savedLocations, setSavedLocations] = useState<any[]>([]);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -579,11 +587,13 @@ export default function RegistrationForm() {
       const classDetails = {
         ...data,
         location: data.location || defaultLocation,
-        contact: data.contact || null
+        contact: data.contact || null,
+        id: Date.now() // Add unique ID for each class
       };
 
       setClassDetailsData(prev => [...prev, classDetails]);
       classForm.reset();
+      setShowClassFields(false); // Hide the form after saving
       toast.success('Class details saved successfully');
     } catch (error) {
       console.error('Error saving class details:', error);
@@ -652,16 +662,6 @@ export default function RegistrationForm() {
           });
         }
 
-        // Add tutor details
-        // formData.append('activity.tutorFirstName', personalDetailsData.firstName);
-        // formData.append('activity.tutorLastName', personalDetailsData.lastName);
-        // formData.append('activity.tutorEmailID', personalDetailsData.emailId);
-        // formData.append('activity.tutorCountryCode', '+91');
-        // formData.append('activity.tutorPhoneNo', personalDetailsData.phoneNumber);
-        // formData.append('activity.whatsappCountryCode', '+91');
-        // formData.append('activity.whatsappNo', personalDetailsData.phoneNumber);
-        // formData.append('activity.tutorIntro', instituteDetailsData.introduction || '');
-
         // Add additional information
         formData.append('activity.website', instituteDetailsData.websiteName || '');
         formData.append('activity.classLevel', instituteDetailsData.classLevel || '');
@@ -669,7 +669,7 @@ export default function RegistrationForm() {
         formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
       }
 
-      // Format class details array
+      // Format class details array with location and contact
       const classDetailsArray = classDetailsData.map((classItem) => ({
         title: classItem.className,
         subCategoryID: classItem.subCategory || '0',
@@ -687,28 +687,26 @@ export default function RegistrationForm() {
         toPrice: parseFloat(classItem.tocost) || 0,
         id: 0,
         activityId: 0,
-        address: classItem.location?.address || "Pune",
-        area: classItem.location?.area || "Pune",
-        city: classItem.location?.city || "Pune",
-        state: classItem.location?.state || "Maharashtra",
-        country: classItem.location?.country || "India",
-        pincode: classItem.location?.pincode || "411001",
-        latitude: classItem.location?.latitude || "18.5204",
-        longitude: classItem.location?.longitude || "73.8567",
-        road: classItem.location?.road || "Main Road",
-        tutorFirstName:classItem.contact?.tutorFirstName || 'Default',
-        tutorLastName: classItem.contact?.tutorLastName || 'Contact',
-        tutorCountryCode: classItem.contact?.tutorCountryCode || '+91',
-        tutorPhoneNo: classItem.contact?.tutorPhoneNo || '+919876543210',
-        whatsappCountryCode: classItem.contact?.whatsappCountryCode || '+91',
-        whatsappNo: classItem.contact?.whatsappNo || '+919876543210',
-        tutorIntro: classItem.contact?.tutorIntro || 'Default',
-        tutorEmailID: classItem.contact?.tutorEmailID || 'default@example.com',
-        // location: classItem.location || defaultLocation,
-        // contact: classItem.contact || defaultContact,
+        address: classItem.location?.address,
+        area: classItem.location?.area,
+        city: classItem.location?.city,
+        state: classItem.location?.state,
+        country: classItem.location?.country,
+        pincode: classItem.location?.pincode,
+        latitude: classItem.location?.latitude,
+        longitude: classItem.location?.longitude,
+        road: classItem.location?.road,
+        tutorFirstName: classItem.contact?.tutorFirstName,
+        tutorLastName: classItem.contact?.tutorLastName,
+        tutorCountryCode: classItem.contact?.tutorCountryCode,
+        tutorPhoneNo: classItem.contact?.tutorPhoneNo,
+        whatsappCountryCode: classItem.contact?.whatsappCountryCode,
+        whatsappNo: classItem.contact?.whatsappNo,
+        tutorIntro: classItem.contact?.tutorIntro,
+        tutorEmailID: classItem.contact?.tutorEmailID
       }));
 
-      // Format course details array
+      // Format course details array with location and contact
       const courseDetailsArray = courseDetailsData.map((course) => ({
         title: course.className,
         subCategoryID: course.subCategory || '0',
@@ -728,8 +726,23 @@ export default function RegistrationForm() {
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         id: 0,
         activityId: 0,
-        location: course.location || defaultLocation,
-        // contact: course.contact || defaultContact,
+        address: course.location?.address,
+        area: course.location?.area,
+        city: course.location?.city,
+        state: course.location?.state,
+        country: course.location?.country,
+        pincode: course.location?.pincode,
+        latitude: course.location?.latitude,
+        longitude: course.location?.longitude,
+        road: course.location?.road,
+        tutorFirstName: course.contact?.tutorFirstName,
+        tutorLastName: course.contact?.tutorLastName,
+        tutorCountryCode: course.contact?.tutorCountryCode,
+        tutorPhoneNo: course.contact?.tutorPhoneNo,
+        whatsappCountryCode: course.contact?.whatsappCountryCode,
+        whatsappNo: course.contact?.whatsappNo,
+        tutorIntro: course.contact?.tutorIntro,
+        tutorEmailID: course.contact?.tutorEmailID
       }));
 
       // Add class and course details
@@ -1032,26 +1045,17 @@ export default function RegistrationForm() {
 
   // Update the handleLocationSubmit function
   const handleLocationSubmit = async (locationData: Location) => {
-    debugger;
     try {
-      // Store the location in localStorage for persistence
-      const savedLocations = JSON.parse(localStorage.getItem('locations') || '[]');
-      savedLocations.push(locationData);
-      localStorage.setItem('locations', JSON.stringify(savedLocations));
-
-      // Update the form value based on current form type
+      // Update form value based on current form type
       if (currentFormType === 'class') {
         setValueClass('location', locationData);
       } else {
         setValueCourse('location', locationData);
       }
 
-      // Update saved locations state
-      setSavedLocations(prev => [...prev, `${locationData.address}, ${locationData.area}, ${locationData.city}`]);
-      
       // Close the popup
       setIsLocationPopupOpen(false);
-      
+
       toast.success('Location saved successfully');
     } catch (error) {
       console.error('Error setting location:', error);
@@ -1062,11 +1066,6 @@ export default function RegistrationForm() {
   // Update the handleContactSubmit function
   const handleContactSubmit = async (contactData: any) => {
     try {
-      // Store the contact in localStorage for persistence
-      const savedContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
-      savedContacts.push(contactData);
-      localStorage.setItem('contacts', JSON.stringify(savedContacts));
-
       // Update the form value based on current form type
       if (currentFormType === 'class') {
         setValueClass('contact', contactData);
@@ -1076,7 +1075,7 @@ export default function RegistrationForm() {
 
       // Close the popup
       setIsContactPopupOpen(false);
-      
+
       toast.success('Contact saved successfully');
     } catch (error) {
       console.error('Error setting contact:', error);
@@ -1119,13 +1118,14 @@ export default function RegistrationForm() {
                 className="w-full"
                 variant="outline"
                 onClick={(e) => {
-                   e.preventDefault();
-                                  const escapeEvent = new KeyboardEvent('keydown', {
-                                    key: 'Escape',
-                                    bubbles: true,
-                                  });
-                                   document.dispatchEvent(escapeEvent);
-                  setIsContactPopupOpen(true)}}
+                  e.preventDefault();
+                  const escapeEvent = new KeyboardEvent('keydown', {
+                    key: 'Escape',
+                    bubbles: true,
+                  });
+                  document.dispatchEvent(escapeEvent);
+                  setIsContactPopupOpen(true)
+                }}
               >
                 + Add Contact
               </Button>
@@ -1141,10 +1141,13 @@ export default function RegistrationForm() {
 
   // Add this function to handle location selection
   const handleLocationSelect = (value: string, formType: 'class' | 'course') => {
+    const selectedLocation = savedLocations.find(
+      (loc) => getLocationValue(loc) === value
+    );
     if (formType === 'class') {
-      setValueClass('location', defaultLocation);
+      setValueClass('location', selectedLocation || null);
     } else {
-      setValueCourse('location', defaultLocation);
+      setValueCourse('location', selectedLocation || null);
     }
   };
 
@@ -1163,12 +1166,19 @@ export default function RegistrationForm() {
     }
   };
 
+  useEffect(() => {
+    const locations = localStorage.getItem('locations');
+    if (locations) {
+      const parsedLocations = JSON.parse(locations);
+      setSavedLocations(parsedLocations); // <-- store as array of objects
+    }
+  }, [isLocationPopupOpen]);
+
   // Update the location select value handling
   const getLocationValue = (location: Location | null | undefined): string => {
     if (!location) return '';
-    return typeof location === 'string' ? location : location.address;
+    return `${location.address}, ${location.area}, ${location.city}, ${location.state}, ${location.country}, ${location.pincode}`;
   };
-
   return (
     <>
       <div className="mx-auto p-6">
@@ -1953,27 +1963,25 @@ export default function RegistrationForm() {
                             <SelectValue placeholder="Select location" />
                           </SelectTrigger>
                           <SelectContent>
-                            {savedLocations.map((location, index) => (
-                              <SelectItem
-                                key={`location-${index}-${location.replace(/[^a-zA-Z0-9]/g, '-')}`}
-                                value={location}
-                              >
-                                {location}
-                              </SelectItem>
-                            ))}
+                            {savedLocations.map((location, index) => {
+                              const display = getLocationValue(location);
+                              return (
+                                <SelectItem key={`location-${index}-${location.address}-${location.pincode}`} value={display}>
+                                  {display}
+                                </SelectItem>
+                              );
+                            })}
                             <div className="p-2 border-t border-gray-200">
                               <Button
                                 className="w-full"
                                 variant="outline"
                                 onClick={(e) => {
-                                  // e.preventDefault();
-                                  // e.stopPropagation();
                                   e.preventDefault();
                                   const escapeEvent = new KeyboardEvent('keydown', {
                                     key: 'Escape',
                                     bubbles: true,
                                   });
-                                   document.dispatchEvent(escapeEvent);
+                                  document.dispatchEvent(escapeEvent);
                                   setIsLocationPopupOpen(true);
                                 }}
                               >
