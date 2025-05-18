@@ -30,7 +30,9 @@ import SessionRangeInput from "./sessionRangeInput";
 import LocationPopupScreen from "./locationSelection";
 import ContactPopupScreen from "./contactSelection";
 import { FormValues, Location, Contact, Category } from "./types";
-// import { useRouter } from "next/navigation";
+import ReactCrop, { Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -210,11 +212,24 @@ export default function RegistrationForm() {
   const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
   const [instituteDetailsData, setInstituteDetailsData] = useState<any>(null);
   const [images, setImages] = useState<File[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [savedLocations, setSavedLocations] = useState<any[]>([]);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 90,
+    height: 90,
+    x: 5,
+    y: 5
+  });
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Add back the contacts state
   const [contacts] = useState<Contact[]>([
@@ -649,18 +664,16 @@ export default function RegistrationForm() {
         formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
 
         // Add thumbnail image
-        if (instituteDetailsData.thumbnailImageFile instanceof File) {
-          formData.append('activity.thumbnailImageFile', instituteDetailsData.thumbnailImageFile);
+        if (selectedThumbnailIndex !== null && images[selectedThumbnailIndex]) {
+          formData.append('activity.thumbnailImageFile', images[selectedThumbnailIndex]);
         }
 
-        // Add additional images
-        if (images.length > 0) {
-          images.forEach((image) => {
-            if (image instanceof File) {
-              formData.append('activity.images', image);
-            }
-          });
-        }
+        // Add other images
+        images.forEach((image, index) => {
+          if (index !== selectedThumbnailIndex) {
+            formData.append('activity.images', image);
+          }
+        });
 
         // Add additional information
         formData.append('activity.website', instituteDetailsData.websiteName || '');
@@ -806,18 +819,16 @@ export default function RegistrationForm() {
         formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
 
         // Add thumbnail image
-        if (instituteDetailsData.thumbnailImageFile instanceof File) {
-          formData.append('activity.thumbnailImageFile', instituteDetailsData.thumbnailImageFile);
+        if (selectedThumbnailIndex !== null && images[selectedThumbnailIndex]) {
+          formData.append('activity.thumbnailImageFile', images[selectedThumbnailIndex]);
         }
 
-        // Add additional images
-        if (images.length > 0) {
-          images.forEach((image) => {
-            if (image instanceof File) {
-              formData.append('activity.images', image);
-            }
-          });
-        }
+        // Add other images
+        images.forEach((image, index) => {
+          if (index !== selectedThumbnailIndex) {
+            formData.append('activity.images', image);
+          }
+        });
 
         // Add tutor details
         formData.append('activity.tutorFirstName', personalDetailsData.firstName);
@@ -1009,8 +1020,12 @@ export default function RegistrationForm() {
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setValuePersonal("profileImageFile", file);
-      setProfileImagePreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImageToCrop(e.target?.result as string);
+        setIsCropDialogOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -1179,6 +1194,110 @@ export default function RegistrationForm() {
     if (!location) return '';
     return `${location.address}, ${location.area}, ${location.city}, ${location.state}, ${location.country}, ${location.pincode}`;
   };
+
+  const handleCropComplete = async () => {
+    if (!imageRef.current || !imageToCrop) return;
+
+    const canvas = document.createElement('canvas');
+    const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+    const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return;
+
+    ctx.drawImage(
+      imageRef.current,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const croppedFile = new File([blob], 'cropped-profile.jpg', { type: 'image/jpeg' });
+        setValuePersonal("profileImageFile", croppedFile);
+        setProfileImagePreview(URL.createObjectURL(blob));
+        setIsCropDialogOpen(false);
+        setImageToCrop(null);
+      }
+    }, 'image/jpeg');
+  };
+
+  // Add this function to handle image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    
+    // Check if adding new files would exceed the 8 image limit
+    if (images.length + files.length > 8) {
+      toast.error("Maximum 8 images allowed");
+      return;
+    }
+
+    // Validate each file
+    const validFiles = files.filter(file => {
+      // Check file size (8MB limit)
+      if (file.size > 8 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Maximum size is 8MB`);
+        return false;
+      }
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image file`);
+        return false;
+      }
+      return true;
+    });
+
+    // Add valid files to images array
+    setImages(prev => [...prev, ...validFiles]);
+    
+    // Create URLs for preview
+    validFiles.forEach(file => {
+      const url = URL.createObjectURL(file);
+      setImageUrls(prev => [...prev, url]);
+    });
+
+    // If this is the first image, set it as thumbnail
+    if (images.length === 0 && validFiles.length > 0) {
+      setSelectedThumbnailIndex(0);
+      setValueInstitute("thumbnailImageFile", validFiles[0]);
+    }
+  };
+
+  // Add this function to handle thumbnail selection
+  const handleThumbnailSelect = (index: number) => {
+    setSelectedThumbnailIndex(index);
+    setValueInstitute("thumbnailImageFile", images[index]);
+  };
+
+  // Add this function to handle image deletion
+  const handleImageDelete = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+    
+    // If deleted image was thumbnail, update thumbnail
+    if (selectedThumbnailIndex === index) {
+      if (images.length > 1) {
+        const newThumbnailIndex = index === 0 ? 1 : index - 1;
+        setSelectedThumbnailIndex(newThumbnailIndex);
+        setValueInstitute("thumbnailImageFile", images[newThumbnailIndex]);
+      } else {
+        setSelectedThumbnailIndex(null);
+        setValueInstitute("thumbnailImageFile", new File([], ''));
+      }
+    } else if (selectedThumbnailIndex && selectedThumbnailIndex > index) {
+      setSelectedThumbnailIndex(selectedThumbnailIndex - 1);
+    }
+  };
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -1447,69 +1566,83 @@ export default function RegistrationForm() {
                     <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                       Photos<span className="text-red-500">*</span>
                     </Label>
-
-                    {thumbnailPreview && (
-                      <div className="relative w-[158px] h-[158px] mb-4">
-                        <Image
-                          src={thumbnailPreview}
-                          alt="Thumbnail Preview"
-                          width={158}
-                          height={158}
-                          className="rounded-md w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setThumbnailPreview(null);
-                            if (thumbnailInputRef.current) {
-                              thumbnailInputRef.current.value = '';
-                            }
-                            setValueInstitute("thumbnailImageFile", new File([], ''));
-                          }}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
+                    
+                    {images.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
+                        {imageUrls.map((url, index) => (
+                          <div key={index} className="relative group">
+                            <div className="relative w-[158px] h-[158px]">
+                              <Image
+                                src={url}
+                                alt={`Uploaded ${index + 1}`}
+                                width={158}
+                                height={158}
+                                className="rounded-md w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleImageDelete(index)}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleThumbnailSelect(index)}
+                                className={`absolute bottom-2 left-2 px-2 py-1 rounded text-sm ${
+                                  selectedThumbnailIndex === index
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                {selectedThumbnailIndex === index ? 'Thumbnail' : 'Set as Thumbnail'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
 
-                    <div
-                      className="h-[180px] flex flex-col gap-3 justify-center items-center py-4 my-3 rounded-[15px] border border-dashed border-[#05244f] cursor-pointer p-4"
-                      onClick={() => thumbnailInputRef.current?.click()}
-                    >
-                      <div className="flex justify-center">
-                        <Image src={"/Icons/file-upload.svg"} alt="file-upload" height={45} width={59} />
+                    {images.length < 8 && (
+                      <div
+                        className="h-[180px] flex flex-col gap-3 justify-center items-center py-4 my-3 rounded-[15px] border border-dashed border-[#05244f] cursor-pointer p-4"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <div className="flex justify-center">
+                          <Image src={"/Icons/file-upload.svg"} alt="file-upload" height={45} width={59} />
+                        </div>
+                        <div className="text-center text-[#acacac] trajan-pro text-[11.6px] font-medium">
+                          Drag your file(s) to start uploading
+                        </div>
+                        <div>
+                          <Button variant="outline" type="button">Browse File</Button>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleImageUpload}
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/jpeg,image/png,image/avif,.jpg,.jpeg,.png,.avif"
+                        />
                       </div>
-                      <div className="text-center text-[#acacac] trajan-pro text-[11.6px] font-medium">
-                        Drag your file(s) to start uploading
-                      </div>
-                      <div>
-                        <Button variant="outline" type="button" className="">Browse File</Button>
-                      </div>
-                      <input
-                        type="file"
-                        onChange={handleThumbnailUpload}
-                        ref={thumbnailInputRef}
-                        className="hidden"
-                        accept="image/jpeg,image/png,image/avif,.jpg,.jpeg,.png,.avif"
-                      />
-                    </div>
+                    )}
+                    
                     <div className="relative justify-center text-[#cecece] text-[11.6px] font-medium">
-                      Only support jpg, png and avif files
+                      Maximum 8 images allowed. Each image should be less than 8MB. Supported formats: JPG, PNG, AVIF
                     </div>
                     {errorsInstitute.thumbnailImageFile && (
                       <p className="text-red-500 text-xs">{errorsInstitute.thumbnailImageFile.message}</p>
@@ -2361,6 +2494,46 @@ export default function RegistrationForm() {
           onContactSubmit={(contactData: any) => handleContactSubmit(contactData)}
         />
       </div>
+
+      {/* Add this dialog component for image cropping */}
+      <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
+        <DialogContent className="max-w-[800px]">
+          <DialogHeader>
+            <DialogTitle>Crop Profile Image</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            {imageToCrop && (
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                aspect={1}
+                className="max-w-full"
+              >
+                <img
+                  ref={imageRef}
+                  src={imageToCrop}
+                  alt="Profile to crop"
+                  className="max-w-full"
+                />
+              </ReactCrop>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCropDialogOpen(false);
+                  setImageToCrop(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCropComplete}>
+                Crop & Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
