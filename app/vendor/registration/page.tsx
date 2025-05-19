@@ -557,7 +557,7 @@ export default function RegistrationForm() {
       }
 
       const data = watchCourse();
-      debugger
+      
       const courseDetails = {
         ...data,
         location: data.location || defaultLocation,
@@ -581,6 +581,39 @@ export default function RegistrationForm() {
 
   // Update the handleFinalSubmit function
   const handleFinalSubmit = async () => {
+    try {
+      
+      // Check if personal details are completed
+      if (!completedSections.personalDetails || !personalDetailsData) {
+        toast.error("Please complete the Profile Details section first");
+        setActiveAccordion("item-0");
+        return;
+      }
+
+      // Check if institute details are completed
+      if (!completedSections.instituteDetails || !instituteDetailsData) {
+        toast.error("Please complete the Institute Details section first");
+        setActiveAccordion("item-1");
+        return;
+      }
+
+      // Check if at least one class or course is added
+      if (classDetailsData.length === 0 && courseDetailsData.length === 0) {
+        toast.error("Please add at least one class or course");
+        setActiveAccordion("item-4");
+        return;
+      }
+
+      // If all validations pass, show the preview popup
+      setIsPreviewOpen(true);
+    } catch (error) {
+      console.error("Error in validation:", error);
+      toast.error("An error occurred while validating the form. Please try again.");
+    }
+  };
+
+  // New function to handle actual form submission after preview confirmation
+  const handleSubmitAfterPreview = async () => {
     try {
       setIsLoading(true);
       const formData = new FormData();
@@ -715,6 +748,7 @@ export default function RegistrationForm() {
           setUsername(response.username);
           setIsSuccessPopupOpen(true);
           toast.success("Registration completed successfully!");
+          setIsPreviewOpen(false);
         }
       } catch (error: any) {
         console.error('API Error:', error);
@@ -727,144 +761,6 @@ export default function RegistrationForm() {
       toast.error("An error occurred while submitting the form. Please try again.");
     } finally {
       setIsLoading(false);
-      setIsPreviewOpen(false);
-    }
-  };
-
-  // New function to handle actual form submission after preview confirmation
-  const handleSubmitAfterPreview = async () => {
-    try {
-      setIsLoading(true);
-
-      // Create FormData object
-      const formData = new FormData();
-
-      // Add personal details
-      if (personalDetailsData) {
-        formData.append('name', personalDetailsData.firstName + ' ' + personalDetailsData.lastName);
-        formData.append('emailId', personalDetailsData.emailId);
-        formData.append('phoneNumber', personalDetailsData.phoneNumber);
-        formData.append('gender', personalDetailsData.gender);
-        if (personalDetailsData.dob) {
-          formData.append('dob', personalDetailsData.dob.toISOString());
-        }
-        if (personalDetailsData.profileImageFile instanceof File) {
-          formData.append('profileImageFile', personalDetailsData.profileImageFile);
-        }
-      }
-
-      // Add activity details
-      if (instituteDetailsData) {
-        formData.append('activity.type', 'INSTITUTE');
-        formData.append('activity.categoryId', instituteDetailsData.categoryId?.toString() || '0');
-        formData.append('activity.title', instituteDetailsData.programTitle);
-        formData.append('activity.companyName', instituteDetailsData.instituteName);
-        formData.append('activity.description', instituteDetailsData.introduction || '');
-        formData.append('activity.sinceYear', instituteDetailsData.since || '');
-        formData.append('activity.gstNo', instituteDetailsData.gstNo || '');
-
-        // Add thumbnail image
-        if (selectedThumbnailIndex !== null && images[selectedThumbnailIndex]) {
-          formData.append('activity.thumbnailImageFile', images[selectedThumbnailIndex]);
-        }
-
-        // Add other images
-        images.forEach((image, index) => {
-          if (index !== selectedThumbnailIndex) {
-            formData.append('activity.images', image);
-          }
-        });
-
-        // Add tutor details
-        formData.append('activity.tutorFirstName', personalDetailsData.firstName);
-        formData.append('activity.tutorLastName', personalDetailsData.tutorLastName);
-        formData.append('activity.tutorEmailID', personalDetailsData.emailId);
-        formData.append('activity.tutorCountryCode', '+91');
-        formData.append('activity.tutorPhoneNo', personalDetailsData.phoneNumber);
-        formData.append('activity.whatsappCountryCode', '+91');
-        formData.append('activity.whatsappNo', personalDetailsData.phoneNumber);
-        formData.append('activity.tutorIntro', instituteDetailsData.introduction || '');
-
-        // Add additional information
-        formData.append('activity.website', instituteDetailsData.websiteName || '');
-        formData.append('activity.classLevel', instituteDetailsData.classLevel || '');
-        formData.append('activity.instagramAcc', instituteDetailsData.instagramAccount || '');
-        formData.append('activity.youtubeAcc', instituteDetailsData.youtubeAccount || '');
-        formData.append('activity.purchaseMaterialIds', instituteDetailsData.purchaseMaterialIds || '');
-        formData.append('activity.itemCarryText', instituteDetailsData.itemCarryText || '');
-      }
-
-      // Format class details array
-      const classDetailsArray = classDetailsData.map((classItem) => ({
-        title: classItem.className,
-        subCategoryID: classItem.subCategory || '0',
-        categoryID: classItem.category || '0',
-        timingsFrom: classItem.timingsFrom || '09:00',
-        timingsTo: classItem.timingsTo || '12:00',
-        day: Array.isArray(classItem.weekdays) ? classItem.weekdays.join(',') : 'monday',
-        type: classItem.type || 'Offline',
-        ageFrom: parseInt(classItem.fromage) || 0,
-        ageTo: parseInt(classItem.toage) || 0,
-        sessionFrom: parseInt(classItem.sessionFrom) || 0,
-        sessionTo: parseInt(classItem.sessionTo) || 1,
-        gender: classItem.gender || 'both',
-        fromPrice: parseFloat(classItem.fromcost) || 0,
-        toPrice: parseFloat(classItem.tocost) || 0,
-        id: 0,
-        activityId: 0,
-        location: classItem.location || defaultLocation,
-        // contact: classItem.contact || defaultContact,
-      }));
-
-      // Format course details array
-      const courseDetailsArray = courseDetailsData.map((course) => ({
-        title: course.className,
-        subCategoryID: course.subCategory || '0',
-        categoryID: course.category || '0',
-        timingsFrom: course.timingsFrom || '09:00',
-        timingsTo: course.timingsTo || '12:00',
-        day: Array.isArray(course.weekdays) ? course.weekdays.join(',') : 'monday',
-        type: course.type || 'Offline',
-        ageFrom: parseInt(course.fromage) || 0,
-        ageTo: parseInt(course.toage) || 0,
-        sessionFrom: parseInt(course.sessionFrom) || 0,
-        sessionTo: parseInt(course.sessionTo) || 1,
-        gender: course.gender || 'both',
-        fromPrice: parseFloat(course.fromcost) || 0,
-        toPrice: parseFloat(course.tocost) || 0,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        id: 0,
-        activityId: 0,
-        location: course.location || defaultLocation,
-        // contact: course.contact || defaultContact,
-      }));
-
-      // Add class and course details
-      formData.append('activity.classDetails', JSON.stringify(classDetailsArray));
-      formData.append('activity.courseDetails', JSON.stringify(courseDetailsArray));
-      formData.append('activity.id', '0');
-
-      try {
-        const response = await registerVendor(formData);
-
-        if (response) {
-          setUsername(response.username);
-          setIsSuccessPopupOpen(true);
-          toast.success("Registration completed successfully!");
-        }
-      } catch (error: any) {
-        console.error('API Error:', error);
-        const errorMessage = error.message || "An error occurred while submitting the form. Please try again.";
-        toast.error(errorMessage);
-        return;
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error("An error occurred while submitting the form. Please try again.");
-    } finally {
-      setIsLoading(false);
-      setIsPreviewOpen(false);
     }
   };
   const handleWeekdayChange = (day: string, isClassfields: boolean) => {
