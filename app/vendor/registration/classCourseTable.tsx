@@ -39,18 +39,22 @@ export default function ClassCourseTable({ items, onEdit, onDelete }: ClassCours
                 {item.contact ? `${item.contact.tutorFirstName} ${item.contact.tutorLastName}` : 'N/A'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button
-                  onClick={() => onEdit(index)}
-                  className="text-indigo-600 hover:text-indigo-900 mr-4"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete(index)}
-                  className="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => onEdit(index)}
+                    className="text-indigo-600 hover:text-indigo-900 flex items-center cursor-pointer"
+                  >
+                    <img src="/Icons/edit.png" alt="Edit Icon" className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => onDelete(index)}
+                    className="text-red-600 hover:text-red-900 flex items-center cursor-pointer"
+                  >
+                    <img src="/Icons/bin.png" alt="Delete Icon" className="w-4 h-4" />
+                  </button>
+                </div>
+
               </td>
             </tr>
           ))}
