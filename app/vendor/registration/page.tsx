@@ -2196,7 +2196,6 @@ export default function RegistrationForm() {
               <h3 className="text-[#05244f] text-lg font-semibold mb-4">Classes</h3>
               <ClassCourseTable
                 items={classDetailsData}
-                // type="class"
                 onEdit={handleEditClass}
                 onDelete={handleDeleteClass}
               />
@@ -2208,13 +2207,40 @@ export default function RegistrationForm() {
               <h3 className="text-[#05244f] text-lg font-semibold mb-4">Courses</h3>
               <ClassCourseTable
                 items={courseDetailsData}
-                // type="course"
                 onEdit={handleEditCourse}
                 onDelete={handleDeleteCourse}
               />
             </div>
           )}
         </div>
+
+        {/* Directory Section */}
+        {(savedLocations.length > 0 || savedContacts.length > 0) && (
+          <div className="mt-8">
+            <h3 className="text-[#05244f] text-lg font-semibold mb-4">Directory</h3>
+            <div className="bg-white rounded-[15px] border-1 border-[#05244f] py-4 px-8">
+              <DirectoryTable
+                directory={savedLocations.map((location, index) => {
+                  const contact = savedContacts[index] || null;
+                  return {
+                    address: `${location.address}, ${location.area}, ${location.city}, ${location.state}, ${location.country} - ${location.pincode}`,
+                    isPrimary: contact?.contactType?.primary ? 'Yes' : 'No',
+                    firstName: contact?.tutorFirstName || '',
+                    lastName: contact?.tutorLastName || '',
+                    phoneNumber: contact?.tutorPhoneNo || '',
+                    whatsappNumber: contact?.whatsappNo || '',
+                    email: contact?.tutorEmailID || '',
+                    contactType: contact?.contactType || { primary: false, secondary: false, billing: false }
+                  };
+                })}
+                handleDelete={(index) => {
+                  setSavedLocations(prev => prev.filter((_, i) => i !== index));
+                  setSavedContacts(prev => prev.filter((_, i) => i !== index));
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Add Class/Course Button */}
         <div className="flex justify-center mt-4">
