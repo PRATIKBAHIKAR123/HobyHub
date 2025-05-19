@@ -560,11 +560,12 @@ export default function RegistrationForm() {
         toast.error("Please fill in all required fields");
         return;
       }
-      debugger;
+      var classData= classForm.getValues();
+      
       const classDetails = {
         ...data,
-        location: data.location || defaultLocation,
-        contact: data.contact || null,
+        location: classData.location || defaultLocation,
+        contact: classData.contact || null,
         id: Date.now(), // Add unique ID for each class
         type: data.type || 'Offline',
         gender: data.gender || 'both',
