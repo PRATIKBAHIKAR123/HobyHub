@@ -100,18 +100,18 @@ const classDetailsSchema = yup.object().shape({
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
   time: yup.string(),
-  timingsFrom: yup.string(),
+  timingsFrom: yup.string().required('Timings is required'),
   timingsTo: yup.string(),
-  weekdays: yup.array().of(yup.string()),
+  weekdays: yup.array().of(yup.string()).min(1, 'At least one weekday is required'),
   fromage: yup.string(),
   toage: yup.string(),
   fromcost: yup.string(),
   tocost: yup.string(),
-  gender: yup.string(),
-  experienceLevel: yup.string(),
+  gender: yup.string().required('Gender is required'),
+  experienceLevel: yup.string().required('Experience level is required'),
   noOfSessions: yup.string(),
-  location: yup.object().nullable(),
-  contact: yup.object().nullable()
+  location: yup.object().nullable().required('Location is required'),
+  contact: yup.object().nullable().required('Contact is required')
 });
 
 // Course details form schema
@@ -120,19 +120,19 @@ const courseDetailsSchema = yup.object().shape({
   className: yup.string().required('Course name is required'),
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
-  time: yup.string(),
+  time: yup.string().required('Time is required'),
   timingsFrom: yup.string(),
   timingsTo: yup.string(),
-  weekdays: yup.array().of(yup.string()),
+  weekdays: yup.array().of(yup.string()).min(1, 'At least one weekday is required'),
   fromage: yup.string(),
   toage: yup.string(),
   fromcost: yup.string(),
   tocost: yup.string(),
-  gender: yup.string(),
-  experienceLevel: yup.string(),
+  gender: yup.string().required('Gender is required'),
+  experienceLevel: yup.string().required('Experience level is required'),
   noOfSessions: yup.string(),
-  location: yup.object().nullable(),
-  contact: yup.object().nullable()
+  location: yup.object().nullable().required('Location is required'),
+  contact: yup.object().nullable().required('Contact is required')
 });
 
 export default function RegistrationForm() {
@@ -142,7 +142,7 @@ export default function RegistrationForm() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [directory, setDirectory] = useState<DirectoryItem[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  // const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [onDeleteCallback, setOnDeleteCallback] = useState<(() => void) | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
@@ -166,7 +166,7 @@ export default function RegistrationForm() {
   const [selectedThumbnailIndex, setSelectedThumbnailIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [courses, setCourses] = useState<any[]>([]);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  // const [ setThumbnailPreview] = useState<string | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
   const [crop, setCrop] = useState<Crop>({
@@ -179,51 +179,6 @@ export default function RegistrationForm() {
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-
-  // Add back the contacts state
-  const [contacts] = useState<Contact[]>([
-    {
-      id: '1',
-      tutorFirstName: 'Ajay',
-      tutorLastName: 'Kumar',
-      tutorEmailID: 'ajay@example.com',
-      tutorCountryCode: '+91',
-      tutorPhoneNo: '9876543210',
-      whatsappCountryCode: '+91',
-      whatsappNo: '9876543210',
-      tutorIntro: 'Experienced tutor',
-      contactType: { primary: true, secondary: false, billing: false }
-    },
-    {
-      id: '2',
-      tutorFirstName: 'Priya',
-      tutorLastName: 'Singh',
-      tutorEmailID: 'priya@example.com',
-      tutorCountryCode: '+91',
-      tutorPhoneNo: '9876543211',
-      whatsappCountryCode: '+91',
-      whatsappNo: '9876543211',
-      tutorIntro: 'Professional instructor',
-      contactType: { primary: false, secondary: true, billing: false }
-    },
-    {
-      id: '3',
-      tutorFirstName: 'Raj',
-      tutorLastName: 'Sharma',
-      tutorEmailID: 'raj@example.com',
-      tutorCountryCode: '+91',
-      tutorPhoneNo: '9876543212',
-      whatsappCountryCode: '+91',
-      whatsappNo: '9876543212',
-      tutorIntro: 'Senior trainer',
-      contactType: { primary: false, secondary: false, billing: true }
-    }
-  ]);
-
-  // const router = useRouter();
-
-  // Remove unused state variables
-  // const [editIndex, setEditIndex] = useState<number | null>(null);
 
   // Add default location
   const defaultLocation: Location = {
@@ -554,23 +509,31 @@ export default function RegistrationForm() {
   // Update the saveClassDetails function
   const saveClassDetails = async (data: any) => {
     try {
-      // Validate the form
-      const isValid = await classForm.trigger();
-      if (!isValid) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
-      var classData= classForm.getValues();
-      
+      // Get all form values
+      const classData = classForm.getValues();
+
+      // Create class details object
       const classDetails = {
         ...data,
         location: classData.location || defaultLocation,
         contact: classData.contact || null,
         id: Date.now(), // Add unique ID for each class
-        type: data.type || 'Offline',
-        gender: data.gender || 'both',
-        experienceLevel: data.experienceLevel || 'beginner',
-        noOfSessions: data.noOfSessions || '1'
+        category: classData.category || '0',
+        className: classData.className || '',
+        experienceLevel: classData.experienceLevel || 'beginner',
+        fromage: classData.fromage || '0',
+        toage: classData.toage || '0',
+        fromcost: classData.fromcost || '0',
+        tocost: classData.tocost || '0',
+        type: classData.type || 'Offline',
+        gender: classData.gender || 'both',
+        noOfSessions: data.noOfSessions || '1',
+        time: classData.time || '09:00',
+        timingsFrom: classData.timingsFrom || '09:00',
+        timingsTo: classData.timingsTo || '12:00',
+        weekdays: classData.weekdays || [],
+        sessionFrom: classData.sessionFrom || '0',
+        sessionTo: classData.sessionTo || '1',
       };
 
       setClassDetailsData(prev => [...prev, classDetails]);
@@ -594,6 +557,7 @@ export default function RegistrationForm() {
       }
 
       const data = watchCourse();
+      debugger
       const courseDetails = {
         ...data,
         location: data.location || defaultLocation,
@@ -991,13 +955,13 @@ export default function RegistrationForm() {
     }
   }
 
-  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setValueInstitute("thumbnailImageFile", file);
-      setThumbnailPreview(URL.createObjectURL(file));
-    }
-  };
+  // const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     setValueInstitute("thumbnailImageFile", file);
+  //     setThumbnailPreview(URL.createObjectURL(file));
+  //   }
+  // };
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -1026,7 +990,7 @@ export default function RegistrationForm() {
     // Clear images
     setImages([]);
     // setImageUrls([]);
-    setThumbnailPreview(null);
+    // setThumbnailPreview(null);
 
     // Reset completion states
     setCompletedSections({
@@ -1044,12 +1008,12 @@ export default function RegistrationForm() {
     try {
       // Add new location to state
       setSavedLocations(prev => [...prev, locationData]);
-      
+
       // Update form value based on current form type
       if (currentFormType === 'class') {
-        setValueClass('location', locationData);
+        setValueClass('location', locationData, { shouldValidate: true });
       } else {
-        setValueCourse('location', locationData);
+        setValueCourse('location', locationData, { shouldValidate: true });
       }
 
       // Close the popup
@@ -1067,12 +1031,12 @@ export default function RegistrationForm() {
     try {
       // Add new contact to state
       setSavedContacts(prev => [...prev, contactData]);
-      
+
       // Update form value based on current form type
       if (currentFormType === 'class') {
-        setValueClass('contact', contactData);
+        setValueClass('contact', contactData, { shouldValidate: true });
       } else {
-        setValueCourse('contact', contactData);
+        setValueCourse('contact', contactData, { shouldValidate: true });
       }
 
       // Close the popup
@@ -1147,9 +1111,9 @@ export default function RegistrationForm() {
       (loc) => getLocationValue(loc) === value
     );
     if (formType === 'class') {
-      setValueClass('location', selectedLocation || null);
+      setValueClass('location', selectedLocation || null, { shouldValidate: true });
     } else {
-      setValueCourse('location', selectedLocation || null);
+      setValueCourse('location', selectedLocation || null, { shouldValidate: true });
     }
   };
 
@@ -1161,9 +1125,9 @@ export default function RegistrationForm() {
 
     if (selectedContact) {
       if (formType === 'class') {
-        setValueClass('contact', selectedContact);
+        setValueClass('contact', selectedContact, { shouldValidate: true });
       } else {
-        setValueCourse('contact', selectedContact);
+        setValueCourse('contact', selectedContact, { shouldValidate: true });
       }
     }
   };
@@ -1213,7 +1177,7 @@ export default function RegistrationForm() {
   // Add this function to handle image upload
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
+
     // Check if adding new files would exceed the 8 image limit
     if (images.length + files.length > 8) {
       toast.error("Maximum 8 images allowed");
@@ -1237,7 +1201,7 @@ export default function RegistrationForm() {
 
     // Add valid files to images array
     setImages(prev => [...prev, ...validFiles]);
-    
+
     // Create URLs for preview
     validFiles.forEach(file => {
       const url = URL.createObjectURL(file);
@@ -1261,7 +1225,7 @@ export default function RegistrationForm() {
   const handleImageDelete = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
     setImageUrls(prev => prev.filter((_, i) => i !== index));
-    
+
     // If deleted image was thumbnail, update thumbnail
     if (selectedThumbnailIndex === index) {
       if (images.length > 1) {
@@ -1601,7 +1565,7 @@ export default function RegistrationForm() {
                     <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                       Photos<span className="text-red-500">*</span>
                     </Label>
-                    
+
                     {images.length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
                         {imageUrls.map((url, index) => (
@@ -1637,11 +1601,10 @@ export default function RegistrationForm() {
                               <button
                                 type="button"
                                 onClick={() => handleThumbnailSelect(index)}
-                                className={`absolute bottom-2 left-2 px-2 py-1 rounded text-sm ${
-                                  selectedThumbnailIndex === index
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                                }`}
+                                className={`absolute bottom-2 left-2 px-2 py-1 rounded text-sm ${selectedThumbnailIndex === index
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                                  }`}
                               >
                                 {selectedThumbnailIndex === index ? 'Thumbnail' : 'Set as Thumbnail'}
                               </button>
@@ -1675,7 +1638,7 @@ export default function RegistrationForm() {
                         />
                       </div>
                     )}
-                    
+
                     <div className="relative justify-center text-[#cecece] text-[11.6px] font-medium">
                       Maximum 8 images allowed. Each image should be less than 8MB. Supported formats: JPG, PNG, AVIF
                     </div>
@@ -2124,8 +2087,7 @@ export default function RegistrationForm() {
                     </div>
 
                     <Button
-                      type="button"
-                      onClick={saveClassDetails}
+                      type="submit"
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >
@@ -2338,7 +2300,7 @@ export default function RegistrationForm() {
               <h3 className="text-[#05244f] text-lg font-semibold mb-4">Classes</h3>
               <ClassCourseTable
                 items={classDetailsData}
-                type="class"
+                // type="class"
                 onEdit={handleEditClass}
                 onDelete={handleDeleteClass}
               />
@@ -2350,7 +2312,7 @@ export default function RegistrationForm() {
               <h3 className="text-[#05244f] text-lg font-semibold mb-4">Courses</h3>
               <ClassCourseTable
                 items={courseDetailsData}
-                type="course"
+                // type="course"
                 onEdit={handleEditCourse}
                 onDelete={handleDeleteCourse}
               />
@@ -2456,7 +2418,7 @@ export default function RegistrationForm() {
                 aspect={1}
                 className="max-w-full"
               >
-                <img
+                <Image
                   ref={imageRef}
                   src={imageToCrop}
                   alt="Profile to crop"
