@@ -560,7 +560,7 @@ export default function RegistrationForm() {
         toast.error("Please fill in all required fields");
         return;
       }
-
+      debugger;
       const classDetails = {
         ...data,
         location: data.location || defaultLocation,
