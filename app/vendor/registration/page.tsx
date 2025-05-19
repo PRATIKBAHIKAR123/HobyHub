@@ -99,44 +99,19 @@ const classDetailsSchema = yup.object().shape({
   className: yup.string().required('Class name is required'),
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
-  time: yup.string().required('Time is required'),
-  timingsFrom: yup.string().required('Start time is required'),
-  timingsTo: yup.string().required('End time is required'),
-  weekdays: yup.array().of(yup.string().required()).required('Weekdays are required'),
-  fromage: yup.string().required('Minimum age is required'),
-  toage: yup.string().required('Maximum age is required'),
-  fromcost: yup.string().required('Minimum cost is required'),
-  tocost: yup.string().required('Maximum cost is required'),
-  gender: yup.string().required('Gender is required'),
-  experienceLevel: yup.string().required('Experience level is required'),
-  noOfSessions: yup.string().required('Number of sessions is required'),
-  location: yup.object().shape({
-    address: yup.string().required('Address is required'),
-    area: yup.string().required('Area is required'),
-    city: yup.string().required('City is required'),
-    state: yup.string().required('State is required'),
-    country: yup.string().required('Country is required'),
-    pincode: yup.string().required('Pincode is required'),
-    latitude: yup.string().required('Latitude is required'),
-    longitude: yup.string().required('Longitude is required'),
-    road: yup.string().required('Road is required')
-  }).required('Location is required'),
-  contact: yup.object().shape({
-    id: yup.string().required('Contact ID is required'),
-    tutorFirstName: yup.string().required('First name is required'),
-    tutorLastName: yup.string().required('Last name is required'),
-    tutorEmailID: yup.string().email('Invalid email').required('Email is required'),
-    tutorCountryCode: yup.string().required('Country code is required'),
-    tutorPhoneNo: yup.string().required('Phone number is required'),
-    whatsappCountryCode: yup.string().required('WhatsApp country code is required'),
-    whatsappNo: yup.string().required('WhatsApp number is required'),
-    tutorIntro: yup.string().required('Introduction is required'),
-    contactType: yup.object().shape({
-      primary: yup.boolean().required(),
-      secondary: yup.boolean().required(),
-      billing: yup.boolean().required()
-    }).required()
-  }).required('Contact is required')
+  time: yup.string(),
+  timingsFrom: yup.string(),
+  timingsTo: yup.string(),
+  weekdays: yup.array().of(yup.string()),
+  fromage: yup.string(),
+  toage: yup.string(),
+  fromcost: yup.string(),
+  tocost: yup.string(),
+  gender: yup.string(),
+  experienceLevel: yup.string(),
+  noOfSessions: yup.string(),
+  location: yup.object().nullable(),
+  contact: yup.object().nullable()
 });
 
 // Course details form schema
@@ -145,44 +120,19 @@ const courseDetailsSchema = yup.object().shape({
   className: yup.string().required('Course name is required'),
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
-  time: yup.string().required('Time is required'),
-  timingsFrom: yup.string().required('Start time is required'),
-  timingsTo: yup.string().required('End time is required'),
-  weekdays: yup.array().of(yup.string().required()).required('Weekdays are required'),
-  fromage: yup.string().required('Minimum age is required'),
-  toage: yup.string().required('Maximum age is required'),
-  fromcost: yup.string().required('Minimum cost is required'),
-  tocost: yup.string().required('Maximum cost is required'),
-  gender: yup.string().required('Gender is required'),
-  experienceLevel: yup.string().required('Experience level is required'),
-  noOfSessions: yup.string().required('Number of sessions is required'),
-  location: yup.object().shape({
-    address: yup.string().required('Address is required'),
-    area: yup.string().required('Area is required'),
-    city: yup.string().required('City is required'),
-    state: yup.string().required('State is required'),
-    country: yup.string().required('Country is required'),
-    pincode: yup.string().required('Pincode is required'),
-    latitude: yup.string().required('Latitude is required'),
-    longitude: yup.string().required('Longitude is required'),
-    road: yup.string().required('Road is required')
-  }).required('Location is required'),
-  contact: yup.object().shape({
-    id: yup.string().required('Contact ID is required'),
-    tutorFirstName: yup.string().required('First name is required'),
-    tutorLastName: yup.string().required('Last name is required'),
-    tutorEmailID: yup.string().email('Invalid email').required('Email is required'),
-    tutorCountryCode: yup.string().required('Country code is required'),
-    tutorPhoneNo: yup.string().required('Phone number is required'),
-    whatsappCountryCode: yup.string().required('WhatsApp country code is required'),
-    whatsappNo: yup.string().required('WhatsApp number is required'),
-    tutorIntro: yup.string().required('Introduction is required'),
-    contactType: yup.object().shape({
-      primary: yup.boolean().required(),
-      secondary: yup.boolean().required(),
-      billing: yup.boolean().required()
-    }).required()
-  }).required('Contact is required')
+  time: yup.string(),
+  timingsFrom: yup.string(),
+  timingsTo: yup.string(),
+  weekdays: yup.array().of(yup.string()),
+  fromage: yup.string(),
+  toage: yup.string(),
+  fromcost: yup.string(),
+  tocost: yup.string(),
+  gender: yup.string(),
+  experienceLevel: yup.string(),
+  noOfSessions: yup.string(),
+  location: yup.object().nullable(),
+  contact: yup.object().nullable()
 });
 
 export default function RegistrationForm() {
@@ -217,7 +167,6 @@ export default function RegistrationForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [savedLocations, setSavedLocations] = useState<any[]>([]);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
   const [crop, setCrop] = useState<Crop>({
@@ -235,26 +184,38 @@ export default function RegistrationForm() {
   const [contacts] = useState<Contact[]>([
     {
       id: '1',
-      firstName: 'Ajay',
-      lastName: 'Kumar',
-      phoneNumber: '+919876543210',
-      email: 'ajay@example.com',
+      tutorFirstName: 'Ajay',
+      tutorLastName: 'Kumar',
+      tutorEmailID: 'ajay@example.com',
+      tutorCountryCode: '+91',
+      tutorPhoneNo: '9876543210',
+      whatsappCountryCode: '+91',
+      whatsappNo: '9876543210',
+      tutorIntro: 'Experienced tutor',
       contactType: { primary: true, secondary: false, billing: false }
     },
     {
       id: '2',
-      firstName: 'Priya',
-      lastName: 'Singh',
-      phoneNumber: '+919876543211',
-      email: 'priya@example.com',
+      tutorFirstName: 'Priya',
+      tutorLastName: 'Singh',
+      tutorEmailID: 'priya@example.com',
+      tutorCountryCode: '+91',
+      tutorPhoneNo: '9876543211',
+      whatsappCountryCode: '+91',
+      whatsappNo: '9876543211',
+      tutorIntro: 'Professional instructor',
       contactType: { primary: false, secondary: true, billing: false }
     },
     {
       id: '3',
-      firstName: 'Raj',
-      lastName: 'Sharma',
-      phoneNumber: '+919876543212',
-      email: 'raj@example.com',
+      tutorFirstName: 'Raj',
+      tutorLastName: 'Sharma',
+      tutorEmailID: 'raj@example.com',
+      tutorCountryCode: '+91',
+      tutorPhoneNo: '9876543212',
+      whatsappCountryCode: '+91',
+      whatsappNo: '9876543212',
+      tutorIntro: 'Senior trainer',
       contactType: { primary: false, secondary: false, billing: true }
     }
   ]);
@@ -266,6 +227,7 @@ export default function RegistrationForm() {
 
   // Add default location
   const defaultLocation: Location = {
+    id: 'default',
     address: "Pune, Maharashtra",
     area: "Pune",
     city: "Pune",
@@ -293,6 +255,10 @@ export default function RegistrationForm() {
 
   // Add currentFormType state
   const [currentFormType] = useState<'class' | 'course'>('class');
+
+  // Remove the savedLocations state and related localStorage code
+  const [savedLocations, setSavedLocations] = useState<Location[]>([]);
+  const [savedContacts, setSavedContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
     if (showClassFields) {
@@ -346,17 +312,6 @@ export default function RegistrationForm() {
       setActiveAccordion(""); // No default open if all sections are completed
     }
   }, [completedSections, showClassFields, showCourseFields]);
-
-  useEffect(() => {
-    const locations = localStorage.getItem('locations');
-    if (locations) {
-      const parsedLocations = JSON.parse(locations);
-      const locationStrings = parsedLocations.map((loc: any) =>
-        `${loc.address}, ${loc.area}, ${loc.city}`
-      );
-      setSavedLocations(locationStrings);
-    }
-  }, [isLocationPopupOpen]); // Reload when location popup opens/closes
 
   // Form for personal details
   const personalForm = useForm({
@@ -599,17 +554,28 @@ export default function RegistrationForm() {
   // Update the saveClassDetails function
   const saveClassDetails = async (data: any) => {
     try {
+      // Validate the form
+      const isValid = await classForm.trigger();
+      if (!isValid) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
       const classDetails = {
         ...data,
         location: data.location || defaultLocation,
         contact: data.contact || null,
-        id: Date.now() // Add unique ID for each class
+        id: Date.now(), // Add unique ID for each class
+        type: data.type || 'Offline',
+        gender: data.gender || 'both',
+        experienceLevel: data.experienceLevel || 'beginner',
+        noOfSessions: data.noOfSessions || '1'
       };
 
       setClassDetailsData(prev => [...prev, classDetails]);
       classForm.reset();
-      setShowClassFields(false); // Hide the form after saving
       toast.success('Class details saved successfully');
+      setShowClassFields(false); // Hide the form after saving
     } catch (error) {
       console.error('Error saving class details:', error);
       toast.error('Failed to save class details');
@@ -617,17 +583,31 @@ export default function RegistrationForm() {
   };
 
   // Update the handleCourseSubmit function
-  const handleCourseSubmit = async (data: any) => {
+  const handleCourseSubmit = async () => {
     try {
+      // Validate the form
+      const isValid = await courseForm.trigger();
+      if (!isValid) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      const data = watchCourse();
       const courseDetails = {
         ...data,
         location: data.location || defaultLocation,
-        contact: data.contact || null
+        contact: data.contact || null,
+        id: Date.now(), // Add unique ID for each course
+        type: data.type || 'Offline',
+        gender: data.gender || 'both',
+        experienceLevel: data.experienceLevel || 'beginner',
+        noOfSessions: data.noOfSessions || '1'
       };
 
       setCourseDetailsData(prev => [...prev, courseDetails]);
       courseForm.reset();
       toast.success('Course details saved successfully');
+      setShowCourseFields(false);
     } catch (error) {
       console.error('Error saving course details:', error);
       toast.error('Failed to save course details');
@@ -1061,6 +1041,9 @@ export default function RegistrationForm() {
   // Update the handleLocationSubmit function
   const handleLocationSubmit = async (locationData: Location) => {
     try {
+      // Add new location to state
+      setSavedLocations(prev => [...prev, locationData]);
+      
       // Update form value based on current form type
       if (currentFormType === 'class') {
         setValueClass('location', locationData);
@@ -1079,9 +1062,12 @@ export default function RegistrationForm() {
   };
 
   // Update the handleContactSubmit function
-  const handleContactSubmit = async (contactData: any) => {
+  const handleContactSubmit = async (contactData: Contact) => {
     try {
-      // Update the form value based on current form type
+      // Add new contact to state
+      setSavedContacts(prev => [...prev, contactData]);
+      
+      // Update form value based on current form type
       if (currentFormType === 'class') {
         setValueClass('contact', contactData);
       } else {
@@ -1110,19 +1096,19 @@ export default function RegistrationForm() {
           Contact<span className="text-red-500">*</span>
         </Label>
         <Select
-          value={contact ? `${contact.firstName} ${contact.lastName}` : ''}
+          value={contact ? `${contact.tutorFirstName} ${contact.tutorLastName}` : ''}
           onValueChange={(value) => handleContactSelect(value, formType)}
         >
           <SelectTrigger className="w-full h-[52px] border-[#05244f]">
             <SelectValue placeholder="Select contact" />
           </SelectTrigger>
           <SelectContent>
-            {contacts.map(contact => (
+            {savedContacts.map(contact => (
               <SelectItem
-                key={`${contact.firstName}-${contact.lastName}`}
-                value={`${contact.firstName} ${contact.lastName}`}
+                key={`${contact.tutorFirstName}-${contact.tutorLastName}`}
+                value={`${contact.tutorFirstName} ${contact.tutorLastName}`}
               >
-                {`${contact.firstName} ${contact.lastName}`} ({Object.entries(contact.contactType)
+                {`${contact.tutorFirstName} ${contact.tutorLastName}`} ({Object.entries(contact.contactType)
                   .filter(([, value]) => value)
                   .map(([key]) => key)
                   .join(', ')})
@@ -1154,7 +1140,7 @@ export default function RegistrationForm() {
     );
   };
 
-  // Add this function to handle location selection
+  // Update the handleLocationSelect function
   const handleLocationSelect = (value: string, formType: 'class' | 'course') => {
     const selectedLocation = savedLocations.find(
       (loc) => getLocationValue(loc) === value
@@ -1166,10 +1152,10 @@ export default function RegistrationForm() {
     }
   };
 
-  // Add handleContactSelect function
+  // Update the handleContactSelect function
   const handleContactSelect = (value: string, formType: 'class' | 'course') => {
-    const selectedContact = contacts.find(contact =>
-      `${contact.firstName} ${contact.lastName}` === value
+    const selectedContact = savedContacts.find(contact =>
+      `${contact.tutorFirstName} ${contact.tutorLastName}` === value
     );
 
     if (selectedContact) {
@@ -1181,18 +1167,10 @@ export default function RegistrationForm() {
     }
   };
 
-  useEffect(() => {
-    const locations = localStorage.getItem('locations');
-    if (locations) {
-      const parsedLocations = JSON.parse(locations);
-      setSavedLocations(parsedLocations); // <-- store as array of objects
-    }
-  }, [isLocationPopupOpen]);
-
   // Update the location select value handling
   const getLocationValue = (location: Location | null | undefined): string => {
     if (!location) return '';
-    return `${location.address}, ${location.area}, ${location.city}, ${location.state}, ${location.country}, ${location.pincode}`;
+    return `${location.address}, ${location.area}, ${location.city}`;
   };
 
   const handleCropComplete = async () => {
@@ -1296,6 +1274,62 @@ export default function RegistrationForm() {
     } else if (selectedThumbnailIndex && selectedThumbnailIndex > index) {
       setSelectedThumbnailIndex(selectedThumbnailIndex - 1);
     }
+  };
+
+  // Add the renderLocationSelect function
+  const renderLocationSelect = (formType: 'class' | 'course') => {
+    const watch = formType === 'class' ? watchClass : watchCourse;
+    const errors = formType === 'class' ? errorsClass : errorsCourse;
+    const location = watch('location');
+
+    return (
+      <div className="flex flex-col gap-2">
+        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+          Location<span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={location ? getLocationValue(location) : ''}
+          onValueChange={(value) => handleLocationSelect(value, formType)}
+        >
+          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+            <SelectValue placeholder="Select location" />
+          </SelectTrigger>
+          <SelectContent>
+            {savedLocations.map(location => (
+              <SelectItem
+                key={location.id}
+                value={getLocationValue(location)}
+              >
+                {getLocationValue(location)}
+              </SelectItem>
+            ))}
+            <div className="p-2 border-t border-gray-200">
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => {
+                  const escapeEvent = new KeyboardEvent('keydown', {
+                    key: 'Escape',
+                    code: 'Escape',
+                    keyCode: 27,
+                    which: 27,
+                    bubbles: true,
+                    cancelable: true
+                  });
+                  document.dispatchEvent(escapeEvent);
+                  setIsLocationPopupOpen(true);
+                }}
+              >
+                + Add Location
+              </Button>
+            </div>
+          </SelectContent>
+        </Select>
+        {errors.location && (
+          <p className="text-red-500 text-xs">{errors.location.message}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -2084,59 +2118,13 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 mt-4 gap-4 mb-6">
-                      <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Location<span className="text-red-500">*</span>
-                        </Label>
-                        <Select
-                          value={getLocationValue(watchClass("location")) || ''}
-                          onValueChange={(value) => handleLocationSelect(value, 'class')}
-                        >
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Select location" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {savedLocations.map((location, index) => {
-                              const display = getLocationValue(location);
-                              return (
-                                <SelectItem key={`location-${index}-${location.address}-${location.pincode}`} value={display}>
-                                  {display}
-                                </SelectItem>
-                              );
-                            })}
-                            <div className="p-2 border-t border-gray-200">
-                              <Button
-                                className="w-full"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  const escapeEvent = new KeyboardEvent('keydown', {
-                                    key: 'Escape',
-                                    bubbles: true,
-                                  });
-                                  document.dispatchEvent(escapeEvent);
-                                  setIsLocationPopupOpen(true);
-                                }}
-                              >
-                                + Add New Location
-                              </Button>
-                            </div>
-                          </SelectContent>
-                        </Select>
-                        {errorsClass.location && (
-                          <p className="text-red-500 text-xs">{errorsClass.location.message}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {/* <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Contact<span className="text-red-500">*</span>
-                        </Label> */}
-                        {renderContactSelect('class')}
-                      </div>
+                      {renderLocationSelect('class')}
+                      {renderContactSelect('class')}
                     </div>
 
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={saveClassDetails}
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >
@@ -2323,55 +2311,13 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 mt-4 gap-4 mb-6">
-                      <div className="flex flex-col gap-2">
-                        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Location<span className="text-red-500">*</span>
-                        </Label>
-                        <Select
-                          value={getLocationValue(watchCourse("location")) || ''}
-                          onValueChange={(value) => handleLocationSelect(value, 'course')}
-                        >
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Select location" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {savedLocations.map((location, index) => (
-                              <SelectItem
-                                key={`location-${index}-${location.replace(/[^a-zA-Z0-9]/g, '-')}`}
-                                value={location}
-                              >
-                                {location}
-                              </SelectItem>
-                            ))}
-                            <div className="p-2 border-t border-gray-200">
-                              <Button
-                                className="w-full"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setIsLocationPopupOpen(true);
-                                }}
-                              >
-                                + Add New Location
-                              </Button>
-                            </div>
-                          </SelectContent>
-                        </Select>
-                        {errorsCourse.location && (
-                          <p className="text-red-500 text-xs">{errorsCourse.location.message}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        {/* <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                          Contact<span className="text-red-500">*</span>
-                        </Label> */}
-                        {renderContactSelect('course')}
-                      </div>
+                      {renderLocationSelect('course')}
+                      {renderContactSelect('course')}
                     </div>
 
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={handleCourseSubmit}
                       className="my-4 app-bg-color text-white flex justify-end"
                       disabled={isLoading}
                     >

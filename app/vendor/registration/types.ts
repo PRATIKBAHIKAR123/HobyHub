@@ -23,7 +23,9 @@ export interface FormValues {
 }
 
 export interface Location {
+  id: string;
   address: string;
+  road: string;
   area: string;
   city: string;
   state: string;
@@ -31,15 +33,18 @@ export interface Location {
   pincode: string;
   latitude: string;
   longitude: string;
-  road: string;
 }
 
 export interface Contact {
   id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
+  tutorFirstName: string;
+  tutorLastName: string;
+  tutorEmailID: string;
+  tutorCountryCode: string;
+  tutorPhoneNo: string;
+  whatsappCountryCode: string;
+  whatsappNo: string;
+  tutorIntro: string;
   contactType: {
     primary: boolean;
     secondary: boolean;

@@ -7,30 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../../lib/googleMaps";
 import { toast } from "sonner";
+import { Location } from "./types";
 
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onLocationSubmit?: (locationData: LocationData) => Promise<void>;
-}
-
-// Define the location data structure
-export interface LocationData {
-  id: string;
-  address: string;
-  road: string;
-  area: string;
-  city: string;
-  state: string;
-  country: string;
-  pincode: string;
-  latitude: string;
-  longitude: string;
+  onLocationSubmit?: (locationData: Location) => Promise<void>;
 }
 
 export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }: PopupScreenProps) {
   // State for form data
-  const [formData, setFormData] = useState<LocationData>({
+  const [formData, setFormData] = useState<Location>({
     id: '',
     address: '',
     road: '',
@@ -292,11 +279,11 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         road: formData.road.trim(),
         area: formData.area.trim(),
         city: formData.city.trim(),
-        state: formData.state.trim() || 'Maharashtra', // Default state if not provided
-        country: formData.country.trim() || 'India', // Default country if not provided
-        pincode: formData.pincode.trim() || '411001', // Default pincode if not provided
-        latitude: formData.latitude || '18.5204', // Default latitude if not provided
-        longitude: formData.longitude || '73.8567', // Default longitude if not provided
+        state: formData.state.trim(),
+        country: formData.country.trim(),
+        pincode: formData.pincode.trim(),
+        latitude: formData.latitude.trim(),
+        longitude: formData.longitude.trim(),
       };
 
       // Call the parent's onLocationSubmit callback
