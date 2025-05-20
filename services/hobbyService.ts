@@ -196,13 +196,15 @@ export const getAllCategories = async (): Promise<Category[]> => {
 /**
  * Get activity details by ID
  * @param activityId The ID of the activity to fetch
+ * @param latitude The latitude coordinate for distance calculation
+ * @param longitude The longitude coordinate for distance calculation
  * @returns Activity details
  */
-export const getActivityById = async (activityId: number): Promise<Activity> => {
+export const getActivityById = async (activityId: number, latitude?: string, longitude?: string): Promise<Activity> => {
     try {
         const token = getAuthToken();
         const response = await axios.get<Activity>(
-            `${API_BASE_URL}/activity/get?id=${activityId}`,
+            `${API_BASE_URL}/activity/get?id=${activityId}&latitude=${latitude || '18.5204'}&longitude=${longitude || '73.8567'}`,
             {
                 headers: {
                     'accept': '*/*',

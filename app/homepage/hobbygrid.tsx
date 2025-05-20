@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMode } from "@/contexts/ModeContext";
 import { useSortFilter } from "@/contexts/SortFilterContext";
 import { useFilter } from "@/contexts/FilterContext";
+import { API_BASE_URL_IMG } from "@/lib/apiConfigs";
 
 interface Activity {
   id: number;
@@ -246,7 +247,7 @@ const isFavorited = (activityId: number): boolean => {
           <div className="relative">
             <Image
               src={activity.thumbnailImage ?
-                `https://api.hobyhub.com${activity.thumbnailImage.replace(/\\/g, '/')}` :
+                `${API_BASE_URL_IMG}${activity.thumbnailImage.replace(/\\/g, '/')}` :
                 ''}
               alt={activity.title}
               width={300}
