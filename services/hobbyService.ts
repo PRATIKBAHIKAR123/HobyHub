@@ -148,7 +148,7 @@ export const getAllActivities = async (filters: Partial<ActivityFilters> = {}): 
                 type: filters.type || null,
                 time: filters.time || null,
                 gender: filters.gender || null,
-                priceFrom: filters.priceFrom || '0',
+                priceFrom: filters.priceFrom || null,
                 priceTo: filters.priceTo || null,
                 pageNumber: filters.pageNumber || 0,
                 pageSize: filters.pageSize || 10,
