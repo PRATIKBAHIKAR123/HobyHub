@@ -30,9 +30,7 @@ import SessionRangeInput from "./sessionRangeInput";
 import LocationPopupScreen from "./locationSelection";
 import ContactPopupScreen from "./contactSelection";
 import { FormValues, Location, Contact, Category } from "./types";
-import ReactCrop, { Crop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ImageCropper from '@/app/components/ImageCropper';
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -169,16 +167,8 @@ export default function RegistrationForm() {
   // const [ setThumbnailPreview] = useState<string | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 90,
-    height: 90,
-    x: 5,
-    y: 5
-  });
-  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
 
   // Add default location
   const defaultLocation: Location = {
@@ -305,8 +295,8 @@ export default function RegistrationForm() {
       category: '',
       subCategory: '',
       time: '',
-      timingsFrom: '',
-      timingsTo: '',
+      timingsFrom: '00:00',
+      timingsTo: '00:00',
       weekdays: [],
       fromage: '',
       toage: '',
@@ -330,8 +320,8 @@ export default function RegistrationForm() {
       category: '',
       subCategory: '',
       time: '',
-      timingsFrom: '',
-      timingsTo: '',
+      timingsFrom: '00:00',
+      timingsTo: '00:00',
       weekdays: [],
       fromage: '',
       toage: '',
@@ -861,13 +851,17 @@ export default function RegistrationForm() {
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImageToCrop(e.target?.result as string);
-        setIsCropDialogOpen(true);
-      };
-      reader.readAsDataURL(file);
+      const imageUrl = URL.createObjectURL(file);
+      setTempImageUrl(imageUrl);
+      setIsCropperOpen(true);
     }
+  };
+
+  const handleCropComplete = (croppedImage: File) => {
+    setValuePersonal("profileImageFile", croppedImage);
+    setProfileImagePreview(URL.createObjectURL(croppedImage));
+    setTempImageUrl(null);
+    setIsCropperOpen(false);
   };
 
   const handleClearForm = () => {
@@ -1032,42 +1026,6 @@ export default function RegistrationForm() {
   const getLocationValue = (location: Location | null | undefined): string => {
     if (!location) return '';
     return `${location.address}, ${location.area}, ${location.city}`;
-  };
-
-  const handleCropComplete = async () => {
-    if (!imageRef.current || !imageToCrop) return;
-
-    const canvas = document.createElement('canvas');
-    const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-    const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
-    canvas.width = crop.width;
-    canvas.height = crop.height;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) return;
-
-    ctx.drawImage(
-      imageRef.current,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
-      0,
-      0,
-      crop.width,
-      crop.height
-    );
-
-    // Convert canvas to blob
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const croppedFile = new File([blob], 'cropped-profile.jpg', { type: 'image/jpeg' });
-        setValuePersonal("profileImageFile", croppedFile);
-        setProfileImagePreview(URL.createObjectURL(blob));
-        setIsCropDialogOpen(false);
-        setImageToCrop(null);
-      }
-    }, 'image/jpeg');
   };
 
   // Add this function to handle image upload
@@ -1323,18 +1281,13 @@ export default function RegistrationForm() {
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                         Profile Image
                       </Label>
-                      {!profileImagePreview && (<Input
-                        type="file"
-                        accept="image/*"
-                        onChange={
-                          handleProfileImageUpload
-                          // const file = e.target.files?.[0];
-                          // if (file) {
-                          //   setValuePersonal("profileImageFile", file);
-                          // }
-                        }
-                        className="h-[52px] border-[#05244f]"
-                      />
+                      {!profileImagePreview && (
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfileImageUpload}
+                          className="h-[52px] border-[#05244f]"
+                        />
                       )}
                       {profileImagePreview && (
                         <div className="relative w-[158px] h-[158px] mb-4">
@@ -1353,10 +1306,7 @@ export default function RegistrationForm() {
                               if (profileImageInputRef.current) {
                                 profileImageInputRef.current.value = '';
                               }
-                              setPersonalDetailsData((prevData: any) => ({
-                                ...prevData,
-                                profileImageFile: new File([], '')
-                              }));
+                              setValuePersonal("profileImageFile", new File([], ''));
                             }}
                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 shadow-md"
                           >
@@ -2326,45 +2276,18 @@ export default function RegistrationForm() {
         />
       </div>
 
-      {/* Add this dialog component for image cropping */}
-      <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
-        <DialogContent className="max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle>Crop Profile Image</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4">
-            {imageToCrop && (
-              <ReactCrop
-                crop={crop}
-                onChange={(c) => setCrop(c)}
-                aspect={1}
-                className="max-w-full"
-              >
-                <Image
-                  ref={imageRef}
-                  src={imageToCrop}
-                  alt="Profile to crop"
-                  className="max-w-full"
-                />
-              </ReactCrop>
-            )}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCropDialogOpen(false);
-                  setImageToCrop(null);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleCropComplete}>
-                Crop & Save
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Add ImageCropper component */}
+      {tempImageUrl && (
+        <ImageCropper
+          isOpen={isCropperOpen}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setTempImageUrl(null);
+          }}
+          imageUrl={tempImageUrl}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </>
   );
 }

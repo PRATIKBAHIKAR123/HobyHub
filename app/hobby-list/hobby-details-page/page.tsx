@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from 'next/navigation';
 import { getActivityById, increaseActivityViewCount } from "@/services/hobbyService";
 import { API_BASE_URL_1 } from "@/lib/apiConfigs";
+import { useFilter } from "@/contexts/FilterContext";
 
 // const thumbnails = [
 //   // "/images/thumb2.png",
@@ -119,6 +120,7 @@ function HobbyDetailsPageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('id');
   const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const { coordinates } = useFilter();
 
   useEffect(() => {
     const fetchActivityData = async () => {
@@ -130,7 +132,11 @@ function HobbyDetailsPageContent() {
       try {
         const token = localStorage.getItem('token');
         let activity: ActivityData;
-        activity = await getActivityById(parseInt(activityId));
+        activity = await getActivityById(
+          parseInt(activityId),
+          coordinates?.lat.toString(),
+          coordinates?.lng.toString()
+        );
         if (token) {
           localStorage.setItem('activityClassData', JSON.stringify(activity?.classDetails??[]));
           localStorage.setItem('activityCourseData', JSON.stringify(activity?.courseDetails??[]));
@@ -198,7 +204,7 @@ function HobbyDetailsPageContent() {
     };
 
     fetchActivityData();
-  }, [activityId]);
+  }, [activityId, coordinates]);
 
   if (isLoading) {
     return <HobbyDetailsPageSkeleton />;
@@ -281,20 +287,20 @@ function HobbyDetailsPageContent() {
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Age Restriction</h3>
           <p className="text-black text-[18px] font-bold font-['Trajan_Pro'] flex items-center justify-center gap-2">
             <Image src={'/Icons/user-details.png'} height={24} width={24} alt="Age Icon" />
-            {activityData.classDetails?.[0]?.ageFrom} - {activityData.classDetails?.[0]?.ageTo} Years
+            {activityData.ageRestrictionFrom} - {activityData.ageRestrictionTo} Years
           </p>
         </Card>
         <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4]">
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Session</h3>
           <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
             <Image src={'/Icons/Calender-ic.png'} height={24} width={24} alt="Calendar Icon" />
-            Session {activityData.classDetails?.[0]?.sessionTo} - {activityData.classDetails?.[0]?.sessionFrom}
+            Session {activityData.sessionCountFrom} - {activityData.sessionCountTo}
           </p>
         </Card>
         <Card className="p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 border-[#d2dae4]">
           <h3 className="text-black text-lg font-normal font-['Trajan_Pro']">Location</h3>
           <p className="text-black text-[18px] font-bold flex items-center justify-center gap-2">
-            {activityData.city}
+            {activityData.area}, {activityData.state}, {activityData.country}
           </p>
         </Card>
       </div>
