@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,93 +36,93 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   const [wasSubmitted, setWasSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // const mapRef = useRef<HTMLDivElement>(null);
-  // const [ setMapLoaded] = useState(false);
-  const [, setUseGoogleMaps] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [useGoogleMaps, setUseGoogleMaps] = useState(false);
 
   // Initialize map
-  // const initializeMap = useCallback(() => {
-  //   if (mapLoaded && mapRef.current && window.google?.maps) {
-  //     const mapOptions = {
-  //       center: { lat: 19.0760, lng: 72.8777 }, // Default to Mumbai
-  //       zoom: 15,
-  //     };
+  const initializeMap = useCallback(() => {
+    if (mapLoaded && mapRef.current && window.google?.maps) {
+      const mapOptions = {
+        center: { lat: 19.0760, lng: 72.8777 }, // Default to Mumbai
+        zoom: 15,
+      };
 
-  //     const map = new window.google.maps.Map(mapRef.current, mapOptions);
+      const map = new window.google.maps.Map(mapRef.current, mapOptions);
 
-  //     // Add a marker that can be dragged to set the location
-  //     const marker = new window.google.maps.Marker({
-  //       position: mapOptions.center,
-  //       map: map,
-  //       draggable: true,
-  //       title: "Drag to select location",
-  //     });
+      // Add a marker that can be dragged to set the location
+      const marker = new window.google.maps.Marker({
+        position: mapOptions.center,
+        map: map,
+        draggable: true,
+        title: "Drag to select location",
+      });
 
-  //     // Update form data when marker is dragged
-  //     marker.addListener('dragend', () => {
-  //       const position = marker.getPosition();
-  //       if (position) {
-  //         setFormData(prev => ({
-  //           ...prev,
-  //           latitude: position.lat().toString(),
-  //           longitude: position.lng().toString(),
-  //         }));
+      // Update form data when marker is dragged
+      marker.addListener('dragend', () => {
+        const position = marker.getPosition();
+        if (position) {
+          setFormData(prev => ({
+            ...prev,
+            latitude: position.lat().toString(),
+            longitude: position.lng().toString(),
+          }));
 
-  //         // Optionally use reverse geocoding to fill address fields
-  //         const geocoder = new window.google.maps.Geocoder();
-  //         geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
-  //           if (status === 'OK' && results![0]) {
-  //             updateAddressFromGeocode(results![0]);
-  //           }
-  //         });
-  //       }
-  //     });
+          // Optionally use reverse geocoding to fill address fields
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+            if (status === 'OK' && results![0]) {
+              updateAddressFromGeocode(results![0]);
+            }
+          });
+        }
+      });
 
-  //     // Add search box (optional enhancement)
-  //     const input = document.createElement('input');
-  //     input.className = 'controls';
-  //     input.type = 'text';
-  //     input.placeholder = 'Search for a location';
-  //     input.style.margin = '10px';
-  //     input.style.padding = '10px';
-  //     input.style.width = 'calc(100% - 20px)';
-  //     input.style.boxSizing = 'border-box';
+      // Add search box (optional enhancement)
+      const input = document.createElement('input');
+      input.className = 'controls';
+      input.type = 'text';
+      input.placeholder = 'Search for a location';
+      input.style.margin = '10px';
+      input.style.padding = '10px';
+      input.style.width = 'calc(100% - 20px)';
+      input.style.boxSizing = 'border-box';
 
-  //     map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
+      map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
 
-  //     const searchBox = new window.google.maps.places.SearchBox(input);
+      const searchBox = new window.google.maps.places.SearchBox(input);
 
-  //     map.addListener('bounds_changed', () => {
-  //       searchBox.setBounds(map.getBounds()!);
-  //     });
+      map.addListener('bounds_changed', () => {
+        searchBox.setBounds(map.getBounds()!);
+      });
 
-  //     searchBox.addListener('places_changed', () => {
-  //       const places = searchBox.getPlaces();
+      searchBox.addListener('places_changed', () => {
+        const places = searchBox.getPlaces();
 
-  //       if (places?.length === 0) return;
+        if (places?.length === 0) return;
 
-  //       const place = places![0];
+        const place = places![0];
 
-  //       if (!place.geometry || !place.geometry.location) return;
+        if (!place.geometry || !place.geometry.location) return;
 
-  //       // Update marker and map
-  //       marker.setPosition(place.geometry.location);
-  //       map.setCenter(place.geometry.location);
+        // Update marker and map
+        marker.setPosition(place.geometry.location);
+        map.setCenter(place.geometry.location);
 
-  //       // Update form data
-  //       setFormData(prev => ({
-  //         ...prev,
-  //         latitude: place.geometry?.location?.lat().toString(),
-  //         longitude: place.geometry?.location?.lng().toString(),
-  //       }));
+        // Update form data
+        setFormData(prev => ({
+          ...prev,
+          latitude: place.geometry?.location?.lat().toString(),
+          longitude: place.geometry?.location?.lng().toString(),
+        }));
 
-  //       // Update address fields
-  //       if (place.address_components) {
-  //         updateAddressFromGeocode(place);
-  //       }
-  //     });
-  //   }
-  // }, [mapLoaded]);
+        // Update address fields
+        if (place.address_components) {
+          updateAddressFromGeocode(place);
+        }
+      });
+    }
+  }, [mapLoaded]);
 
   // Generate unique ID when form opens
   useEffect(() => {
@@ -142,80 +142,80 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   useEffect(() => {
     if (typeof window !== 'undefined' && open) {
       if (isGoogleMapsLoaded()) {
-        // setMapLoaded(true);
+        setMapLoaded(true);
         setUseGoogleMaps(true);
-        // initializeMap();
+        initializeMap();
       } else {
         loadGoogleMapsScript(() => {
-          // setMapLoaded(true);
+          setMapLoaded(true);
           setUseGoogleMaps(true);
-          // initializeMap();
+          initializeMap();
         });
       }
     }
-  }, );
+  }, [open, initializeMap]);
 
   // Update address fields from geocode result
-  // const updateAddressFromGeocode = (place: google.maps.GeocoderResult | google.maps.places.PlaceResult) => {
-  //   if (!place.address_components) return;
+  const updateAddressFromGeocode = (place: google.maps.GeocoderResult | google.maps.places.PlaceResult) => {
+    if (!place.address_components) return;
 
-  //   let address = '';
-  //   let road = '';
-  //   let area = '';
-  //   let city = '';
-  //   let state = '';
-  //   let country = '';
-  //   let pincode = '';
+    let address = '';
+    let road = '';
+    let area = '';
+    let city = '';
+    let state = '';
+    let country = '';
+    let pincode = '';
 
-  //   for (const component of place.address_components) {
-  //     const componentType = component.types[0];
+    for (const component of place.address_components) {
+      const componentType = component.types[0];
 
-  //     switch (componentType) {
-  //       case 'street_number':
-  //         address = `${component.long_name} ${address}`;
-  //         break;
-  //       case 'route':
-  //         road = component.long_name;
-  //         break;
-  //       case 'sublocality_level_1':
-  //         area = component.long_name;
-  //         break;
-  //       case 'locality':
-  //         city = component.long_name;
-  //         break;
-  //       case 'administrative_area_level_1':
-  //         state = component.long_name;
-  //         break;
-  //       case 'country':
-  //         country = component.long_name;
-  //         break;
-  //       case 'postal_code':
-  //         pincode = component.long_name;
-  //         break;
-  //     }
-  //   }
+      switch (componentType) {
+        case 'street_number':
+          address = `${component.long_name} ${address}`;
+          break;
+        case 'route':
+          road = component.long_name;
+          break;
+        case 'sublocality_level_1':
+          area = component.long_name;
+          break;
+        case 'locality':
+          city = component.long_name;
+          break;
+        case 'administrative_area_level_1':
+          state = component.long_name;
+          break;
+        case 'country':
+          country = component.long_name;
+          break;
+        case 'postal_code':
+          pincode = component.long_name;
+          break;
+      }
+    }
 
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     address: address || prev.address,
-  //     road: road || prev.road,
-  //     area: area || prev.area,
-  //     city: city || prev.city,
-  //     state: state || prev.state,
-  //     country: country || prev.country,
-  //     pincode: pincode || prev.pincode,
-  //   }));
+    setFormData(prev => ({
+      ...prev,
+      address: address || prev.address,
+      road: road || prev.road,
+      area: area || prev.area,
+      city: city || prev.city,
+      state: state || prev.state,
+      country: country || prev.country,
+      pincode: pincode || prev.pincode,
+    }));
 
-  //   // Clear any errors for fields that are now filled
-  //   setErrors(prev => {
-  //     const newErrors = { ...prev };
-  //     if (address) delete newErrors.address;
-  //     if (road) delete newErrors.road;
-  //     if (area) delete newErrors.area;
-  //     if (city) delete newErrors.city;
-  //     return newErrors;
-  //   });
-  // };
+    // Clear any errors for fields that are now filled
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (address) delete newErrors.address;
+      if (road) delete newErrors.road;
+      if (area) delete newErrors.area;
+      if (city) delete newErrors.city;
+      return newErrors;
+    });
+  };
 
   // Validate the form
   const validateForm = (): boolean => {
@@ -336,7 +336,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       setErrors({});
       setWasSubmitted(false);
       setIsSubmitting(false);
-      // setMapLoaded(false);
+      setMapLoaded(false);
       setUseGoogleMaps(false);
     };
   }, []);
@@ -371,7 +371,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
 
         <div className="grid grid-cols-1 gap-6 items-center">
           {/* Map Container */}
-          {/* <div className="flex justify-center w-full">
+          <div className="flex justify-center w-full">
             {useGoogleMaps && (
               <div
                 ref={mapRef}
@@ -380,7 +380,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                 aria-label="Location map"
               ></div>
             )}
-          </div> */}
+          </div>
 
           {/* Form Section */}
           <div className="bg-white rounded-[15px] border border-[#05244f] p-4 w-full">

@@ -1,3 +1,5 @@
+import { GOOGLE_MAP_API_KEY } from "../../lib/apiConfigs";
+
 declare global {
   interface Window {
     google?: any;
@@ -32,7 +34,7 @@ export const loadGoogleMapsScript = (callback?: () => void): void => {
 
   const script = document.createElement('script');
   script.id = 'google-maps-script';
-  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBiXRza3cdC49oDky7hLyXPqkQhaNM4yts&libraries=places&region=IN`;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAP_API_KEY}&libraries=places&region=IN`;
   script.async = true;
   script.defer = true;
 
