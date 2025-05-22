@@ -43,84 +43,267 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   // Initialize map
   const initializeMap = useCallback(() => {
     if (mapLoaded && mapRef.current && window.google?.maps) {
-      const mapOptions = {
-        center: { lat: 19.0760, lng: 72.8777 }, // Default to Mumbai
-        zoom: 15,
-      };
+      // Default to Mumbai if geolocation fails
+      const defaultLocation = { lat: 19.0760, lng: 72.8777 };
+      
+      // Try to get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            
+            const mapOptions = {
+              center: userLocation,
+              zoom: 15,
+            };
 
-      const map = new window.google.maps.Map(mapRef.current, mapOptions);
+            const map = new window.google.maps.Map(mapRef.current, mapOptions);
 
-      // Add a marker that can be dragged to set the location
-      const marker = new window.google.maps.Marker({
-        position: mapOptions.center,
-        map: map,
-        draggable: true,
-        title: "Drag to select location",
-      });
+            // Add a marker that can be dragged to set the location
+            const marker = new window.google.maps.Marker({
+              position: userLocation,
+              map: map,
+              draggable: true,
+              title: "Drag to select location",
+            });
 
-      // Update form data when marker is dragged
-      marker.addListener('dragend', () => {
-        const position = marker.getPosition();
-        if (position) {
+            // Update form data when marker is dragged
+            marker.addListener('dragend', () => {
+              const position = marker.getPosition();
+              if (position) {
+                setFormData(prev => ({
+                  ...prev,
+                  latitude: position.lat().toString(),
+                  longitude: position.lng().toString(),
+                }));
+
+                // Use reverse geocoding to fill address fields
+                const geocoder = new window.google.maps.Geocoder();
+                geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+                  
+                  if (status === 'OK' && results![0]) {
+                   
+                    updateAddressFromGeocode(results![0]);
+                  }
+                });
+              }
+            });
+
+            // Add search box
+            const input = document.createElement('input');
+            input.className = 'controls';
+            input.type = 'text';
+            input.placeholder = 'Search for a location';
+            input.style.margin = '10px';
+            input.style.padding = '10px';
+            input.style.width = 'calc(100% - 20px)';
+            input.style.boxSizing = 'border-box';
+
+            map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
+
+            const searchBox = new window.google.maps.places.SearchBox(input);
+
+            map.addListener('bounds_changed', () => {
+              searchBox.setBounds(map.getBounds()!);
+            });
+
+            searchBox.addListener('places_changed', () => {
+              const places = searchBox.getPlaces();
+
+              if (places?.length === 0) return;
+
+              const place = places![0];
+
+              if (!place.geometry || !place.geometry.location) return;
+
+              // Update marker and map
+              marker.setPosition(place.geometry.location);
+              map.setCenter(place.geometry.location);
+
+              // Update form data
+              setFormData(prev => ({
+                ...prev,
+                latitude: place.geometry?.location?.lat().toString(),
+                longitude: place.geometry?.location?.lng().toString(),
+              }));
+
+              // Update address fields
+              if (place.address_components) {
+                updateAddressFromGeocode(place);
+              }
+            });
+          },
+          (error) => {
+            // If geolocation fails, use default location
+            console.error('Error getting location:', error);
+            toast.error('Unable to get your current location. Using default location.');
+            
+            const mapOptions = {
+              center: defaultLocation,
+              zoom: 15,
+            };
+
+            const map = new window.google.maps.Map(mapRef.current, mapOptions);
+
+            // Add a marker that can be dragged to set the location
+            const marker = new window.google.maps.Marker({
+              position: defaultLocation,
+              map: map,
+              draggable: true,
+              title: "Drag to select location",
+            });
+
+            // Update form data when marker is dragged
+            marker.addListener('dragend', () => {
+              const position = marker.getPosition();
+              if (position) {
+                setFormData(prev => ({
+                  ...prev,
+                  latitude: position.lat().toString(),
+                  longitude: position.lng().toString(),
+                }));
+
+                // Use reverse geocoding to fill address fields
+                const geocoder = new window.google.maps.Geocoder();
+                geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+                  if (status === 'OK' && results![0]) {
+                    updateAddressFromGeocode(results![0]);
+                  }
+                });
+              }
+            });
+
+            // Add search box
+            const input = document.createElement('input');
+            input.className = 'controls';
+            input.type = 'text';
+            input.placeholder = 'Search for a location';
+            input.style.margin = '10px';
+            input.style.padding = '10px';
+            input.style.width = 'calc(100% - 20px)';
+            input.style.boxSizing = 'border-box';
+
+            map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
+
+            const searchBox = new window.google.maps.places.SearchBox(input);
+
+            map.addListener('bounds_changed', () => {
+              searchBox.setBounds(map.getBounds()!);
+            });
+
+            searchBox.addListener('places_changed', () => {
+              const places = searchBox.getPlaces();
+
+              if (places?.length === 0) return;
+
+              const place = places![0];
+
+              if (!place.geometry || !place.geometry.location) return;
+
+              // Update marker and map
+              marker.setPosition(place.geometry.location);
+              map.setCenter(place.geometry.location);
+
+              // Update form data
+              setFormData(prev => ({
+                ...prev,
+                latitude: place.geometry?.location?.lat().toString(),
+                longitude: place.geometry?.location?.lng().toString(),
+              }));
+
+              // Update address fields
+              if (place.address_components) {
+                updateAddressFromGeocode(place);
+              }
+            });
+          }
+        );
+      } else {
+        // If geolocation is not supported, use default location
+        toast.error('Geolocation is not supported by your browser. Using default location.');
+        
+        const mapOptions = {
+          center: defaultLocation,
+          zoom: 15,
+        };
+
+        const map = new window.google.maps.Map(mapRef.current, mapOptions);
+
+        // Add a marker that can be dragged to set the location
+        const marker = new window.google.maps.Marker({
+          position: defaultLocation,
+          map: map,
+          draggable: true,
+          title: "Drag to select location",
+        });
+
+        // Update form data when marker is dragged
+        marker.addListener('dragend', () => {
+          const position = marker.getPosition();
+          if (position) {
+            setFormData(prev => ({
+              ...prev,
+              latitude: position.lat().toString(),
+              longitude: position.lng().toString(),
+            }));
+
+            // Use reverse geocoding to fill address fields
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+              if (status === 'OK' && results![0]) {
+                updateAddressFromGeocode(results![0]);
+              }
+            });
+          }
+        });
+
+        // Add search box
+        const input = document.createElement('input');
+        input.className = 'controls';
+        input.type = 'text';
+        input.placeholder = 'Search for a location';
+        input.style.margin = '10px';
+        input.style.padding = '10px';
+        input.style.width = 'calc(100% - 20px)';
+        input.style.boxSizing = 'border-box';
+
+        map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
+
+        const searchBox = new window.google.maps.places.SearchBox(input);
+
+        map.addListener('bounds_changed', () => {
+          searchBox.setBounds(map.getBounds()!);
+        });
+
+        searchBox.addListener('places_changed', () => {
+          const places = searchBox.getPlaces();
+
+          if (places?.length === 0) return;
+
+          const place = places![0];
+
+          if (!place.geometry || !place.geometry.location) return;
+
+          // Update marker and map
+          marker.setPosition(place.geometry.location);
+          map.setCenter(place.geometry.location);
+
+          // Update form data
           setFormData(prev => ({
             ...prev,
-            latitude: position.lat().toString(),
-            longitude: position.lng().toString(),
+            latitude: place.geometry?.location?.lat().toString(),
+            longitude: place.geometry?.location?.lng().toString(),
           }));
 
-          // Optionally use reverse geocoding to fill address fields
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
-            if (status === 'OK' && results![0]) {
-              updateAddressFromGeocode(results![0]);
-            }
-          });
-        }
-      });
-
-      // Add search box (optional enhancement)
-      const input = document.createElement('input');
-      input.className = 'controls';
-      input.type = 'text';
-      input.placeholder = 'Search for a location';
-      input.style.margin = '10px';
-      input.style.padding = '10px';
-      input.style.width = 'calc(100% - 20px)';
-      input.style.boxSizing = 'border-box';
-
-      map.controls[window.google.maps.ControlPosition.TOP_CENTER].push(input);
-
-      const searchBox = new window.google.maps.places.SearchBox(input);
-
-      map.addListener('bounds_changed', () => {
-        searchBox.setBounds(map.getBounds()!);
-      });
-
-      searchBox.addListener('places_changed', () => {
-        const places = searchBox.getPlaces();
-
-        if (places?.length === 0) return;
-
-        const place = places![0];
-
-        if (!place.geometry || !place.geometry.location) return;
-
-        // Update marker and map
-        marker.setPosition(place.geometry.location);
-        map.setCenter(place.geometry.location);
-
-        // Update form data
-        setFormData(prev => ({
-          ...prev,
-          latitude: place.geometry?.location?.lat().toString(),
-          longitude: place.geometry?.location?.lng().toString(),
-        }));
-
-        // Update address fields
-        if (place.address_components) {
-          updateAddressFromGeocode(place);
-        }
-      });
+          // Update address fields
+          if (place.address_components) {
+            updateAddressFromGeocode(place);
+          }
+        });
+      }
     }
   }, [mapLoaded]);
 
@@ -168,10 +351,12 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
     let pincode = '';
 
     for (const component of place.address_components) {
+      debugger
       const componentType = component.types[0];
 
       switch (componentType) {
         case 'street_number':
+          
           address = `${component.long_name} ${address}`;
           break;
         case 'route':
