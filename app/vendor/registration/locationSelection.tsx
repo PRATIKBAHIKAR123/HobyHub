@@ -9,6 +9,14 @@ import { loadGoogleMapsScript, isGoogleMapsLoaded } from "../../lib/googleMaps";
 import { toast } from "sonner";
 import { Location } from "./types";
 
+// Add global interface declaration
+declare global {
+  interface Window {
+    google?: any;
+    mapInstance?: google.maps.Map | null;
+  }
+}
+
 interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -37,12 +45,16 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [useGoogleMaps, setUseGoogleMaps] = useState(false);
 
   // Initialize map
   const initializeMap = useCallback(() => {
-    if (mapLoaded && mapRef.current && window.google?.maps) {
+    if (mapRef.current && window.google?.maps) {
+      // Clear any existing map instance
+      if (window.mapInstance) {
+        window.mapInstance = null;
+      }
+
       // Default to Mumbai if geolocation fails
       const defaultLocation = { lat: 19.0760, lng: 72.8777 };
       
@@ -61,6 +73,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
             };
 
             const map = new window.google.maps.Map(mapRef.current, mapOptions);
+            window.mapInstance = map; // Store map instance globally
 
             // Add a marker that can be dragged to set the location
             const marker = new window.google.maps.Marker({
@@ -83,9 +96,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
                 // Use reverse geocoding to fill address fields
                 const geocoder = new window.google.maps.Geocoder();
                 geocoder.geocode({ location: position }, (results: google.maps.GeocoderResult[] | null, status: string) => {
-                  
                   if (status === 'OK' && results![0]) {
-                   
                     updateAddressFromGeocode(results![0]);
                   }
                 });
@@ -147,6 +158,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
             };
 
             const map = new window.google.maps.Map(mapRef.current, mapOptions);
+            window.mapInstance = map; // Store map instance globally
 
             // Add a marker that can be dragged to set the location
             const marker = new window.google.maps.Marker({
@@ -231,6 +243,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         };
 
         const map = new window.google.maps.Map(mapRef.current, mapOptions);
+        window.mapInstance = map; // Store map instance globally
 
         // Add a marker that can be dragged to set the location
         const marker = new window.google.maps.Marker({
@@ -305,7 +318,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
         });
       }
     }
-  }, [mapLoaded]);
+  }, []);
 
   // Generate unique ID when form opens
   useEffect(() => {
@@ -325,14 +338,18 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   useEffect(() => {
     if (typeof window !== 'undefined' && open) {
       if (isGoogleMapsLoaded()) {
-        setMapLoaded(true);
         setUseGoogleMaps(true);
-        initializeMap();
+        // Add a small delay to ensure DOM is ready
+        setTimeout(() => {
+          initializeMap();
+        }, 100);
       } else {
         loadGoogleMapsScript(() => {
-          setMapLoaded(true);
           setUseGoogleMaps(true);
-          initializeMap();
+          // Add a small delay to ensure DOM is ready
+          setTimeout(() => {
+            initializeMap();
+          }, 100);
         });
       }
     }
@@ -340,6 +357,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
 
   // Update address fields from geocode result
   const updateAddressFromGeocode = (place: google.maps.GeocoderResult | google.maps.places.PlaceResult) => {
+    debugger
     if (!place.address_components) return;
 
     let address = '';
@@ -351,7 +369,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
     let pincode = '';
 
     for (const component of place.address_components) {
-      debugger
+      
       const componentType = component.types[0];
 
       switch (componentType) {
@@ -521,8 +539,10 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       setErrors({});
       setWasSubmitted(false);
       setIsSubmitting(false);
-      setMapLoaded(false);
       setUseGoogleMaps(false);
+      
+      // Clean up map instance
+      window.mapInstance = null;
     };
   }, []);
 
@@ -545,6 +565,9 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
     setErrors({});
     setWasSubmitted(false);
     setIsSubmitting(false);
+    
+    // Clean up map instance
+    window.mapInstance = null;
   };
 
   return (
