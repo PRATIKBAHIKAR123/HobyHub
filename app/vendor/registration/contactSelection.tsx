@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-// import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -51,7 +51,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
   // State for images
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // const certificationRef = useRef<HTMLInputElement>(null);
+  const [useSameNumber, setUseSameNumber] = useState(false);
 
   // Generate unique ID when form opens
   useEffect(() => {
@@ -104,6 +104,21 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
       [name]: value
     }));
 
+    // If using same number, update WhatsApp fields when phone number changes
+    if (useSameNumber) {
+      if (name === 'tutorCountryCode') {
+        setFormData(prev => ({
+          ...prev,
+          whatsappCountryCode: value
+        }));
+      } else if (name === 'tutorPhoneNo') {
+        setFormData(prev => ({
+          ...prev,
+          thatsappNo: value
+        }));
+      }
+    }
+
     // Clear error for this field if it exists
     if (errors[name]) {
       setErrors(prev => {
@@ -111,6 +126,18 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
         delete newErrors[name];
         return newErrors;
       });
+    }
+  };
+
+  // Handle checkbox change
+  const handleCheckboxChange = (checked: boolean) => {
+    setUseSameNumber(checked);
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        whatsappCountryCode: prev.tutorCountryCode,
+        thatsappNo: prev.tutorPhoneNo
+      }));
     }
   };
 
@@ -281,6 +308,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
                     onChange={handleInputChange}
                     placeholder="+91"
                     className="h-[52px] border-[#05244f] w-20"
+                    disabled={useSameNumber}
                   />
                   <Input
                     name="thatsappNo"
@@ -288,7 +316,18 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
                     onChange={handleInputChange}
                     placeholder="WhatsApp Number"
                     className="h-[52px] border-[#05244f] flex-1"
+                    disabled={useSameNumber}
                   />
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id="useSameNumber"
+                    checked={useSameNumber}
+                    onCheckedChange={handleCheckboxChange}
+                  />
+                  <Label htmlFor="useSameNumber" className="text-sm text-gray-600">
+                    Use same number as contact number
+                  </Label>
                 </div>
               </div>
               <div className="flex flex-col gap-2 col-span-2">
