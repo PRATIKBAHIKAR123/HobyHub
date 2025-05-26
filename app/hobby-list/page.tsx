@@ -336,7 +336,7 @@ function ClassDetails() {
 function ClassGridList({ classes, filterType }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete] = useState<any>(null);
 
   const filteredClasses = classes.filter((item: any) => item.type === filterType);
 
@@ -370,7 +370,7 @@ function ClassGridList({ classes, filterType }:any) {
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Gender:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.gender}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro']"><strong>Price:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.fromPrice} - {item.toPrice}</p></p>
           <div className="flex justify-between gap-2 mt-4">
-            <Button 
+            {/* <Button 
               variant="outline"
               onClick={() => {
                 setSelectedClassToDelete(item);
@@ -379,7 +379,7 @@ function ClassGridList({ classes, filterType }:any) {
               className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
             >
               Delete
-            </Button>
+            </Button> */}
             <Button 
               className="flex-1 app-bg-color"
               onClick={() => setIsInquiryOpen(true)}
@@ -405,7 +405,7 @@ function ClassGridList({ classes, filterType }:any) {
 function ClassList({ classes, filterType }:any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
+  const [selectedClassToDelete] = useState<any>(null);
 
   const filteredClasses = classes.filter((item: any) => item.type === filterType);
 
@@ -459,7 +459,7 @@ function ClassList({ classes, filterType }:any) {
               <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button 
+                  {/* <Button 
                     variant="outline"
                     onClick={() => {
                       setSelectedClassToDelete(item);
@@ -468,7 +468,7 @@ function ClassList({ classes, filterType }:any) {
                     className="border-red-500 text-red-500 hover:bg-red-50"
                   >
                     Delete
-                  </Button>
+                  </Button> */}
                   <Button 
                     className="app-bg-color"
                     onClick={() => setIsInquiryOpen(true)}
