@@ -1,36 +1,28 @@
-import { useEffect, useState } from "react";
+'use client';
+import { useEffect, useState, Suspense } from "react";
 import { getStoredToken } from "@/utils/localStorage";
 import { AuthDialog } from "./login/authpopup";
 import { httpClient } from "@/utils/httpClient";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) => {
   const WithAuthComponent = (props: P) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-
-    useEffect(() => {
-      const userToken = getStoredToken();
-      console.log("userToken:", userToken);
-
-      if (userToken) {
-        setIsAuthenticated(true);
-        // Set the auth modal callback for unauthorized responses
-        httpClient.setAuthModalCallback((show) => {
-          setShowAuthModal(show);
-          setIsAuthenticated(!show);
-        });
-      } else {
-        setShowAuthModal(true);
-      }
-    }, []);
+    const pathname = usePathname();
 
     return (
-      <>
-        <div className={showAuthModal && !isAuthenticated ? "blur-sm pointer-events-none select-none transition-all duration-300" : "transition-all duration-300"}>
-          <WrappedComponent {...props} blurred={showAuthModal && !isAuthenticated} />
-        </div>
-        <AuthDialog open={showAuthModal} setOpen={setShowAuthModal} />
-      </>
+      <Suspense fallback={<div>Loading...</div>}>
+        <WithAuthContent 
+          {...props} 
+          WrappedComponent={WrappedComponent}
+          isAuthenticated={isAuthenticated}
+          setIsAuthenticated={setIsAuthenticated}
+          showAuthModal={showAuthModal}
+          setShowAuthModal={setShowAuthModal}
+          pathname={pathname}
+        />
+      </Suspense>
     );
   };
 
@@ -38,6 +30,56 @@ const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) =>
   WithAuthComponent.displayName = `withAuth(${WrappedComponent.displayName || WrappedComponent.name || "Component"})`;
 
   return WithAuthComponent;
+};
+
+// Separate component to use useSearchParams
+const WithAuthContent = <P extends object>({
+  WrappedComponent,
+  isAuthenticated,
+  setIsAuthenticated,
+  showAuthModal,
+  setShowAuthModal,
+  pathname,
+  ...props
+}: P & {
+  WrappedComponent: React.ComponentType<P>;
+  isAuthenticated: boolean;
+  setIsAuthenticated: (value: boolean) => void;
+  showAuthModal: boolean;
+  setShowAuthModal: (value: boolean) => void;
+  pathname: string;
+}) => {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const userToken = getStoredToken();
+    console.log("userToken:", userToken);
+
+    if (userToken) {
+      setIsAuthenticated(true);
+      // Set the auth modal callback for unauthorized responses
+      httpClient.setAuthModalCallback((show) => {
+        setShowAuthModal(show);
+        setIsAuthenticated(!show);
+      });
+    } else {
+      // Store the complete URL including query parameters
+      const completeUrl = searchParams.toString() 
+        ? `${pathname}?${searchParams.toString()}`
+        : pathname;
+      localStorage.setItem('intendedDestination', completeUrl);
+      setShowAuthModal(true);
+    }
+  }, [pathname, searchParams, setIsAuthenticated, setShowAuthModal]);
+
+  return (
+    <>
+      <div className={showAuthModal && !isAuthenticated ? "blur-sm pointer-events-none select-none transition-all duration-300" : "transition-all duration-300"}>
+        <WrappedComponent {...props as P} blurred={showAuthModal && !isAuthenticated} />
+      </div>
+      <AuthDialog open={showAuthModal} setOpen={setShowAuthModal} />
+    </>
+  );
 };
 
 export default withAuth;

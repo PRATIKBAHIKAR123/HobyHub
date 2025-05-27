@@ -184,20 +184,6 @@ export default function RegistrationForm() {
     road: "Main Road"
   };
 
-  // Remove duplicate state declarations
-  // const [locationData, setLocationData] = useState<Location | null>(null);
-  // const [contactData, setContactData] = useState<Contact | null>(null);
-
-  // Add default contact
-  // const defaultContact: Contact = {
-  //   id: '1',
-  //   firstName: 'Default',
-  //   tutorLastName: 'Contact',
-  //   phoneNumber: '+919876543210',
-  //   email: 'default@example.com',
-  //   contactType: { primary: true, secondary: false, billing: false }
-  // };
-
   // Add currentFormType state
   const [currentFormType] = useState<'class' | 'course'>('class');
 
@@ -547,7 +533,6 @@ export default function RegistrationForm() {
       }
 
       const data = watchCourse();
-      
       const courseDetails = {
         ...data,
         location: data.location || defaultLocation,
@@ -572,7 +557,7 @@ export default function RegistrationForm() {
   // Update the handleFinalSubmit function
   const handleFinalSubmit = async () => {
     try {
-      
+
       // Check if personal details are completed
       if (!completedSections.personalDetails || !personalDetailsData) {
         toast.error("Please complete the Profile Details section first");

@@ -62,16 +62,25 @@ export default function LoginPage() {
       setotpFailed(false);
       toast.success('Login successful');
       
+      // Get the intended destination from localStorage
+      const intendedDestination = localStorage.getItem('intendedDestination') || '/';
+      localStorage.removeItem('intendedDestination'); // Clean up
+      
+      // Ensure we're using the complete URL with query parameters
+      const destinationUrl = intendedDestination.startsWith('/') 
+        ? intendedDestination 
+        : `/${intendedDestination}`;
+      
       // Clear browser history and prevent back navigation
-      window.history.pushState(null, '', '/');
-      window.history.pushState(null, '', '/');
+      window.history.pushState(null, '', destinationUrl);
+      window.history.pushState(null, '', destinationUrl);
       window.onpopstate = function() {
-        window.history.pushState(null, '', '/');
-        router.push('/');
+        window.history.pushState(null, '', destinationUrl);
+        router.push(destinationUrl);
       };
       
-      // Force navigation to home page
-      router.replace('/');
+      // Force navigation to intended destination
+      router.replace(destinationUrl);
     } catch (err) {
       setotpFailed(true);
       toast.error(String(err));

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import withAuth from "../auth/withAuth";
 
@@ -224,4 +224,12 @@ function FavoriteHobbies() {
   );
 }
 
-export default withAuth(FavoriteHobbies)
+function WishlistPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <FavoriteHobbies />
+    </Suspense>
+  );
+}
+
+export default withAuth(WishlistPage);

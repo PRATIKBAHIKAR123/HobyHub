@@ -6,22 +6,29 @@ import * as yup from "yup";
 
 // Yup schema for validation
 export const timeRangeScheme = {
-  timingsFrom: yup.string(),
+  timingsFrom: yup.string()
+    .required('From Time is required'),
   timingsTo: yup.string()
+    .required('To Time is required')
     .test(
       'is-greater-than-timingsFrom',
-      'To Time must be greater than or equal to From Time',
+      'To Time must be greater than From Time',
       function (value) {
         const { timingsFrom } = this.parent;
         if (!timingsFrom || !value) return true;
-        return timingsFrom <= value;
+        
+        // Convert times to comparable values
+        const fromTime = new Date(`2000-01-01T${timingsFrom}`);
+        const toTime = new Date(`2000-01-01T${value}`);
+        
+        return toTime > fromTime;
       }
     ),
   time: yup.string().required('Time is required'),
 };
 
 export default function TimeRangeInput({ form, setValue, errors }: FormInputProps) {
-  const { register, control } = form;
+  const { register, control, trigger } = form;
   const timingsFrom = useWatch({ control, name: "timingsFrom" });
   const timingsTo = useWatch({ control, name: "timingsTo" });
 
@@ -32,16 +39,24 @@ export default function TimeRangeInput({ form, setValue, errors }: FormInputProp
     if (timingsFrom && timingsTo) {
       const formatted = `${timingsFrom} - ${timingsTo}`;
       setValue("time", formatted);
+      // Trigger validation when either time changes
+      trigger(["timingsFrom", "timingsTo"]);
     }
-  }, [timingsFrom, timingsTo, setValue]);
+  }, [timingsFrom, timingsTo, setValue, trigger]);
 
   const handleTimeInputClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-      if (inputRef.current?.showPicker) {
-        inputRef.current.showPicker();
-      } else {
-        inputRef.current?.focus(); // fallback
-      }
-    };
+    if (inputRef.current?.showPicker) {
+      inputRef.current.showPicker();
+    } else {
+      inputRef.current?.focus(); // fallback
+    }
+  };
+
+  const handleTimeChange = async (field: "timingsFrom" | "timingsTo", value: string) => {
+    setValue(field, value);
+    // Trigger validation for both fields when either changes
+    await trigger(["timingsFrom", "timingsTo"]);
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -49,7 +64,9 @@ export default function TimeRangeInput({ form, setValue, errors }: FormInputProp
         <Input
           id="timingsFrom"
           type="time"
-          {...register("timingsFrom")}
+          {...register("timingsFrom", {
+            onChange: (e) => handleTimeChange("timingsFrom", e.target.value)
+          })}
           ref={(el) => {
             fromTimeRef.current = el;
             register("timingsFrom").ref(el);
@@ -61,7 +78,9 @@ export default function TimeRangeInput({ form, setValue, errors }: FormInputProp
         <Input
           id="timingsTo"
           type="time"
-          {...register("timingsTo")}
+          {...register("timingsTo", {
+            onChange: (e) => handleTimeChange("timingsTo", e.target.value)
+          })}
           ref={(el) => {
             toTimeRef.current = el;
             register("timingsTo").ref(el);
@@ -80,13 +99,5 @@ export default function TimeRangeInput({ form, setValue, errors }: FormInputProp
     </div>
   );
 }
-// const formatTo12Hour = (time: string): string => {
-//   if (!time) return "";
-//   const [hourStr, minuteStr] = time.split(":");
-//   let hour = parseInt(hourStr, 10);
-//   const minute = minuteStr;
-//   const ampm = hour >= 12 ? "PM" : "AM";
-//   hour = hour % 12 || 12; // Convert 0 to 12
-//   return `${hour}:${minute} ${ampm}`;
-// };
+
 
