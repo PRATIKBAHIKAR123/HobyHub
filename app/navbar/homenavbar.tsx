@@ -204,7 +204,7 @@ export default function HomeNavbar() {
                                     checked={isOnline}
                                     onCheckedChange={setIsOnline} />
                                 <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]">
-                                    {isOnline ? "Online Classes" : "Offline Classes"}
+                                    {isOnline ? "Online Classes" : "In Person"}
                                 </Label>
                             </div>
                         </div>
@@ -286,7 +286,7 @@ export default function HomeNavbar() {
                         <LocationSelector />
                         <div className="pl-[3px] pt-[3px] pb-0.5 rounded-[20px] shadow-[0px_4px_6px_0px_rgba(0,0,0,0.10)] justify-between items-center inline-flex gap-2">
                             <Label className="text-center text-[#f8f9fa] text-[9.94px] font-normal font-['Inter'] leading-[18px]">
-                                {isOnline ? "Online Classes" : "Offline Classes"}
+                                {isOnline ? "Online Classes" : "In Person"}
                             </Label>
                             <Switch className="w-[3.2em] data-[state=checked]:bg-[#1e90ff] data-[state=unchecked]:bg-[#808080] [&_[data-slot='switch-thumb']]:data-[state=checked]:translate-x-8 [&_[data-slot='switch-thumb']]:data-[state=unchecked]:translate-x-0"
                                 checked={isOnline}

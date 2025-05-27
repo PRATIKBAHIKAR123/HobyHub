@@ -71,6 +71,7 @@ const personalDetailsSchema = yup.object().shape({
     ),
 
   profileImageFile: yup.mixed().nullable(),
+  countryCode: yup.string().required("Country Code is required"),
 });
 
 
@@ -1193,12 +1194,85 @@ export default function RegistrationForm() {
                         Mobile<span className="text-red-500">*</span>
                       </Label>
                       <div className="flex items-center">
-                        <Select>
+                        <Select onValueChange={(value) => setValuePersonal("countryCode", value)} defaultValue="91">
                           <SelectTrigger className="p-0 md:p-4 w-[20%] md:w-[20%]] h-[52px] rounded-l-md rounded-r-none border-[#05244f] border-r-0">
                             <SelectValue placeholder="+91" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="91">+91</SelectItem>
+                            <SelectItem value="1">+1 (US/Canada)</SelectItem>
+                            <SelectItem value="44">+44 (UK)</SelectItem>
+                            <SelectItem value="91">+91 (India)</SelectItem>
+                            <SelectItem value="61">+61 (Australia)</SelectItem>
+                            <SelectItem value="49">+49 (Germany)</SelectItem>
+                            <SelectItem value="33">+33 (France)</SelectItem>
+                            <SelectItem value="81">+81 (Japan)</SelectItem>
+                            <SelectItem value="86">+86 (China)</SelectItem>
+                            <SelectItem value="971">+971 (UAE)</SelectItem>
+                            <SelectItem value="966">+966 (Saudi Arabia)</SelectItem>
+                            <SelectItem value="65">+65 (Singapore)</SelectItem>
+                            <SelectItem value="60">+60 (Malaysia)</SelectItem>
+                            <SelectItem value="66">+66 (Thailand)</SelectItem>
+                            <SelectItem value="84">+84 (Vietnam)</SelectItem>
+                            <SelectItem value="62">+62 (Indonesia)</SelectItem>
+                            <SelectItem value="63">+63 (Philippines)</SelectItem>
+                            <SelectItem value="82">+82 (South Korea)</SelectItem>
+                            <SelectItem value="880">+880 (Bangladesh)</SelectItem>
+                            <SelectItem value="92">+92 (Pakistan)</SelectItem>
+                            <SelectItem value="94">+94 (Sri Lanka)</SelectItem>
+                            <SelectItem value="977">+977 (Nepal)</SelectItem>
+                            <SelectItem value="95">+95 (Myanmar)</SelectItem>
+                            <SelectItem value="856">+856 (Laos)</SelectItem>
+                            <SelectItem value="855">+855 (Cambodia)</SelectItem>
+                            <SelectItem value="673">+673 (Brunei)</SelectItem>
+                            <SelectItem value="670">+670 (Timor-Leste)</SelectItem>
+                            <SelectItem value="672">+672 (Norfolk Island)</SelectItem>
+                            <SelectItem value="675">+675 (Papua New Guinea)</SelectItem>
+                            <SelectItem value="676">+676 (Tonga)</SelectItem>
+                            <SelectItem value="677">+677 (Solomon Islands)</SelectItem>
+                            <SelectItem value="678">+678 (Vanuatu)</SelectItem>
+                            <SelectItem value="679">+679 (Fiji)</SelectItem>
+                            <SelectItem value="680">+680 (Palau)</SelectItem>
+                            <SelectItem value="681">+681 (Wallis and Futuna)</SelectItem>
+                            <SelectItem value="682">+682 (Cook Islands)</SelectItem>
+                            <SelectItem value="683">+683 (Niue)</SelectItem>
+                            <SelectItem value="685">+685 (Samoa)</SelectItem>
+                            <SelectItem value="686">+686 (Kiribati)</SelectItem>
+                            <SelectItem value="687">+687 (New Caledonia)</SelectItem>
+                            <SelectItem value="688">+688 (Tuvalu)</SelectItem>
+                            <SelectItem value="689">+689 (French Polynesia)</SelectItem>
+                            <SelectItem value="690">+690 (Tokelau)</SelectItem>
+                            <SelectItem value="691">+691 (Micronesia)</SelectItem>
+                            <SelectItem value="692">+692 (Marshall Islands)</SelectItem>
+                            <SelectItem value="850">+850 (North Korea)</SelectItem>
+                            <SelectItem value="852">+852 (Hong Kong)</SelectItem>
+                            <SelectItem value="853">+853 (Macau)</SelectItem>
+                            <SelectItem value="855">+855 (Cambodia)</SelectItem>
+                            <SelectItem value="856">+856 (Laos)</SelectItem>
+                            <SelectItem value="880">+880 (Bangladesh)</SelectItem>
+                            <SelectItem value="886">+886 (Taiwan)</SelectItem>
+                            <SelectItem value="960">+960 (Maldives)</SelectItem>
+                            <SelectItem value="961">+961 (Lebanon)</SelectItem>
+                            <SelectItem value="962">+962 (Jordan)</SelectItem>
+                            <SelectItem value="963">+963 (Syria)</SelectItem>
+                            <SelectItem value="964">+964 (Iraq)</SelectItem>
+                            <SelectItem value="965">+965 (Kuwait)</SelectItem>
+                            <SelectItem value="966">+966 (Saudi Arabia)</SelectItem>
+                            <SelectItem value="967">+967 (Yemen)</SelectItem>
+                            <SelectItem value="968">+968 (Oman)</SelectItem>
+                            <SelectItem value="970">+970 (Palestine)</SelectItem>
+                            <SelectItem value="971">+971 (UAE)</SelectItem>
+                            <SelectItem value="972">+972 (Israel)</SelectItem>
+                            <SelectItem value="973">+973 (Bahrain)</SelectItem>
+                            <SelectItem value="974">+974 (Qatar)</SelectItem>
+                            <SelectItem value="975">+975 (Bhutan)</SelectItem>
+                            <SelectItem value="976">+976 (Mongolia)</SelectItem>
+                            <SelectItem value="977">+977 (Nepal)</SelectItem>
+                            <SelectItem value="992">+992 (Tajikistan)</SelectItem>
+                            <SelectItem value="993">+993 (Turkmenistan)</SelectItem>
+                            <SelectItem value="994">+994 (Azerbaijan)</SelectItem>
+                            <SelectItem value="995">+995 (Georgia)</SelectItem>
+                            <SelectItem value="996">+996 (Kyrgyzstan)</SelectItem>
+                            <SelectItem value="998">+998 (Uzbekistan)</SelectItem>
                           </SelectContent>
                         </Select>
                         <Input
@@ -1841,7 +1915,7 @@ export default function RegistrationForm() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Online">Online</SelectItem>
-                            <SelectItem value="Offline">Offline</SelectItem>
+                            <SelectItem value="Offline">In Person</SelectItem>
                           </SelectContent>
                         </Select>
 
@@ -1930,7 +2004,7 @@ export default function RegistrationForm() {
             </AccordionItem>
           )}
 
-          {/* Class Details Section */}
+          {/* Course Details Section */}
           {showCourseFields && (
             <AccordionItem value="item-5">
               <div className="bg-white rounded-[15px] border border-[#05244f] py-2 px-8 my-4">
@@ -2258,6 +2332,12 @@ export default function RegistrationForm() {
           open={isContactPopupOpen}
           setOpen={setIsContactPopupOpen}
           onContactSubmit={(contactData: any) => handleContactSubmit(contactData)}
+          profileDetails={personalDetailsData ? {
+            firstName: personalDetailsData.firstName,
+            lastName: personalDetailsData.lastName,
+            emailId: personalDetailsData.emailId,
+            phoneNumber: personalDetailsData.phoneNumber
+          } : undefined}
         />
       </div>
 

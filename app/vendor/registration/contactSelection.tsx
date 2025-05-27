@@ -14,6 +14,12 @@ interface PopupScreenProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onContactSubmit: (contactData: ContactData) => Promise<void>;
+  profileDetails?: {
+    firstName: string;
+    lastName: string;
+    emailId: string;
+    phoneNumber: string;
+  };
 }
 
 // Define the contact data structure
@@ -29,7 +35,7 @@ export interface ContactData {
   tutorIntro: string;
 }
 
-export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: PopupScreenProps) {
+export default function ContactPopupScreen({ open, setOpen, onContactSubmit, profileDetails }: PopupScreenProps) {
   // State for form data
   const [formData, setFormData] = useState<ContactData>({
     id: '',
@@ -52,6 +58,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
   const [images, setImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [useSameNumber, setUseSameNumber] = useState(false);
+  const [useProfileDetails, setUseProfileDetails] = useState(false);
 
   // Generate unique ID when form opens
   useEffect(() => {
@@ -66,6 +73,22 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
       setIsSubmitting(false);
     }
   }, [open]);
+
+  // Add useEffect to handle auto-filling when checkbox is checked
+  useEffect(() => {
+    if (useProfileDetails && profileDetails) {
+      setFormData(prev => ({
+        ...prev,
+        tutorFirstName: profileDetails.firstName,
+        tutorLastName: profileDetails.lastName,
+        tutorEmailID: profileDetails.emailId,
+        tutorCountryCode: '+91',
+        tutorPhoneNo: profileDetails.phoneNumber,
+        whatsappCountryCode: '+91',
+        thatsappNo: profileDetails.phoneNumber
+      }));
+    }
+  }, [useProfileDetails, profileDetails]);
 
   // Validate the form
   const validateForm = (): boolean => {
@@ -139,6 +162,11 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
         thatsappNo: prev.tutorPhoneNo
       }));
     }
+  };
+
+  // Add handler for checkbox change
+  const handleProfileDetailsCheckbox = (checked: boolean) => {
+    setUseProfileDetails(checked);
   };
 
   // Handle form submission
@@ -227,6 +255,21 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit }: P
             <div className="relative justify-start text-start text-[#05244f] text-2xl font-medium font-['Minion_Pro'] mb-4">
               Contact Details
             </div>
+            
+            {/* Add checkbox for using profile details */}
+            {profileDetails && (
+              <div className="flex items-center gap-2 mb-4">
+                <Checkbox
+                  id="useProfileDetails"
+                  checked={useProfileDetails}
+                  onCheckedChange={handleProfileDetailsCheckbox}
+                />
+                <Label htmlFor="useProfileDetails" className="text-sm text-gray-600">
+                  Use same details as Profile
+                </Label>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">

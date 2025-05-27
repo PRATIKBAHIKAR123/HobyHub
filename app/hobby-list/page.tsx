@@ -298,7 +298,7 @@ function ClassDetails() {
           </ToggleGroup>
           <div className="border-2 border-gray-300 rounded-md p-1 flex">
             <Button variant={`${filterType=='Online'?'default':'outline'}`} onClick={() => setFilterType('Online')}>Online Classes</Button>
-            <Button variant={`${filterType=='Offline'?'default':'outline'}`} className="ml-1" onClick={() => setFilterType('Offline')}>Offline Classes</Button>
+            <Button variant={`${filterType=='Offline'?'default':'outline'}`} className="ml-1" onClick={() => setFilterType('Offline')}>In Person</Button>
           </div>
         </div>
       </div>
