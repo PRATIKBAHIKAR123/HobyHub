@@ -242,7 +242,7 @@ export default function HobbyGrid() {
             onClick={() => {
               router.push(`/hobby-list/hobby-details-page?id=${activity.id}`);
             }}
-            className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl"
+            className="rounded-2xl border-[1px] border-black/20 w-full max-w-sm mx-auto bg-white relative transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl h-full flex flex-col"
           >
             {/* Image Section */}
             <div className="relative">
@@ -303,49 +303,48 @@ export default function HobbyGrid() {
             </div>
 
             {/* Content Section */}
-            <div className="p-4">
-              <h2 className="text-[#212529] text-[14px] font-bold trajan-pro mb-2">{activity.title}</h2>
+            <div className="p-4 flex flex-col h-full">
+              <h2 className="text-[#212529] text-[14px] font-bold trajan-pro mb-2 line-clamp-2">{activity.title}</h2>
 
-              <div className="w-auto h-[29px] px-[11px] bg-[#c8daeb] rounded-[20px] flex items-center justify-between gap-[5px]">
-                <div className="flex items-center gap-[5px]">
-                  <Image src={'/Icons/location-pin-black.svg'} height={14} width={12} alt="pin" />
-                  <span className="text-[#212529] text-sm font-medium font-['Minion_Pro'] leading-[21px]">
-                    {activity.area} - {activity.city}
-                  </span>
+              {/* Push location/distance to the bottom */}
+              <div className="mt-auto">
+                <div className="flex bg-[#c8daeb]  rounded-[20px] pl-1 items-center gap-2 w-full">
+                  <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <Image src={'/Icons/location-pin-black.svg'} height={14} width={12} alt="pin" />
+                    <span
+                      className="text-[#212529] bg-[#c8daeb] text-sm font-medium font-['Minion_Pro'] leading-[21px] truncate"
+                      style={{ maxWidth: 150 }}
+                      title={`${activity.area} - ${activity.city}`}
+                    >
+                      {activity.area} - {activity.city}
+                    </span>
+                  </div>
+                  <div
+                    className=" px-3 py-1 min-w-0"
+                    style={{ maxWidth: 100 }}
+                    title={activity.distanceInKm ? `${activity.distanceInKm.toFixed(1)} km away` : 'Distance not available'}
+                  >
+                    <span className="text-[#212529] text-sm font-medium font-['Minion_Pro'] leading-[21px] truncate block">
+                      {activity.distanceInKm ? `${activity.distanceInKm.toFixed(1)} km away` : 'Distance not available'}
+                    </span>
+                  </div>
                 </div>
-                <div className="w-auto h-[29px] px-[11px] bg-[#c8daeb] rounded-[20px] flex items-center justify-between gap-[5px]">
-
-                  <span className="text-[#212529] text-sm font-medium font-['Minion_Pro'] leading-[21px]">
-                    {activity.distanceInKm ? `${activity.distanceInKm.toFixed(1)} km away` : 'Distance not available'}
+                <div className="flex justify-between items-center mt-3">
+                  <span className="text-[#212529] text-xs font-normal font-['Trajan_Pro'] flex gap-2">
+                    <Image src={"/Icons/user-ic.svg"} alt="user" height={14} width={14} />
+                    <span>{activity.ageRestrictionFrom} - {activity.ageRestrictionTo} YEARS</span>
                   </span>
+                  <div className="flex items-center gap-2">
+                    <Image src={"/Icons/calender-blk.svg"} alt="user" height={14} width={14} />
+                    <span className="text-[#212529] text-[11.16px] font-normal font-['Trajan_Pro'] mt-[5px] truncate" style={{ maxWidth: 80 }}>
+                      SESSION {activity.sessionCountFrom}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-
-              <div className="flex justify-between items-center mt-3">
-                <span className="text-[#212529] text-xs font-normal font-['Trajan_Pro'] flex gap-2">
-                  <Image src={"/Icons/user-ic.svg"} alt="user" height={14} width={14} />
-                  <span>{activity.ageRestrictionFrom} - {activity.ageRestrictionTo} YEARS</span>
-                </span>
-                <div className="flex items-center gap-2">
-                  <Image src={"/Icons/calender-blk.svg"} alt="user" height={14} width={14} />
-                  <span className="text-[#212529] text-[11.16px] font-normal font-['Trajan_Pro'] mt-[5px]">
-                    SESSION {activity.sessionCountFrom}
-                  </span>
-                </div>
-              </div>
-              {/* Distance Display */}
-              {/* <div className="mt-2 flex items-center gap-1">
-                <Image src={"/Icons/location-pin-black.svg"} height={14} width={12} alt="distance" />
-                <span className="text-[#212529] text-xs font-normal font-['Trajan_Pro']">
-                  {activity.distanceInKm ? `${activity.distanceInKm.toFixed(1)} km away` : 'Distance not available'}
-                </span>
-              </div> */}
             </div>
           </div>
         ))}
-
-
       </div>
       {/* Loading indicator at the bottom when fetching more data */}
       {loadingMore && (
