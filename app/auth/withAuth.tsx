@@ -67,7 +67,14 @@ const WithAuthContent = <P extends object>({
       const completeUrl = searchParams.toString() 
         ? `${pathname}?${searchParams.toString()}`
         : pathname;
-      localStorage.setItem('intendedDestination', completeUrl);
+
+      // Transform the URL if it's a hobby-list with an ID
+      const transformedUrl = completeUrl.replace(
+        /^\/hobby-list\?id=(\d+)$/,
+        '/hobby-list/hobby-details-page?id=$1'
+      );
+
+      localStorage.setItem('intendedDestination', transformedUrl);
       setShowAuthModal(true);
     }
   }, [pathname, searchParams, setIsAuthenticated, setShowAuthModal]);
