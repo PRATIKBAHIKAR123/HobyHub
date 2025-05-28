@@ -1,6 +1,7 @@
 import { ClassCourseTableProps, ClassCourseItem } from '@/types/classCourse';
+import { toast } from "sonner";
 
-export default function ClassCourseTable({ items, onEdit, onDelete }: ClassCourseTableProps) {
+export default function ClassCourseTable({ items, onEdit, onDelete, onCopy }: ClassCourseTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
@@ -48,13 +49,22 @@ export default function ClassCourseTable({ items, onEdit, onDelete }: ClassCours
                   </button>
 
                   <button
+                    onClick={() => {
+                      onCopy(index);
+                      toast.success("Class details copied successfully!");
+                    }}
+                    className="text-blue-600 hover:text-blue-900 flex items-center cursor-pointer"
+                  >
+                    <img src="/Icons/copy.png" alt="Copy Icon" className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => onDelete(index)}
                     className="text-red-600 hover:text-red-900 flex items-center cursor-pointer"
                   >
                     <img src="/Icons/bin.png" alt="Delete Icon" className="w-4 h-4" />
                   </button>
                 </div>
-
               </td>
             </tr>
           ))}

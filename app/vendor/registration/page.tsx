@@ -31,6 +31,8 @@ import LocationPopupScreen from "./locationSelection";
 import ContactPopupScreen from "./contactSelection";
 import { FormValues, Location, Contact, Category } from "./types";
 import ImageCropper from '@/app/components/ImageCropper';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -39,8 +41,9 @@ const personalDetailsSchema = yup.object().shape({
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
     .string()
-    .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
-    .required("Phone number is required"),
+    .required("Phone number is required")
+    .min(8, "Phone number must be at least 8 digits")
+    .max(15, "Phone number must not exceed 15 digits"),
   gender: yup.string().required("Gender is required"),
   dob: yup
     .date()
@@ -69,9 +72,8 @@ const personalDetailsSchema = yup.object().shape({
         return false;
       }
     ),
-
   profileImageFile: yup.mixed().nullable(),
-  countryCode: yup.string().required("Country Code is required"),
+  // countryCode: yup.string().required("Country Code is required"),
 });
 
 
@@ -170,6 +172,8 @@ export default function RegistrationForm() {
   const profileImageInputRef = useRef<HTMLInputElement>(null);
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
+  // Add a state to track which item is being edited
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // Add default location
   const defaultLocation: Location = {
@@ -432,12 +436,13 @@ export default function RegistrationForm() {
 
   // Save personal details to localStorage and proceed to the next section
   const savePersonalDetails = async (data: any) => {
+    ;
     try {
       setIsLoading(true);
 
       // Store personal details in state
       setPersonalDetailsData(data);
-
+      ;
       // Mark section as completed and move to next
       setCompletedSections(prev => ({ ...prev, personalDetails: true }));
       setActiveAccordion("item-1");
@@ -513,8 +518,18 @@ export default function RegistrationForm() {
         sessionTo: classData.sessionTo || '1',
       };
 
-      setClassDetailsData(prev => [...prev, classDetails]);
+      if (editingIndex !== null) {
+        // Update existing item
+        setClassDetailsData(prev => prev.map((item, index) =>
+          index === editingIndex ? classDetails : item
+        ));
+      } else {
+        // Add new item
+        setClassDetailsData(prev => [...prev, classDetails]);
+      }
+
       classForm.reset();
+      setEditingIndex(null); // Reset editing index
       toast.success('Class details saved successfully');
       setShowClassFields(false); // Hide the form after saving
     } catch (error) {
@@ -545,8 +560,18 @@ export default function RegistrationForm() {
         noOfSessions: data.noOfSessions || '1'
       };
 
-      setCourseDetailsData(prev => [...prev, courseDetails]);
+      if (editingIndex !== null) {
+        // Update existing item
+        setCourseDetailsData(prev => prev.map((item, index) =>
+          index === editingIndex ? courseDetails : item
+        ));
+      } else {
+        // Add new item
+        setCourseDetailsData(prev => [...prev, courseDetails]);
+      }
+
       courseForm.reset();
+      setEditingIndex(null); // Reset editing index
       toast.success('Course details saved successfully');
       setShowCourseFields(false);
     } catch (error) {
@@ -598,7 +623,9 @@ export default function RegistrationForm() {
       if (personalDetailsData) {
         formData.append('name', personalDetailsData.firstName + ' ' + personalDetailsData.lastName);
         formData.append('emailId', personalDetailsData.emailId);
-        formData.append('phoneNumber', personalDetailsData.phoneNumber);
+        // Strip country code from phone number before sending
+        const phoneNumber = personalDetailsData.phoneNumber.replace(/^\+91/, '');
+        formData.append('phoneNumber', phoneNumber);
         formData.append('gender', personalDetailsData.gender);
         if (personalDetailsData.dob) {
           formData.append('dob', personalDetailsData.dob.toISOString());
@@ -758,23 +785,27 @@ export default function RegistrationForm() {
     }
   };
 
+  // Update the handleEditClass function
   const handleEditClass = (index: number) => {
     const classToEdit = classDetailsData[index];
     if (classToEdit) {
       Object.keys(classToEdit).forEach((key) => {
         setValueClass(key as keyof FormValues, classToEdit[key]);
       });
+      setEditingIndex(index); // Set the index of the item being edited
     }
     setShowClassFields(true);
     setActiveAccordion("item-4");
   };
 
+  // Update the handleEditCourse function
   const handleEditCourse = (index: number) => {
     const courseToEdit = courseDetailsData[index];
     if (courseToEdit) {
       Object.keys(courseToEdit).forEach((key) => {
         setValueCourse(key as keyof FormValues, courseToEdit[key]);
       });
+      setEditingIndex(index); // Set the index of the item being edited
     }
     setShowCourseFields(true);
     setActiveAccordion("item-5");
@@ -1137,6 +1168,30 @@ export default function RegistrationForm() {
     );
   };
 
+  const handleCopyClass = (index: number) => {
+    const classToCopy = classDetailsData[index];
+    if (classToCopy) {
+      const copiedClass = {
+        ...classToCopy,
+        className: `${classToCopy.className}`,
+        id: Date.now() // Add new unique ID
+      };
+      setClassDetailsData(prev => [...prev, copiedClass]);
+    }
+  };
+
+  const handleCopyCourse = (index: number) => {
+    const courseToCopy = courseDetailsData[index];
+    if (courseToCopy) {
+      const copiedCourse = {
+        ...courseToCopy,
+        className: `${courseToCopy.className} (Copy)`,
+        id: Date.now() // Add new unique ID
+      };
+      setCourseDetailsData(prev => [...prev, copiedCourse]);
+    }
+  };
+
   return (
     <>
       <div className="mx-auto p-6">
@@ -1193,95 +1248,21 @@ export default function RegistrationForm() {
                       <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                         Mobile<span className="text-red-500">*</span>
                       </Label>
-                      <div className="flex items-center">
-                        <Select onValueChange={(value) => setValuePersonal("countryCode", value)} defaultValue="91">
-                          <SelectTrigger className="p-0 md:p-4 w-[20%] md:w-[20%]] h-[52px] rounded-l-md rounded-r-none border-[#05244f] border-r-0">
-                            <SelectValue placeholder="+91" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">+1 (US/Canada)</SelectItem>
-                            <SelectItem value="44">+44 (UK)</SelectItem>
-                            <SelectItem value="91">+91 (India)</SelectItem>
-                            <SelectItem value="61">+61 (Australia)</SelectItem>
-                            <SelectItem value="49">+49 (Germany)</SelectItem>
-                            <SelectItem value="33">+33 (France)</SelectItem>
-                            <SelectItem value="81">+81 (Japan)</SelectItem>
-                            <SelectItem value="86">+86 (China)</SelectItem>
-                            <SelectItem value="971">+971 (UAE)</SelectItem>
-                            <SelectItem value="966">+966 (Saudi Arabia)</SelectItem>
-                            <SelectItem value="65">+65 (Singapore)</SelectItem>
-                            <SelectItem value="60">+60 (Malaysia)</SelectItem>
-                            <SelectItem value="66">+66 (Thailand)</SelectItem>
-                            <SelectItem value="84">+84 (Vietnam)</SelectItem>
-                            <SelectItem value="62">+62 (Indonesia)</SelectItem>
-                            <SelectItem value="63">+63 (Philippines)</SelectItem>
-                            <SelectItem value="82">+82 (South Korea)</SelectItem>
-                            <SelectItem value="880">+880 (Bangladesh)</SelectItem>
-                            <SelectItem value="92">+92 (Pakistan)</SelectItem>
-                            <SelectItem value="94">+94 (Sri Lanka)</SelectItem>
-                            <SelectItem value="977">+977 (Nepal)</SelectItem>
-                            <SelectItem value="95">+95 (Myanmar)</SelectItem>
-                            <SelectItem value="856">+856 (Laos)</SelectItem>
-                            <SelectItem value="855">+855 (Cambodia)</SelectItem>
-                            <SelectItem value="673">+673 (Brunei)</SelectItem>
-                            <SelectItem value="670">+670 (Timor-Leste)</SelectItem>
-                            <SelectItem value="672">+672 (Norfolk Island)</SelectItem>
-                            <SelectItem value="675">+675 (Papua New Guinea)</SelectItem>
-                            <SelectItem value="676">+676 (Tonga)</SelectItem>
-                            <SelectItem value="677">+677 (Solomon Islands)</SelectItem>
-                            <SelectItem value="678">+678 (Vanuatu)</SelectItem>
-                            <SelectItem value="679">+679 (Fiji)</SelectItem>
-                            <SelectItem value="680">+680 (Palau)</SelectItem>
-                            <SelectItem value="681">+681 (Wallis and Futuna)</SelectItem>
-                            <SelectItem value="682">+682 (Cook Islands)</SelectItem>
-                            <SelectItem value="683">+683 (Niue)</SelectItem>
-                            <SelectItem value="685">+685 (Samoa)</SelectItem>
-                            <SelectItem value="686">+686 (Kiribati)</SelectItem>
-                            <SelectItem value="687">+687 (New Caledonia)</SelectItem>
-                            <SelectItem value="688">+688 (Tuvalu)</SelectItem>
-                            <SelectItem value="689">+689 (French Polynesia)</SelectItem>
-                            <SelectItem value="690">+690 (Tokelau)</SelectItem>
-                            <SelectItem value="691">+691 (Micronesia)</SelectItem>
-                            <SelectItem value="692">+692 (Marshall Islands)</SelectItem>
-                            <SelectItem value="850">+850 (North Korea)</SelectItem>
-                            <SelectItem value="852">+852 (Hong Kong)</SelectItem>
-                            <SelectItem value="853">+853 (Macau)</SelectItem>
-                            <SelectItem value="855">+855 (Cambodia)</SelectItem>
-                            <SelectItem value="856">+856 (Laos)</SelectItem>
-                            <SelectItem value="880">+880 (Bangladesh)</SelectItem>
-                            <SelectItem value="886">+886 (Taiwan)</SelectItem>
-                            <SelectItem value="960">+960 (Maldives)</SelectItem>
-                            <SelectItem value="961">+961 (Lebanon)</SelectItem>
-                            <SelectItem value="962">+962 (Jordan)</SelectItem>
-                            <SelectItem value="963">+963 (Syria)</SelectItem>
-                            <SelectItem value="964">+964 (Iraq)</SelectItem>
-                            <SelectItem value="965">+965 (Kuwait)</SelectItem>
-                            <SelectItem value="966">+966 (Saudi Arabia)</SelectItem>
-                            <SelectItem value="967">+967 (Yemen)</SelectItem>
-                            <SelectItem value="968">+968 (Oman)</SelectItem>
-                            <SelectItem value="970">+970 (Palestine)</SelectItem>
-                            <SelectItem value="971">+971 (UAE)</SelectItem>
-                            <SelectItem value="972">+972 (Israel)</SelectItem>
-                            <SelectItem value="973">+973 (Bahrain)</SelectItem>
-                            <SelectItem value="974">+974 (Qatar)</SelectItem>
-                            <SelectItem value="975">+975 (Bhutan)</SelectItem>
-                            <SelectItem value="976">+976 (Mongolia)</SelectItem>
-                            <SelectItem value="977">+977 (Nepal)</SelectItem>
-                            <SelectItem value="992">+992 (Tajikistan)</SelectItem>
-                            <SelectItem value="993">+993 (Turkmenistan)</SelectItem>
-                            <SelectItem value="994">+994 (Azerbaijan)</SelectItem>
-                            <SelectItem value="995">+995 (Georgia)</SelectItem>
-                            <SelectItem value="996">+996 (Kyrgyzstan)</SelectItem>
-                            <SelectItem value="998">+998 (Uzbekistan)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          placeholder="Mobile"
-                          maxLength={10}
-                          {...registerPersonal("phoneNumber")}
-                          className="h-[52px] rounded-l-none border-[#05244f]"
-                        />
-                      </div>
+                      <PhoneInput
+                        country={'in'}
+                        value={watchPersonal("phoneNumber")}
+                        onChange={(value) => {
+                          setValuePersonal("phoneNumber", value);
+                        }}
+                        inputClass="h-[52px]  w-full border-[#000000]"
+                        buttonClass="border-[#000000]"
+                        containerClass="w-full"
+                        inputProps={{
+                          name: 'phoneNumber',
+                          required: true,
+                          className: 'h-[52px] pl-[60px] w-full border-[#000000]'
+                        }}
+                      />
                       {errorsPersonal.phoneNumber && (
                         <p className="text-red-500 text-xs">{errorsPersonal.phoneNumber.message}</p>
                       )}
@@ -1584,11 +1565,18 @@ export default function RegistrationForm() {
                         </div>
                         <div className="flex flex-col gap-2">
                           <Label className="w-[177px] text-black text-[11.6px] font-semibold">Class Level</Label>
-                          <Input
-                            placeholder="Enter class level"
-                            {...registerInstitute("classLevel")}
-                            className="h-[52px] border-[#05244f]"
-                          />
+                          <Select
+                            onValueChange={(value) => setValueInstitute("classLevel", value)}
+                            value={watchInstitute("classLevel") || ""}
+                          >
+                            <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                              <SelectValue placeholder="Select Class Level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Individual">Individual</SelectItem>
+                              <SelectItem value="Academy">Academy</SelectItem>
+                            </SelectContent>
+                          </Select>
                           {errorsInstitute.classLevel && (
                             <p className="text-red-500 text-xs">{errorsInstitute.classLevel.message}</p>
                           )}
@@ -2207,6 +2195,7 @@ export default function RegistrationForm() {
                 items={classDetailsData}
                 onEdit={handleEditClass}
                 onDelete={handleDeleteClass}
+                onCopy={handleCopyClass}
               />
             </div>
           )}
@@ -2218,6 +2207,7 @@ export default function RegistrationForm() {
                 items={courseDetailsData}
                 onEdit={handleEditCourse}
                 onDelete={handleDeleteCourse}
+                onCopy={handleCopyCourse}
               />
             </div>
           )}

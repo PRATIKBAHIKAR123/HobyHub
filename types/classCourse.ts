@@ -22,4 +22,5 @@ export interface ClassCourseTableProps {
   items: ClassCourseItem[];
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  onCopy: (index: number) => void;
 } 

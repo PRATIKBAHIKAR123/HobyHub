@@ -14,69 +14,6 @@ import DeletePopupScreen from "../components/DeletePopupScreen";
 import { useMode } from "@/contexts/ModeContext";
 import { getAllCategories, getAllSubCategories } from "@/services/hobbyService";
 
-// const classes = [
-//   {
-//     sno: 1,
-//     name: "Yoga for Beginners",
-//     schedule: "Monday, Wednesday, Friday",
-//     scheduletime: "09:00 - 10:00",
-//     agegroup: "18-45",
-//     gender: "Mixed",
-//     stratdate: "2024-04-01",
-//     enddate: "2024-06-30",
-//     sessions: 12,
-//     cost: "$299"
-//   },
-//   {
-//     sno: 2,
-//     name: "Advanced Pilates",
-//     schedule: "Tuesday, Thursday",
-//     scheduletime: "18:00 - 19:30",
-//     agegroup: "25-50",
-//     gender: "Female",
-//     stratdate: "2024-04-02",
-//     enddate: "2024-07-02",
-//     sessions: 8,
-//     cost: "$399"
-//   },
-//   {
-//     sno: 3,
-//     name: "Kids Dance Class",
-//     schedule: "Saturday",
-//     scheduletime: "10:00 - 11:30",
-//     agegroup: "5-12",
-//     gender: "Mixed",
-//     stratdate: "2024-04-06",
-//     enddate: "2024-06-29",
-//     sessions: 6,
-//     cost: "$199"
-//   },
-//   {
-//     sno: 4,
-//     name: "Zumba Fitness",
-//     schedule: "Monday, Wednesday",
-//     scheduletime: "19:00 - 20:00",
-//     agegroup: "16-60",
-//     gender: "Mixed",
-//     stratdate: "2024-04-01",
-//     enddate: "2024-06-30",
-//     sessions: 10,
-//     cost: "$249"
-//   },
-//   {
-//     sno: 5,
-//     name: "Meditation Workshop",
-//     schedule: "Sunday",
-//     scheduletime: "15:00 - 16:30",
-//     agegroup: "18+",
-//     gender: "Mixed",
-//     stratdate: "2024-04-07",
-//     enddate: "2024-06-30",
-//     sessions: 4,
-//     cost: "$179"
-//   }
-// ];
-
 function NavigationSkeleton() {
   return (
     <div className="flex gap-4 mb-8">
