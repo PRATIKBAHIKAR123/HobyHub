@@ -270,7 +270,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex flex-col gap-4 mb-6 sm:grid sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                   First Name <span className="text-red-500">*</span>
@@ -301,78 +301,97 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                   <p className="text-red-500 text-sm mt-1">{errors.tutorLastName}</p>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                  Email <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  name="tutorEmailID"
-                  value={formData.tutorEmailID}
-                  onChange={handleInputChange}
-                  placeholder="Email"
-                  className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorEmailID ? 'border-red-500' : ''}`}
-                />
-                {wasSubmitted && errors.tutorEmailID && (
-                  <p className="text-red-500 text-sm mt-1">{errors.tutorEmailID}</p>
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                  Phone Number <span className="text-red-500">*</span>
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    name="tutorCountryCode"
-                    value={formData.tutorCountryCode}
-                    onChange={handleInputChange}
-                    placeholder="+91"
-                    className="h-[52px] border-[#05244f] w-20"
-                  />
-                  <Input
-                    name="tutorPhoneNo"
-                    value={formData.tutorPhoneNo}
-                    onChange={handleInputChange}
-                    placeholder="Phone Number"
-                    className={`h-[52px] border-[#05244f] flex-1 ${wasSubmitted && errors.tutorPhoneNo ? 'border-red-500' : ''}`}
-                  />
+
+              {/* Responsive row for Email, Phone, WhatsApp on mobile only */}
+              <div className="flex flex-col gap-4 sm:col-span-2">
+                <div className="flex flex-row gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Email */}
+                  <div className="flex flex-col gap-2 flex-1 min-w-[150px]">
+                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                      Email <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="tutorEmailID"
+                      value={formData.tutorEmailID}
+                      onChange={handleInputChange}
+                      placeholder="Email"
+                      className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorEmailID ? 'border-red-500' : ''}`}
+                      type="email"
+                    />
+                    {wasSubmitted && errors.tutorEmailID && (
+                      <p className="text-red-500 text-sm mt-1">{errors.tutorEmailID}</p>
+                    )}
+                  </div>
+                  {/* Phone Number */}
+                  <div className="flex flex-col gap-2 flex-1 min-w-[150px]">
+                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                      Phone Number <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        name="tutorCountryCode"
+                        value={formData.tutorCountryCode}
+                        onChange={handleInputChange}
+                        placeholder="+91"
+                        className="h-[52px] border-[#05244f] w-20"
+                        type="tel"
+                        inputMode="tel"
+                      />
+                      <Input
+                        name="tutorPhoneNo"
+                        value={formData.tutorPhoneNo}
+                        onChange={handleInputChange}
+                        placeholder="Phone Number"
+                        className={`h-[52px] border-[#05244f] flex-1 ${wasSubmitted && errors.tutorPhoneNo ? 'border-red-500' : ''}`}
+                        type="tel"
+                        inputMode="tel"
+                      />
+                    </div>
+                    {wasSubmitted && errors.tutorPhoneNo && (
+                      <p className="text-red-500 text-sm mt-1">{errors.tutorPhoneNo}</p>
+                    )}
+                  </div>
+                  {/* WhatsApp Number */}
+                  <div className="flex flex-col gap-2 flex-1 min-w-[150px]">
+                    <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+                      WhatsApp Number
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        name="whatsappCountryCode"
+                        value={formData.whatsappCountryCode}
+                        onChange={handleInputChange}
+                        placeholder="+91"
+                        className="h-[52px] border-[#05244f] w-20"
+                        disabled={useSameNumber}
+                        type="tel"
+                        inputMode="tel"
+                      />
+                      <Input
+                        name="thatsappNo"
+                        value={formData.thatsappNo}
+                        onChange={handleInputChange}
+                        placeholder="WhatsApp Number"
+                        className="h-[52px] border-[#05244f] flex-1"
+                        disabled={useSameNumber}
+                        type="tel"
+                        inputMode="tel"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Checkbox
+                        id="useSameNumber"
+                        checked={useSameNumber}
+                        onCheckedChange={handleCheckboxChange}
+                      />
+                      <Label htmlFor="useSameNumber" className="text-sm text-gray-600">
+                        Use same number as contact number
+                      </Label>
+                    </div>
+                  </div>
                 </div>
-                {wasSubmitted && errors.tutorPhoneNo && (
-                  <p className="text-red-500 text-sm mt-1">{errors.tutorPhoneNo}</p>
-                )}
               </div>
-              <div className="flex flex-col gap-2">
-                <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-                  WhatsApp Number
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    name="whatsappCountryCode"
-                    value={formData.whatsappCountryCode}
-                    onChange={handleInputChange}
-                    placeholder="+91"
-                    className="h-[52px] border-[#05244f] w-20"
-                    disabled={useSameNumber}
-                  />
-                  <Input
-                    name="thatsappNo"
-                    value={formData.thatsappNo}
-                    onChange={handleInputChange}
-                    placeholder="WhatsApp Number"
-                    className="h-[52px] border-[#05244f] flex-1"
-                    disabled={useSameNumber}
-                  />
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Checkbox
-                    id="useSameNumber"
-                    checked={useSameNumber}
-                    onCheckedChange={handleCheckboxChange}
-                  />
-                  <Label htmlFor="useSameNumber" className="text-sm text-gray-600">
-                    Use same number as contact number
-                  </Label>
-                </div>
-              </div>
+
               <div className="flex flex-col gap-2 col-span-2">
                 <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                   Introduction
