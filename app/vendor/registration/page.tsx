@@ -1254,13 +1254,12 @@ export default function RegistrationForm() {
                         onChange={(value) => {
                           setValuePersonal("phoneNumber", value);
                         }}
-                        inputClass="h-[52px]  w-full border-[#000000]"
-                        buttonClass="border-[#000000]"
-                        containerClass="w-full"
+                        inputClass="!h-[52px] !pl-[60px] !w-full !border !border-[#05244f] !rounded-[6px]"
+                        buttonClass="!border !border-[#05244f] !rounded-[6px]"
+                        containerClass="!w-full !border !border-[#05244f] !rounded-[6px]"
                         inputProps={{
                           name: 'phoneNumber',
                           required: true,
-                          className: 'h-[52px] pl-[60px] w-full border-[#000000]'
                         }}
                       />
                       {errorsPersonal.phoneNumber && (
