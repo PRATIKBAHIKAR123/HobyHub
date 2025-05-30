@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactCrop, { Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,13 @@ export default function ImageCropper({ isOpen, onClose, imageUrl, onCropComplete
         y: 5
     });
     const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setImageLoaded(false);
+        }
+    }, [isOpen]);
 
     const getCroppedImg = (image: HTMLImageElement, crop: Crop): Promise<File> => {
         const canvas = document.createElement('canvas');
@@ -52,7 +59,7 @@ export default function ImageCropper({ isOpen, onClose, imageUrl, onCropComplete
                 }
                 const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
                 resolve(file);
-            }, 'image/jpeg');
+            }, 'image/jpeg', 0.95);
         });
     };
 
@@ -68,33 +75,48 @@ export default function ImageCropper({ isOpen, onClose, imageUrl, onCropComplete
         }
     };
 
+    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const img = e.currentTarget;
+        setImageRef(img);
+        setImageLoaded(true);
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-[800px]">
+            <DialogContent className="max-w-[90vw] md:max-w-[600px] max-h-[90vh]">
                 <DialogHeader>
-                    <DialogTitle>Crop Image</DialogTitle>
+                    <DialogTitle>Crop Profile Image</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-4">
-                    <div className="max-w-full overflow-auto">
+                    <div className="w-full max-h-[60vh] overflow-auto">
+                        {!imageLoaded && (
+                            <div className="flex items-center justify-center h-[300px]">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            </div>
+                        )}
                         <ReactCrop
                             crop={crop}
                             onChange={(c) => setCrop(c)}
                             aspect={1}
                             circularCrop
+                            className={!imageLoaded ? 'hidden' : ''}
                         >
                             <img
-                                ref={setImageRef}
                                 src={imageUrl}
                                 alt="Crop me"
-                                className="max-w-full"
+                                onLoad={handleImageLoad}
+                                className="max-w-full max-h-[60vh] object-contain"
                             />
                         </ReactCrop>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mt-4">
                         <Button variant="outline" onClick={onClose}>
                             Cancel
                         </Button>
-                        <Button onClick={handleCropComplete}>
+                        <Button 
+                            onClick={handleCropComplete}
+                            disabled={!imageLoaded}
+                        >
                             Crop & Save
                         </Button>
                     </div>

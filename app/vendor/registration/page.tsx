@@ -868,6 +868,18 @@ export default function RegistrationForm() {
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
       const imageUrl = URL.createObjectURL(file);
       setTempImageUrl(imageUrl);
       setIsCropperOpen(true);
@@ -876,7 +888,8 @@ export default function RegistrationForm() {
 
   const handleCropComplete = (croppedImage: File) => {
     setValuePersonal("profileImageFile", croppedImage);
-    setProfileImagePreview(URL.createObjectURL(croppedImage));
+    const previewUrl = URL.createObjectURL(croppedImage);
+    setProfileImagePreview(previewUrl);
     setTempImageUrl(null);
     setIsCropperOpen(false);
   };
@@ -1321,22 +1334,27 @@ export default function RegistrationForm() {
                         Profile Image
                       </Label>
                       {!profileImagePreview && (
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfileImageUpload}
-                          className="h-[52px] border-[#05244f]"
-                        />
+                        <div className="relative">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfileImageUpload}
+                            className="h-[52px] border-[#05244f]"
+                          />
+                        </div>
                       )}
                       {profileImagePreview && (
                         <div className="relative w-[158px] h-[158px] mb-4">
-                          <Image
-                            src={profileImagePreview}
-                            alt="Profile Preview"
-                            width={158}
-                            height={158}
-                            className="rounded-md w-full h-full object-cover"
-                          />
+                          <div className="w-full h-full overflow-hidden rounded-md">
+                            <Image
+                              src={profileImagePreview}
+                              alt="Profile Preview"
+                              width={158}
+                              height={158}
+                              className="w-full h-full object-cover"
+                              style={{ maxWidth: '100%', maxHeight: '100%' }}
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -2092,16 +2110,7 @@ export default function RegistrationForm() {
                         <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                           Time<span className="text-red-500">*</span>
                         </Label>
-                        {/* <Select onValueChange={(value) => setValueCourse("time", value)} value={watchCourse("time") || ""}>
-                          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-                            <SelectValue placeholder="Time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="morning">Morning</SelectItem>
-                            <SelectItem value="afternoon">Afternoon</SelectItem>
-                            <SelectItem value="evening">Evening</SelectItem>
-                          </SelectContent>
-                        </Select> */}
+                        
                         <TimeRangeInput form={courseForm as UseFormReturn<FormValues>}
                           setValue={setValueCourse}
                           errors={errorsCourse} />

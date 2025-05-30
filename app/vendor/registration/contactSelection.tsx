@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { toast } from "sonner";
+import PhoneInput, { CountryData } from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 interface PopupScreenProps {
   open: boolean;
@@ -28,10 +30,10 @@ export interface ContactData {
   tutorFirstName: string;
   tutorLastName: string;
   tutorEmailID: string;
-  tutorCountryCode: string;
   tutorPhoneNo: string;
-  whatsappCountryCode: string;
+  tutorCountryCode: string;
   thatsappNo: string;
+  whatsappCountryCode: string;
   tutorIntro: string;
 }
 
@@ -42,10 +44,10 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
     tutorFirstName: '',
     tutorLastName: '',
     tutorEmailID: '',
-    tutorCountryCode: '',
     tutorPhoneNo: '',
-    whatsappCountryCode: '',
+    tutorCountryCode: '+91',
     thatsappNo: '',
+    whatsappCountryCode: '+91',
     tutorIntro: '',
   });
 
@@ -82,10 +84,20 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
         tutorFirstName: profileDetails.firstName,
         tutorLastName: profileDetails.lastName,
         tutorEmailID: profileDetails.emailId,
-        tutorCountryCode: '+91',
         tutorPhoneNo: profileDetails.phoneNumber,
-        whatsappCountryCode: '+91',
-        thatsappNo: profileDetails.phoneNumber
+        thatsappNo: profileDetails.phoneNumber,
+        whatsappCountryCode: '+91'
+      }));
+    } else if (!useProfileDetails) {
+      // Clear the fields when unchecked
+      setFormData(prev => ({
+        ...prev,
+        tutorFirstName: '',
+        tutorLastName: '',
+        tutorEmailID: '',
+        tutorPhoneNo: '',
+        thatsappNo: '',
+        whatsappCountryCode: '+91'
       }));
     }
   }, [useProfileDetails, profileDetails]);
@@ -103,9 +115,9 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
       newErrors.tutorLastName = "Last name is required";
     }
 
-    if (!formData.tutorPhoneNo.trim()) {
+    if (!formData.tutorPhoneNo) {
       newErrors.tutorPhoneNo = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.tutorPhoneNo.replace(/\D/g, ''))) {
+    } else if (formData.tutorPhoneNo.length < 8) {
       newErrors.tutorPhoneNo = "Please enter a valid phone number";
     }
 
@@ -119,6 +131,24 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle phone number changes
+  const handlePhoneChange = (value: string, name: string, countryCode: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      [name === 'tutorPhoneNo' ? 'tutorCountryCode' : 'whatsappCountryCode']: countryCode
+    }));
+
+    // If using same number, update WhatsApp when phone changes
+    if (useSameNumber && name === 'tutorPhoneNo') {
+      setFormData(prev => ({
+        ...prev,
+        thatsappNo: value,
+        whatsappCountryCode: countryCode
+      }));
+    }
+  };
+
   // Handle regular input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -126,21 +156,6 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
       ...prev,
       [name]: value
     }));
-
-    // If using same number, update WhatsApp fields when phone number changes
-    if (useSameNumber) {
-      if (name === 'tutorCountryCode') {
-        setFormData(prev => ({
-          ...prev,
-          whatsappCountryCode: value
-        }));
-      } else if (name === 'tutorPhoneNo') {
-        setFormData(prev => ({
-          ...prev,
-          thatsappNo: value
-        }));
-      }
-    }
 
     // Clear error for this field if it exists
     if (errors[name]) {
@@ -158,7 +173,6 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
     if (checked) {
       setFormData(prev => ({
         ...prev,
-        whatsappCountryCode: prev.tutorCountryCode,
         thatsappNo: prev.tutorPhoneNo
       }));
     }
@@ -187,10 +201,10 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
         tutorFirstName: formData.tutorFirstName.trim(),
         tutorLastName: formData.tutorLastName.trim(),
         tutorEmailID: formData.tutorEmailID.trim(),
-        tutorCountryCode: formData.tutorCountryCode.trim() || '+91',
         tutorPhoneNo: formData.tutorPhoneNo.trim(),
-        whatsappCountryCode: formData.whatsappCountryCode.trim() || '+91',
+        tutorCountryCode: formData.tutorCountryCode,
         thatsappNo: formData.thatsappNo.trim() || formData.tutorPhoneNo.trim(),
+        whatsappCountryCode: formData.whatsappCountryCode,
         tutorIntro: formData.tutorIntro.trim() || '',
         contactType: {
           primary: true,
@@ -208,10 +222,10 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
         tutorFirstName: '',
         tutorLastName: '',
         tutorEmailID: '',
-        tutorCountryCode: '',
         tutorPhoneNo: '',
-        whatsappCountryCode: '',
+        tutorCountryCode: '+91',
         thatsappNo: '',
+        whatsappCountryCode: '+91',
         tutorIntro: '',
       });
       setImages([]);
@@ -281,6 +295,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                   onChange={handleInputChange}
                   placeholder="First Name"
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorFirstName ? 'border-red-500' : ''}`}
+                  disabled={useProfileDetails}
                 />
                 {wasSubmitted && errors.tutorFirstName && (
                   <p className="text-red-500 text-sm mt-1">{errors.tutorFirstName}</p>
@@ -296,6 +311,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                   onChange={handleInputChange}
                   placeholder="Last Name"
                   className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorLastName ? 'border-red-500' : ''}`}
+                  disabled={useProfileDetails}
                 />
                 {wasSubmitted && errors.tutorLastName && (
                   <p className="text-red-500 text-sm mt-1">{errors.tutorLastName}</p>
@@ -317,6 +333,7 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                       placeholder="Email"
                       className={`h-[52px] border-[#05244f] ${wasSubmitted && errors.tutorEmailID ? 'border-red-500' : ''}`}
                       type="email"
+                      disabled={useProfileDetails}
                     />
                     {wasSubmitted && errors.tutorEmailID && (
                       <p className="text-red-500 text-sm mt-1">{errors.tutorEmailID}</p>
@@ -327,26 +344,19 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                     <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                       Phone Number <span className="text-red-500">*</span>
                     </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        name="tutorCountryCode"
-                        value={formData.tutorCountryCode}
-                        onChange={handleInputChange}
-                        placeholder="+91"
-                        className="h-[52px] border-[#05244f] w-20"
-                        type="tel"
-                        inputMode="tel"
-                      />
-                      <Input
-                        name="tutorPhoneNo"
-                        value={formData.tutorPhoneNo}
-                        onChange={handleInputChange}
-                        placeholder="Phone Number"
-                        className={`h-[52px] border-[#05244f] flex-1 ${wasSubmitted && errors.tutorPhoneNo ? 'border-red-500' : ''}`}
-                        type="tel"
-                        inputMode="tel"
-                      />
-                    </div>
+                    <PhoneInput
+                      country={'in'}
+                      value={formData.tutorPhoneNo}
+                      onChange={(value, country: CountryData) => handlePhoneChange(value, 'tutorPhoneNo', `+${country.dialCode}`)}
+                      inputClass="!h-[52px] !pl-[60px] !w-full !border !border-[#05244f] !rounded-[6px]"
+                      buttonClass="!border !border-[#05244f] !rounded-[6px]"
+                      containerClass="!w-full !border !border-[#05244f] !rounded-[6px]"
+                      disabled={useProfileDetails}
+                      inputProps={{
+                        name: 'tutorPhoneNo',
+                        required: true,
+                      }}
+                    />
                     {wasSubmitted && errors.tutorPhoneNo && (
                       <p className="text-red-500 text-sm mt-1">{errors.tutorPhoneNo}</p>
                     )}
@@ -356,33 +366,24 @@ export default function ContactPopupScreen({ open, setOpen, onContactSubmit, pro
                     <Label className="w-[177px] text-black text-[11.6px] font-semibold">
                       WhatsApp Number
                     </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        name="whatsappCountryCode"
-                        value={formData.whatsappCountryCode}
-                        onChange={handleInputChange}
-                        placeholder="+91"
-                        className="h-[52px] border-[#05244f] w-20"
-                        disabled={useSameNumber}
-                        type="tel"
-                        inputMode="tel"
-                      />
-                      <Input
-                        name="thatsappNo"
-                        value={formData.thatsappNo}
-                        onChange={handleInputChange}
-                        placeholder="WhatsApp Number"
-                        className="h-[52px] border-[#05244f] flex-1"
-                        disabled={useSameNumber}
-                        type="tel"
-                        inputMode="tel"
-                      />
-                    </div>
+                    <PhoneInput
+                      country={'in'}
+                      value={formData.thatsappNo}
+                      onChange={(value, country: CountryData) => handlePhoneChange(value, 'thatsappNo', `+${country.dialCode}`)}
+                      inputClass="!h-[52px] !pl-[60px] !w-full !border !border-[#05244f] !rounded-[6px]"
+                      buttonClass="!border !border-[#05244f] !rounded-[6px]"
+                      containerClass="!w-full !border !border-[#05244f] !rounded-[6px]"
+                      disabled={useSameNumber || useProfileDetails}
+                      inputProps={{
+                        name: 'thatsappNo',
+                      }}
+                    />
                     <div className="flex items-center gap-2 mt-2">
                       <Checkbox
                         id="useSameNumber"
                         checked={useSameNumber}
                         onCheckedChange={handleCheckboxChange}
+                        disabled={useProfileDetails}
                       />
                       <Label htmlFor="useSameNumber" className="text-sm text-gray-600">
                         Use same number as contact number
