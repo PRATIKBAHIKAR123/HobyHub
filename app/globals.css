@@ -303,6 +303,7 @@ color: #ABABAB;
 .pac-container {
   z-index: 99999 !important;
   position: relative;
+  pointer-events: auto !important;
 }
 
 @layer utilities {

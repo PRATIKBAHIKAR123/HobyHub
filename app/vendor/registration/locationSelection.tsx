@@ -49,6 +49,7 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
   // Track if form was submitted
   const [wasSubmitted, setWasSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
@@ -207,6 +208,10 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
       // Get the most specific location name available
       const locationName = place.formatted_address || place.name || "";
       setSearchInput(locationName);
+
+      if (inputRef.current) {
+      inputRef.current.value = locationName;
+    }
 
       // Update form data with selected place details
       const geometry = place.geometry;
@@ -546,6 +551,22 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
     };
   }, []);
 
+  useEffect(() => {
+  if (!inputRef.current) return;
+  const input = inputRef.current;
+
+  const observer = new MutationObserver(() => {
+    // If the input value changes (by Google), update React state
+    if (input.value !== searchInput) {
+      setSearchInput(input.value);
+    }
+  });
+
+  observer.observe(input, { attributes: true, attributeFilter: ['value'] });
+
+  return () => observer.disconnect();
+}, [searchInput]);
+
   // Handle dialog close
   const handleDialogClose = () => {
     setOpen(false);
@@ -572,10 +593,20 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
 
   return (
     <LoadScript googleMapsApiKey={GOOGLE_MAP_API_KEY} libraries={libraries}>
-      <Dialog open={open} onOpenChange={handleDialogClose}>
+      <Dialog open={open} onOpenChange={(isOpen) => {
+  if (!isOpen) handleDialogClose();
+}}>
         <DialogOverlay className="bg-[#003161] opacity-50 fixed inset-0 z-[100]" />
 
-        <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-auto max-h-[90vh] mx-auto text-center z-[101]">
+        <DialogContent className="bg-white p-6 min-w-[90%] rounded-xl overflow-y-auto max-h-[90vh] mx-auto text-center z-[101]" onPointerDownOutside={e => {
+    // If the click is inside the Google Places dropdown, prevent dialog close
+    if (
+      e.target instanceof HTMLElement &&
+      (e.target.closest('.pac-container') || e.target.classList.contains('pac-item'))
+    ) {
+      e.preventDefault();
+    }
+  }}>
           <DialogTitle className="text-xl font-semibold mb-4">Add Location</DialogTitle>
 
           <div className="grid grid-cols-1 gap-6 items-center">
@@ -587,11 +618,15 @@ export default function LocationPopupScreen({ open, setOpen, onLocationSubmit }:
               >
                 <Input
                   type="text"
+                  ref={inputRef}
                   name="search"
                   placeholder="Search for a location"
                   className="w-full h-[52px] border-[#05244f] mb-4"
                   value={searchInput}
                   onChange={handleInputChange}
+                  onKeyDown={e => {
+    if (e.key === 'Enter') e.preventDefault();
+  }}
                 />
               </StandaloneSearchBox>
               <Button
