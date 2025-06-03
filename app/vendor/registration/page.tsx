@@ -101,8 +101,30 @@ const classDetailsSchema = yup.object().shape({
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
   time: yup.string(),
-  timingsFrom: yup.string().required('Timings is required'),
-  timingsTo: yup.string(),
+  timingsFrom: yup.string()
+    .required('From Time is required'),
+  timingsTo: yup.string()
+    .required('To Time is required')
+    .test(
+  'is-greater-or-equal-to-timingsFrom',
+  'To Time must be after From Time (can be next day, max 12 hours)',
+  function (value) {
+    const { timingsFrom } = this.parent;
+    if (!timingsFrom || !value) return true;
+
+    const [fromH, fromM] = timingsFrom.split(':').map(Number);
+    const [toH, toM] = value.split(':').map(Number);
+    const fromMinutes = fromH * 60 + fromM;
+    const toMinutes = toH * 60 + toM;
+
+    // If toMinutes <= fromMinutes, treat as next day
+    const adjustedToMinutes = toMinutes <= fromMinutes ? toMinutes + 24 * 60 : toMinutes;
+    const duration = adjustedToMinutes - fromMinutes;
+
+    // Allow only if duration is > 0 and <= 12 hours (720 minutes)
+    return duration > 0 && duration <= 12 * 60;
+  }
+),
   weekdays: yup.array().of(yup.string()).min(1, 'At least one weekday is required'),
   fromage: yup.string(),
   toage: yup.string(),
@@ -122,8 +144,24 @@ const courseDetailsSchema = yup.object().shape({
   category: yup.string().required('Category is required'),
   subCategory: yup.string().required('Sub-category is required'),
   time: yup.string().required('Time is required'),
-  timingsFrom: yup.string(),
-  timingsTo: yup.string(),
+  timingsFrom: yup.string()
+    .required('From Time is required'),
+  timingsTo: yup.string()
+    .required('To Time is required')
+    .test(
+      'is-greater-or-equal-to-timingsFrom',
+      'To Time must be equal to or greater than From Time',
+      function (value) {
+        const { timingsFrom } = this.parent;
+        if (!timingsFrom || !value) return true;
+
+        // Convert times to comparable values
+        const fromTime = new Date(`2000-01-01T${timingsFrom}`);
+        const toTime = new Date(`2000-01-01T${value}`);
+
+        return toTime >= fromTime;
+      }
+    ),
   weekdays: yup.array().of(yup.string()).min(1, 'At least one weekday is required'),
   fromage: yup.string(),
   toage: yup.string(),
@@ -158,6 +196,7 @@ export default function RegistrationForm() {
     instituteDetails: false,
     classDetails: false
   });
+  const [locationPopupFormType, setLocationPopupFormType] = useState<'class' | 'course'>('class');
   const [classDetailsData, setClassDetailsData] = useState<any[]>([]);
   const [courseDetailsData, setCourseDetailsData] = useState<any[]>([]);
   const [personalDetailsData, setPersonalDetailsData] = useState<any>(null);
@@ -493,11 +532,22 @@ export default function RegistrationForm() {
     try {
       // Get all form values
       const classData = classForm.getValues();
-
+const location: Location | null = classData.location;
+if (location) {
+  data.address = location.address;
+  data.area = location.area;
+  data.city = location.city;
+  data.state = location.state;
+  data.country = location.country;
+  data.pincode = location.pincode;
+  data.latitude = location.latitude;
+  data.longitude = location.longitude;
+  data.road = location.road;
+}
       // Create class details object
       const classDetails = {
         ...data,
-        location: classData.location || defaultLocation,
+        location: location || defaultLocation,
         contact: classData.contact || null,
         id: Date.now(), // Add unique ID for each class
         category: classData.category || '0',
@@ -926,18 +976,13 @@ export default function RegistrationForm() {
   // Update the handleLocationSubmit function
   const handleLocationSubmit = async (locationData: Location) => {
     try {
-      // Add new location to state
-      setSavedLocations(prev => [...prev, locationData]);
-
-      // Update form value based on current form type
-      if (currentFormType === 'class') {
-        setValueClass('location', locationData, { shouldValidate: true });
-      } else {
-        setValueCourse('location', locationData, { shouldValidate: true });
-      }
-
-      // Close the popup
-      setIsLocationPopupOpen(false);
+    setSavedLocations(prev => [...prev, locationData]);
+    if (locationPopupFormType === 'class') {
+      setValueClass('location', locationData, { shouldValidate: true });
+    } else {
+      setValueCourse('location', locationData, { shouldValidate: true });
+    }
+    setIsLocationPopupOpen(false);
 
       toast.success('Location saved successfully');
     } catch (error) {
@@ -970,93 +1015,82 @@ export default function RegistrationForm() {
   };
 
   // Update the contact select options
-  const renderContactSelect = (formType: 'class' | 'course') => {
-    const watch = formType === 'class' ? watchClass : watchCourse;
-    const errors = formType === 'class' ? errorsClass : errorsCourse;
-    const contact = watch('contact');
+const renderContactSelect = (formType: 'class' | 'course') => {
+  const watch = formType === 'class' ? watchClass : watchCourse;
+  const errors = formType === 'class' ? errorsClass : errorsCourse;
+  const contact = watch('contact');
 
-    return (
-      <div className="flex flex-col gap-2">
-        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-          Contact<span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={contact ? `${contact.tutorFirstName} ${contact.tutorLastName}` : ''}
-          onValueChange={(value) => handleContactSelect(value, formType)}
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+        Contact<span className="text-red-500">*</span>
+      </Label>
+      <div className="flex gap-2 items-center">
+        <select
+          className="w-full h-[52px] border border-[#05244f] rounded-lg px-2"
+          value={contact?.id || ''}
+          onChange={e => {
+            const selected = savedContacts.find(c => c.id === e.target.value) || null;
+            if (formType === 'class') {
+              setValueClass('contact', selected, { shouldValidate: true });
+            } else {
+              setValueCourse('contact', selected, { shouldValidate: true });
+            }
+          }}
         >
-          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-            <SelectValue placeholder="Select contact" />
-          </SelectTrigger>
-          <SelectContent>
-            {savedContacts.map(contact => (
-              <SelectItem
-                key={`${contact.tutorFirstName}-${contact.tutorLastName}`}
-                value={`${contact.tutorFirstName} ${contact.tutorLastName}`}
-              >
-                {`${contact.tutorFirstName} ${contact.tutorLastName}`} ({Object.entries(contact.contactType)
-                  .filter(([, value]) => value)
-                  .map(([key]) => key)
-                  .join(', ')})
-              </SelectItem>
-            ))}
-            <div className="p-2 border-t border-gray-200">
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const escapeEvent = new KeyboardEvent('keydown', {
-                    key: 'Escape',
-                    bubbles: true,
-                  });
-                  document.dispatchEvent(escapeEvent);
-                  setIsContactPopupOpen(true)
-                }}
-              >
-                + Add Contact
-              </Button>
-            </div>
-          </SelectContent>
-        </Select>
-        {errors.contact && (
-          <p className="text-red-500 text-xs">{errors.contact.message}</p>
-        )}
+          <option value="">Select contact</option>
+          {savedContacts.map(contact => (
+            <option key={contact.id} value={contact.id}>
+              {contact.tutorFirstName} {contact.tutorLastName}
+            </option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-[52px] px-3"
+          onClick={() => setIsContactPopupOpen(true)}
+        >
+          + Add
+        </Button>
       </div>
-    );
-  };
+      {errors.contact && (
+        <p className="text-red-500 text-xs">{errors.contact.message}</p>
+      )}
+    </div>
+  );
+};
 
   // Update the handleLocationSelect function
-  const handleLocationSelect = (value: string, formType: 'class' | 'course') => {
-    const selectedLocation = savedLocations.find(
-      (loc) => getLocationValue(loc) === value
-    );
-    if (formType === 'class') {
-      setValueClass('location', selectedLocation || null, { shouldValidate: true });
-    } else {
-      setValueCourse('location', selectedLocation || null, { shouldValidate: true });
-    }
-  };
+  // const handleLocationSelect = (id: string, formType: 'class' | 'course') => {
+  //   const selected = savedLocations.find(loc => loc.id === id) || null;
+  // if (formType === 'class') {
+  //   setValueClass('location', selected, { shouldValidate: true });
+  // } else {
+  //   setValueCourse('location', selected, { shouldValidate: true });
+  // }
+  // };
 
   // Update the handleContactSelect function
-  const handleContactSelect = (value: string, formType: 'class' | 'course') => {
-    const selectedContact = savedContacts.find(contact =>
-      `${contact.tutorFirstName} ${contact.tutorLastName}` === value
-    );
+  // const handleContactSelect = (value: string, formType: 'class' | 'course') => {
+  //   const selectedContact = savedContacts.find(contact =>
+  //     `${contact.tutorFirstName} ${contact.tutorLastName}` === value
+  //   );
 
-    if (selectedContact) {
-      if (formType === 'class') {
-        setValueClass('contact', selectedContact, { shouldValidate: true });
-      } else {
-        setValueCourse('contact', selectedContact, { shouldValidate: true });
-      }
-    }
-  };
+  //   if (selectedContact) {
+  //     if (formType === 'class') {
+  //       setValueClass('contact', selectedContact, { shouldValidate: true });
+  //     } else {
+  //       setValueCourse('contact', selectedContact, { shouldValidate: true });
+  //     }
+  //   }
+  // };
 
   // Update the location select value handling
-  const getLocationValue = (location: Location | null | undefined): string => {
-    if (!location) return '';
-    return `${location.address}, ${location.area}, ${location.city}`;
-  };
+function getLocationValue(location: Location | null | undefined): string {
+  if (!location) return '';
+  return `${location.address}, ${location.area}, ${location.city}`;
+}
 
   // Add this function to handle image upload
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1126,60 +1160,55 @@ export default function RegistrationForm() {
   };
 
   // Add the renderLocationSelect function
-  const renderLocationSelect = (formType: 'class' | 'course') => {
-    const watch = formType === 'class' ? watchClass : watchCourse;
-    const errors = formType === 'class' ? errorsClass : errorsCourse;
-    const location = watch('location');
+  
+const renderLocationSelect = (formType: 'class' | 'course') => {
+  const watch = formType === 'class' ? watchClass : watchCourse;
+  const errors = formType === 'class' ? errorsClass : errorsCourse;
+  const location = watch('location');
 
-    return (
-      <div className="flex flex-col gap-2">
-        <Label className="w-[177px] text-black text-[11.6px] font-semibold">
-          Location<span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={location ? getLocationValue(location) : ''}
-          onValueChange={(value) => handleLocationSelect(value, formType)}
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="w-[177px] text-black text-[11.6px] font-semibold">
+        Location<span className="text-red-500">*</span>
+      </Label>
+      <div className="flex gap-2 items-center">
+        <select
+          className="w-full h-[52px] border border-[#05244f] rounded-lg px-2"
+          value={location?.id || ''}
+          onChange={e => {
+            const selected = savedLocations.find(loc => loc.id === e.target.value) || null;
+            if (formType === 'class') {
+              setValueClass('location', selected, { shouldValidate: true });
+            } else {
+              setValueCourse('location', selected, { shouldValidate: true });
+            }
+          }}
         >
-          <SelectTrigger className="w-full h-[52px] border-[#05244f]">
-            <SelectValue placeholder="Select location" />
-          </SelectTrigger>
-          <SelectContent>
-            {savedLocations.map(location => (
-              <SelectItem
-                key={location.id}
-                value={getLocationValue(location)}
-              >
-                {getLocationValue(location)}
-              </SelectItem>
-            ))}
-            <div className="p-2 border-t border-gray-200">
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => {
-                  const escapeEvent = new KeyboardEvent('keydown', {
-                    key: 'Escape',
-                    code: 'Escape',
-                    keyCode: 27,
-                    which: 27,
-                    bubbles: true,
-                    cancelable: true
-                  });
-                  document.dispatchEvent(escapeEvent);
-                  setIsLocationPopupOpen(true);
-                }}
-              >
-                + Add Location
-              </Button>
-            </div>
-          </SelectContent>
-        </Select>
-        {errors.location && (
-          <p className="text-red-500 text-xs">{errors.location.message}</p>
-        )}
+          <option value="">Select location</option>
+          {savedLocations.map(loc => (
+            <option key={loc.id} value={loc.id}>
+              {getLocationValue(loc)}
+            </option>
+          ))}
+        </select>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-[52px] px-3"
+          onClick={() => {
+            setLocationPopupFormType(formType);
+            setIsLocationPopupOpen(true);
+          }}
+        >
+          + Add
+        </Button>
       </div>
-    );
-  };
+      {errors.location && (
+        <p className="text-red-500 text-xs">{errors.location.message}</p>
+      )}
+    </div>
+  );
+};
 
   const handleCopyClass = (index: number) => {
     const classToCopy = classDetailsData[index];
@@ -1945,6 +1974,9 @@ export default function RegistrationForm() {
                             <label htmlFor={day.toLowerCase()} className="text-sm">{day}</label>
                           </div>
                         ))}
+                        {errorsClass.weekdays && (
+  <p className="text-red-500 text-xs">{errorsClass.weekdays.message}</p>
+)}
                       </div>
 
                     </div>
@@ -2136,6 +2168,9 @@ export default function RegistrationForm() {
                           <label htmlFor={`course-${day.toLowerCase()}`} className="text-sm">{day}</label>
                         </div>
                       ))}
+                      {errorsCourse.weekdays && (
+                        <p className="text-red-500 text-xs">{errorsCourse.weekdays.message}</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-2 p-2 border border-[#05244f] rounded-md">

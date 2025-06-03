@@ -1,103 +1,126 @@
-import { useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
+import { useEffect } from "react";
 import { useWatch } from "react-hook-form";
 import { FormInputProps } from "./types";
-import * as yup from "yup";
 
-// Yup schema for validation
-export const timeRangeScheme = {
-  timingsFrom: yup.string()
-    .required('From Time is required'),
-  timingsTo: yup.string()
-    .required('To Time is required')
-    .test(
-      'is-greater-than-timingsFrom',
-      'To Time must be greater than From Time',
-      function (value) {
-        const { timingsFrom } = this.parent;
-        if (!timingsFrom || !value) return true;
-        
-        // Convert times to comparable values
-        const fromTime = new Date(`2000-01-01T${timingsFrom}`);
-        const toTime = new Date(`2000-01-01T${value}`);
-        
-        return toTime > fromTime;
-      }
-    ),
-  time: yup.string().required('Time is required'),
-};
+// Generate hour, minute, and AM/PM options
+const hours = Array.from({ length: 12 }, (_, i) => (i === 0 ? "12" : String(i).padStart(2, "0")));
+const minutes = ["00", "15", "30", "45"];
+const ampm = ["AM", "PM"];
+
+// Convert to 24-hour format for logic/validation
+function to24Hour(hour: string, minute: string, period: string) {
+  let h = parseInt(hour, 10);
+  if (period === "AM") {
+    if (h === 12) h = 0;
+  } else {
+    if (h !== 12) h += 12;
+  }
+  return `${h.toString().padStart(2, "0")}:${minute}`;
+}
+
+// Convert from 24-hour to 12-hour for dropdowns
+function from24Hour(time: string) {
+  if (!time) return { hour: "12", minute: "00", period: "AM" };
+  const [h, m] = time.split(":").map(Number);
+  const period = h < 12 ? "AM" : "PM";
+  let hour = h % 12;
+  if (hour === 0) hour = 12;
+  return { hour: hour.toString().padStart(2, "0"), minute: m.toString().padStart(2, "0"), period };
+}
+
+function TimeDropdown({
+  
+  value,
+  onChange,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  error?: string;
+}) {
+  const { hour, minute, period } = from24Hour(value);
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {/* <span className="text-xs text-gray-500 font-medium mb-1">{label}</span> */}
+      <div className="flex gap-1">
+        <select
+          className="rounded-lg border border-[#05244f] px-2 py-2 bg-white text-base focus:ring-2 focus:ring-[#05244f]"
+          value={hour}
+          onChange={e => onChange(to24Hour(e.target.value, minute, period))}
+        >
+          {hours.map(h => (
+            <option key={h} value={h}>{h}</option>
+          ))}
+        </select>
+        {/* <span className="font-bold text-gray-400">:</span> */}
+        <select
+          className="rounded-lg border border-[#05244f] px-2 py-2 bg-white text-base focus:ring-2 focus:ring-[#05244f]"
+          value={minute}
+          onChange={e => onChange(to24Hour(hour, e.target.value, period))}
+        >
+          {minutes.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <select
+          className="rounded-lg border border-[#05244f] px-2 py-2 bg-white text-base focus:ring-2 focus:ring-[#05244f]"
+          value={period}
+          onChange={e => onChange(to24Hour(hour, minute, e.target.value))}
+        >
+          {ampm.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+      </div>
+      {error && <span className="text-red-500 text-xs">{error}</span>}
+    </div>
+  );
+}
 
 export default function TimeRangeInput({ form, setValue, errors }: FormInputProps) {
-  const { register, control, trigger } = form;
-  const timingsFrom = useWatch({ control, name: "timingsFrom" });
-  const timingsTo = useWatch({ control, name: "timingsTo" });
-
-  const fromTimeRef = useRef<HTMLInputElement | null>(null);
-  const toTimeRef = useRef<HTMLInputElement | null>(null);
+  const { control, trigger } = form;
+  const timingsFrom = useWatch({ control, name: "timingsFrom" }) || "00:00";
+  const timingsTo = useWatch({ control, name: "timingsTo" }) || "00:00";
 
   useEffect(() => {
     if (timingsFrom && timingsTo) {
       const formatted = `${timingsFrom} - ${timingsTo}`;
       setValue("time", formatted);
-      // Trigger validation when either time changes
       trigger(["timingsFrom", "timingsTo"]);
     }
   }, [timingsFrom, timingsTo, setValue, trigger]);
 
-  const handleTimeInputClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-    if (inputRef.current?.showPicker) {
-      inputRef.current.showPicker();
-    } else {
-      inputRef.current?.focus(); // fallback
-    }
-  };
-
-  const handleTimeChange = async (field: "timingsFrom" | "timingsTo", value: string) => {
-    setValue(field, value);
-    // Trigger validation for both fields when either changes
-    await trigger(["timingsFrom", "timingsTo"]);
-  };
+  useEffect(() => {
+  if (!timingsFrom) setValue("timingsFrom", "00:00");
+  if (!timingsTo) setValue("timingsTo", "00:00");
+  // eslint-disable-next-line
+}, []);
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex justify-start gap-2 items-center">
-        <Input
-          id="timingsFrom"
-          type="time"
-          {...register("timingsFrom", {
-            onChange: (e) => handleTimeChange("timingsFrom", e.target.value)
-          })}
-          ref={(el) => {
-            fromTimeRef.current = el;
-            register("timingsFrom").ref(el);
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        <TimeDropdown
+          label="From"
+          value={timingsFrom}
+          onChange={val => {
+            setValue("timingsFrom", val);
+            trigger(["timingsFrom", "timingsTo"]);
           }}
-          onClick={() => handleTimeInputClick(fromTimeRef)}
-          className="h-[52px] border-[#05244f] w-auto"
+          error={errors.timingsFrom?.message}
         />
-        <span className="text-gray-500">to</span>
-        <Input
-          id="timingsTo"
-          type="time"
-          {...register("timingsTo", {
-            onChange: (e) => handleTimeChange("timingsTo", e.target.value)
-          })}
-          ref={(el) => {
-            toTimeRef.current = el;
-            register("timingsTo").ref(el);
+        <span className="text-gray-400 font-bold text-lg mx-2">To</span>
+        <TimeDropdown
+          label="To"
+          value={timingsTo}
+          onChange={val => {
+            setValue("timingsTo", val);
+            trigger(["timingsFrom", "timingsTo"]);
           }}
-          onClick={() => handleTimeInputClick(toTimeRef)}
-          className="h-[52px] border-[#05244f] w-auto"
+          error={errors.timingsTo?.message}
         />
       </div>
-
-      {errors.timingsFrom && (
-        <p className="text-red-500 text-xs">{errors.timingsFrom.message}</p>
-      )}
-      {errors.timingsTo && (
-        <p className="text-red-500 text-xs">{errors.timingsTo.message}</p>
-      )}
     </div>
   );
 }
-
-
