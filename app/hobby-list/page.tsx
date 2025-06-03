@@ -213,10 +213,10 @@ function ClassDetails() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
         <h2 className="text-[#767676] text-[18px] md:text-[22.70px] font-semibold">Classes <div className="text-black text-sm md:text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
         <div className="flex gap-2">
-          <ToggleGroup type="single" className="hidden md:block border-2 border-gray-300 rounded-md p-1">
+          <ToggleGroup type="single" className="border-2 border-gray-300 rounded-md p-1 z-0">
             <ToggleGroupItem
               value="list"
               onClick={() => setIsListView(true)}
