@@ -214,7 +214,7 @@ function ClassDetails() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-[#767676] text-[22.70px] font-semibold">Classes <div className="text-black text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
+        <h2 className="text-[#767676] text-[18px] md:text-[22.70px] font-semibold">Classes <div className="text-black text-sm md:text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
         <div className="flex gap-2">
           <ToggleGroup type="single" className="hidden md:block border-2 border-gray-300 rounded-md p-1">
             <ToggleGroupItem
@@ -374,8 +374,8 @@ function ClassList({ classes, filterType }:any) {
             <TableHead>Schedule Time</TableHead>
             <TableHead>Age Group</TableHead>
             <TableHead>Gender</TableHead>
-            <TableHead>Start Date</TableHead>
-            <TableHead>End Date</TableHead>
+            {/* <TableHead>Start Date</TableHead>
+            <TableHead>End Date</TableHead> */}
             <TableHead>Sessions</TableHead>
             <TableHead>Cost</TableHead>
             <TableHead>Actions</TableHead>
@@ -390,8 +390,8 @@ function ClassList({ classes, filterType }:any) {
               <TableCell>{item.timingsFrom} - {item.timingsTo}</TableCell>
               <TableCell>{item.ageFrom} - {item.ageTo}</TableCell>
               <TableCell>{item.gender}</TableCell>
-              <TableCell>{item.sessionFrom}</TableCell>
-              <TableCell>{item.sessionTo}</TableCell>
+              {/* <TableCell>{item.sessionFrom}</TableCell>
+              <TableCell>{item.sessionTo}</TableCell> */}
               <TableCell>{item.sessionFrom}</TableCell>
               <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
               <TableCell>

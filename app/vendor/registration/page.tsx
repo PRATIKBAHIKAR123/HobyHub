@@ -1265,7 +1265,7 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                         First Name<span className="text-red-500">*</span>
                       </Label>
                       <Input
-                        placeholder="Last Name"
+                        placeholder="First Name"
                         {...registerPersonal("firstName")}
                         className="h-[52px] border-[#05244f]"
                       />
