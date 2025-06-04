@@ -285,21 +285,21 @@ function HobbyDetailsPageContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
         <Card className="p-2 md:p-4 text-center bg-[#d3e1f1]/95 rounded-2xl gap-2 border-4 border-[#d2dae4]">
           <h3 className="text-black text-[15px] md:text-[18px]  font-bold  font-['Trajan_Pro']">Age Restriction</h3>
-          <p className="text-black text-lg font-normal font-['Trajan_Pro'] flex items-center justify-center gap-2">
+          <p className="text-black text-[13px] md:text-[15px] font-normal font-['Trajan_Pro'] flex items-center justify-center gap-2">
             <Image src={'/Icons/user-details.png'} height={24} width={24} alt="Age Icon" />
             {activityData.ageRestrictionFrom} - {activityData.ageRestrictionTo} Years
           </p>
         </Card>
         <Card className="p-2 md:p-4 text-center bg-[#d3e1f1]/95 rounded-2xl border-4 gap-2 border-[#d2dae4]">
           <h3 className="text-black text-[15px] md:text-[18px] font-bold font-['Trajan_Pro']">Session</h3>
-          <p className="text-black  text-lg font-normal flex items-center justify-center gap-2">
+          <p className="text-black text-[13px]  md:text-[15px] font-normal flex items-center justify-center gap-2">
             <Image src={'/Icons/Calender-ic.png'} height={24} width={24} alt="Calendar Icon" />
             Session {activityData.sessionCountFrom} - {activityData.sessionCountTo}
           </p>
         </Card>
         <Card className="p-2 md:p-4 text-center bg-[#d3e1f1]/95 rounded-2xl gap-2 border-4 border-[#d2dae4]">
           <h3 className="text-black text-[15px] md:text-[18px]  font-bold font-['Trajan_Pro']">Location</h3>
-          <p className="text-black  text-lg font-normal flex items-center justify-center gap-2">
+          <p className="text-black text-[13px]  md:text-[15px] font-normal flex items-center justify-center gap-2">
             {activityData.area}, {activityData.state}, {activityData.country}
           </p>
         </Card>
