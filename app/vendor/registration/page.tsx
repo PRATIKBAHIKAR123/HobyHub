@@ -33,6 +33,8 @@ import { FormValues, Location, Contact, Category } from "./types";
 import ImageCropper from '@/app/components/ImageCropper';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { Checkbox } from "@/components/ui/checkbox";
+import { TermsAndPrivacyContent } from "@/components/TermsAndPrivacyContent";
 
 // Personal details form schema
 const personalDetailsSchema = yup.object().shape({
@@ -213,6 +215,9 @@ export default function RegistrationForm() {
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
   // Add a state to track which item is being edited
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [isTermsChecked, setIsTermsChecked] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsModalType, setTermsModal] = useState<"privacy" | "terms">('privacy');
 
   // Add default location
   const defaultLocation: Location = {
@@ -654,7 +659,10 @@ if (location) {
         setActiveAccordion("item-4");
         return;
       }
-
+    if (!isTermsChecked) {
+      toast.error("Please agree to the Terms & Conditions and Privacy Policy before submitting.");
+      return;
+    }
       // If all validations pass, show the preview popup
       setIsPreviewOpen(true);
     } catch (error) {
@@ -2294,7 +2302,35 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
             + Add {classDetailsData.length > 0 || courseDetailsData.length > 0 ? 'More' : ''} Class/Course
           </Button>
         </div>
-
+<div className="flex items-center justify-center gap-2 mt-[15px]">
+              <Checkbox
+                id="terms"
+                checked={isTermsChecked}
+                onCheckedChange={(checked) => setIsTermsChecked(checked as boolean)}
+              />
+              <label htmlFor="terms" className="text-[#c6c7c7] text-xs mt-2 trajan-pro font-bold">
+                By proceeding, you agree to our{" "}
+                <button
+                  type="button"
+                  onClick={() => {setShowTermsModal(true); setTermsModal('terms')}}
+                  className="text-[#3e606e] hover:underline"
+                >
+                  Terms & Conditions
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  onClick={() => {setShowTermsModal(true); setTermsModal('privacy')}}
+                  className="text-[#3e606e] hover:underline"
+                >
+                  Privacy Policy
+                </button>
+              </label>
+            </div>
+            <TermsAndPrivacyContent
+                          isOpen={showTermsModal}
+                          onClose={() => setShowTermsModal(false)} type={termsModalType}
+                        />
         {/* Final Submit Button */}
         <div className="flex justify-center mt-6">
           <Button

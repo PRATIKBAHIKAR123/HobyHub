@@ -36,6 +36,8 @@ export default function LoginPage() {
   const [isTermsChecked, setIsTermsChecked] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [termsModalType, setTermsModal] = useState<"privacy" | "terms">('privacy');
+  
 
   // Add verification status states
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -323,7 +325,7 @@ export default function LoginPage() {
                 By proceeding, you agree to our{" "}
                 <button
                   type="button"
-                  onClick={() => setShowTermsModal(true)}
+                  onClick={() => {setShowTermsModal(true); setTermsModal('terms')}}
                   className="text-[#3e606e] hover:underline"
                 >
                   Terms & Conditions
@@ -331,7 +333,7 @@ export default function LoginPage() {
                 and{" "}
                 <button
                   type="button"
-                  onClick={() => setShowTermsModal(true)}
+                  onClick={() => {setShowTermsModal(true); setTermsModal('privacy')}}
                   className="text-[#3e606e] hover:underline"
                 >
                   Privacy Policy
@@ -340,7 +342,7 @@ export default function LoginPage() {
             </div>
             <TermsAndPrivacyContent
               isOpen={showTermsModal}
-              onClose={() => setShowTermsModal(false)}
+              onClose={() => setShowTermsModal(false)} type={termsModalType}
             />
             <span className="text-[#9d9d9d] text-[10.80px] py-2 font-bold trajan-pro">Already have an account? <a className="hover:cursor-pointer text-[#3e606e]" onClick={() => router.push("login")}>Sign In</a></span>
             {/* Button */}

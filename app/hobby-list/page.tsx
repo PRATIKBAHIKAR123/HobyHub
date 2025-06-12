@@ -109,7 +109,12 @@ function ClassListSkeleton() {
 }
 
 function ClassDetails() {
-  const [isListView, setIsListView] = useState<boolean>(true);
+  const [isListView, setIsListView] = useState<boolean>(() => {
+  if (typeof window !== "undefined") {
+    return window.innerWidth >= 768; // true for desktop, false for mobile
+  }
+  return false; // fallback for SSR
+});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);

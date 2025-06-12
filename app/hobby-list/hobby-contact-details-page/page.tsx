@@ -152,23 +152,22 @@ function HobbyContactDetailsPageContent({ blurred = false }: HobbyContactDetails
   }, []);
 
   // Share function
-  const handleShare = async () => {
-    if (navigator.share && activityData) {
-      try {
-        await navigator.share({
-          title: activityData.title,
-          text: `Check out ${activityData.title} on HobyHub!`, 
-          url: window.location.href, // Share the current page URL
-        });
-        console.log('Content shared successfully');
-      } catch (error) {
-        console.error('Error sharing content:', error);
-      }
-    } else {
-      // Fallback for browsers/devices that don't support Web Share API
-      alert('Web Share API is not supported in your browser. You can manually copy the link.');
+const handleShare = async (data: any) => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: `${data.tutorFirstName} ${data.tutorLastName}`,
+        text: `Check out this location at ${data.address}!`, 
+        url: window.location.href,
+      });
+      console.log('Content shared successfully');
+    } catch (error) {
+      console.error('Error sharing content:', error);
     }
-  };
+  } else {
+    alert('Web Share API is not supported in your browser. You can manually copy the link.');
+  }
+};
 
   // Helper: create a unique key for grouping (contact + location)
   const getGroupKey = (item: any) => {
@@ -191,7 +190,12 @@ function HobbyContactDetailsPageContent({ blurred = false }: HobbyContactDetails
 const allDetails = [
   ...(classes || []).map((c: any) => ({ ...c, type: "Class" })),
   ...(courses || []).map((c: any) => ({ ...c, type: "Course" })),
-];
+].filter((item, index, self) => 
+  index === self.findIndex((t) => 
+    t.latitude === item.latitude && 
+    t.longitude === item.longitude
+  )
+);
 
   // Group by contact/location
   const grouped: { [key: string]: { items: any[]; data: any } } = {};
@@ -203,96 +207,12 @@ const allDetails = [
     grouped[key].items.push(item);
   });
 
-  // Update renderContactCard to accept a list of items
-  // const renderContactCard = (groupItems: any[], data: any) => {
-  //   const fullAddress = `${data.address??''}, ${data.road??''}, ${data.area??''}, ${data.city??''}, ${data.state??''} - ${data.pincode??''}, ${data.country??''}`;
-  //   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
-  //   const phoneUrl = `tel:${data.tutorCountryCode}${data.tutorPhoneNo}`;
-  //   const whatsappUrl = `https://wa.me/${data.whatsappCountryCode}${data.whatsappNo}`;
-  //   // Compose label
-  //   const label = groupItems.map(i => `${i.type}: ${i.title}`).join(", ");
-  //   const categories = groupItems.map(i => i.subCategory).filter(Boolean).join(", ");
-  //   return (
-  //     <Card key={label} className="bg-white border border-blue-200 rounded-xl shadow-sm p-6 mb-8">
-  //       <div className="mb-4">
-  //         {/* <h3 className="text-xl font-semibold text-gray-800">For: {label}</h3> */}
-  //         {categories && <p className="text-sm text-gray-600 mt-1">Category: {categories}</p>}
-  //       </div>
-  //       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-  //         <div className="space-y-6">
-  //           <div>
-  //             <p className="text-sm font-medium text-gray-600 mb-1">Institute</p>
-  //             <p className="text-lg font-semibold text-gray-900">{data?.companyName || activityData?.companyName}</p>
-  //           </div>
-  //           <div>
-  //             <p className="text-sm font-medium text-gray-600 mb-1">Contact Person</p>
-  //             <p className="text-lg text-gray-800">{data?.tutorFirstName} {data?.tutorLastName}</p>
-  //           </div>
-  //           <div className="md:col-span-2">
-  //             <p className="text-sm font-medium text-gray-600 mb-1">Intro</p>
-  //             <p className="text-base text-gray-700 leading-relaxed">{data?.tutorIntro}</p>
-  //           </div>
-  //         </div>
-  //         <div className="space-y-5">
-  //           {data.website && (
-  //             <a href={data?.website} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 text-base text-blue-700 hover:underline break-all">
-  //               <Globe size={18} className="text-blue-600 flex-shrink-0" />
-  //               <span>{data?.website}</span>
-  //             </a>
-  //           )}
-  //           <a href={`mailto:${data?.tutorEmailID}`} className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
-  //             <Mail size={18} className="text-blue-600 flex-shrink-0" />
-  //             <span>{data?.tutorEmailID}</span>
-  //           </a>
-  //           <a href={phoneUrl} className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
-  //             <Phone size={18} className="text-blue-600 flex-shrink-0" />
-  //             <span>{data?.tutorCountryCode} {data?.tutorPhoneNo}</span>
-  //           </a>
-  //           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 text-base text-blue-700 hover:underline">
-  //             <MessageSquare size={18} className="text-blue-600 flex-shrink-0" />
-  //             <span>{data?.whatsappCountryCode} {data?.whatsappNo}</span>
-  //           </a>
-  //           <div className="flex items-start space-x-3">
-  //             <MapPin size={18} className="text-blue-600 flex-shrink-0 mt-1" />
-  //             <div>
-  //               <p className="text-base text-gray-800 leading-relaxed">
-  //                 {fullAddress}
-  //               </p>
-  //               <Link href={googleMapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-700 hover:underline mt-1 inline-block">
-  //                 Get Direction
-  //               </Link>
-  //             </div>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </Card>
-  //   );
-  // };
-
-  // const renderMapSection = (groupItems: any[], data: any) => {
-  //   const fullAddress = `${data.address??''}, ${data.road??''}, ${data.area??''}, ${data.city??''}, ${data.state??''} - ${data.pincode??''}, ${data.country??''}`;
-  //   const label = groupItems.map(i => `${i.type}: ${i.title}`).join(", ");
-  //   const categories = groupItems.map(i => i.subCategory).filter(Boolean).join(", ");
-  //   return (
-  //     <div key={label + "-map"} className="mb-8">
-  //       <div className="mb-4">
-  //         <h2 className="text-2xl font-semibold text-gray-800">Location for: {label}</h2>
-  //         {categories && <p className="text-sm text-gray-600 mt-1">Category: {categories}</p>}
-  //       </div>
-  //       <MapComponent
-  //         lat={parseFloat(data?.latitude??0)}
-  //         lng={parseFloat(data?.longitude??0)}
-  //         address={fullAddress}
-  //       />
-  //     </div>
-  //   );
-  // };
 
   if (!activityData) {
     return <div className="p-6 text-center">Loading contact details...</div>;
   }
 
-  const fullAddress = `${activityData.address??''}, ${activityData.road??''}, ${activityData.area??''}, ${activityData.city??''}, ${activityData.state??''} - ${activityData.pincode??''}, ${activityData.country??''}`;
+  // const fullAddress = `${activityData.address??''}, ${activityData.road??''}, ${activityData.area??''}, ${activityData.city??''}, ${activityData.state??''} - ${activityData.pincode??''}, ${activityData.country??''}`;
 
   return (
     <div
@@ -308,20 +228,6 @@ const allDetails = [
         </div>
       </div>
 
-      {/* Render grouped contact cards */}
-      {/* {Object.values(grouped).length > 0 ? (
-        Object.values(grouped).map((group, idx) => (
-          <React.Fragment key={idx}>
-            {renderContactCard(group.items, group.data)}
-            {renderMapSection(group.items, group.data)}
-          </React.Fragment>
-        ))
-      ) : (
-        <>
-          {renderContactCard([activityData], activityData)}
-          {renderMapSection([activityData], activityData)}
-        </>
-      )} */}
 
       <div className="space-y-2 mb-8">
                   <div className="flex gap-2 items-center">
@@ -334,7 +240,7 @@ const allDetails = [
                   </div>}
                   </div>
 
-        <Accordion type="multiple" className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-6 mb-8">
+        <Accordion type="multiple" className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-0 md:p-6 mb-8">
     {allDetails.length > 0 ? (
       allDetails.map((data, idx) => {
         const fullAddress = `${data.address ?? ''}, ${data.road ?? ''}, ${data.area ?? ''}, ${data.city ?? ''}, ${data.state ?? ''} - ${data.pincode ?? ''}, ${data.country ?? ''}`;
@@ -343,23 +249,23 @@ const allDetails = [
         const whatsappUrl = `https://wa.me/${data.whatsappCountryCode}${data.whatsappNo}`;
 
         return (
-          <AccordionItem key={idx} value={`item-${idx}`}>
+          <AccordionItem key={idx} value={`item-${idx}`} className="pb-0">
             {/* Accordion Header: Location Details */}
-            <AccordionTrigger>
+            <AccordionTrigger className="p-4">
               <div className="flex flex-col text-left">
-                <p className="text-lg font-semibold text-gray-900">{data?.subCategory}</p>
+                {/* <p className="text-lg font-semibold text-gray-900">{data?.subCategory}</p> */}
                 <span className="font-semibold text-base text-blue-900">{fullAddress}</span>
               </div>
             </AccordionTrigger>
             {/* Accordion Content: Contact Details (left) + Map (right) */}
-            <AccordionContent>
+            <AccordionContent className="p-0 md:p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
                 {/* Left: Contact Details */}
                 <div className="space-y-6">
-                  <div>
+                  {/* <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Institute</p>
                     <p className="text-lg font-semibold text-gray-900">{data?.companyName}</p>
-                  </div>
+                  </div> */}
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Contact Person</p>
                     <p className="text-lg text-gray-800">{data?.tutorFirstName} {data?.tutorLastName}</p>
@@ -395,7 +301,16 @@ const allDetails = [
                     address={fullAddress}
                   />
                 </div>
+                
               </div>
+                <MobileActionButtons
+    phoneNumber={data.tutorPhoneNo}
+    countryCode={data.tutorCountryCode}
+    whatsappNumber={data.whatsappNo}
+    whatsappCountryCode={data.whatsappCountryCode}
+    address={fullAddress}
+    onShare={() => handleShare(data)}
+  />
             </AccordionContent>
           </AccordionItem>
         );
@@ -407,7 +322,7 @@ const allDetails = [
 
 
       {/* Mobile Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-md p-2 flex justify-around items-center md:hidden z-50">
+      {/* <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-md p-2 flex justify-around items-center md:hidden z-50">
         <a href={`tel:${activityData.tutorCountryCode}${activityData.tutorPhoneNo}`} className="p-2 text-gray-700 hover:text-blue-600">
           <Image src="/images/phone-call.png" alt="Call" width={32} height={32} />
         </a>
@@ -420,7 +335,58 @@ const allDetails = [
         <button onClick={handleShare} className="p-2 text-gray-700 hover:text-black">
           <Image src="/images/share.png" alt="Share" width={32} height={32} />
         </button>
-      </div>
+      </div> */}
+    </div>
+  );
+}
+
+interface MobileActionButtonsProps {
+  phoneNumber: string;
+  countryCode: string;
+  whatsappNumber: string;
+  whatsappCountryCode: string;
+  address: string;
+  onShare: () => void;
+}
+
+function MobileActionButtons({
+  phoneNumber,
+  countryCode,
+  whatsappNumber,
+  whatsappCountryCode,
+  address,
+  onShare
+}: MobileActionButtonsProps) {
+  return (
+    <div className="bg-white border-t border-gray-200 shadow-md p-2 rounded-b-xl flex justify-around items-center md:hidden">
+      <a 
+        href={`tel:${countryCode}${phoneNumber}`} 
+        className="p-2 text-gray-700 hover:text-blue-600"
+      >
+        <Image src="/images/phone-call.png" alt="Call" width={32} height={32} />
+      </a>
+      <a 
+        href={`https://wa.me/${whatsappCountryCode}${whatsappNumber}`} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="p-2 text-gray-700 hover:text-green-600"
+      >
+        <Image src="/images/whatsapp.png" alt="WhatsApp" width={32} height={32} />
+      </a>
+      <a 
+        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="p-2 text-gray-700 hover:text-red-600"
+      >
+        <Image src="/images/google-maps.png" alt="Direction" width={32} height={32} />
+      </a>
+      <button 
+        onClick={onShare} 
+        className="p-2 text-gray-700 hover:text-black"
+      >
+        <Image src="/images/share.png" alt="Share" width={32} height={32} />
+      </button>
     </div>
   );
 }

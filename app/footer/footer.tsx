@@ -18,8 +18,10 @@ export default function Footer() {
           <ul className="space-y-4">
             <li><a href="#" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>About Us</a></li>
             <li><a href="#" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>FAQs</a></li>
-            <li><a href="#" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>Terms of Service</a></li>
-            <li><a href="#" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>Privacy Policy</a></li>
+            <li><a     href="/termsandconditions"
+    target="_blank" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>Terms of Service</a></li>
+            <li><a href="/policy"
+    target="_blank" className={`${inter.variable} hover:underline text-white text-[12.19px] font-normal font-['Inter'] leading-snug`}>Privacy Policy</a></li>
           </ul>
         </div>
 
