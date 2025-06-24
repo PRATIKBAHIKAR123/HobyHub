@@ -240,7 +240,7 @@ const allDetails = [
                   </div>}
                   </div>
 
-        <Accordion type="multiple" className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-0 md:p-6 mb-8">
+        <Accordion type="single" defaultValue={`item-0`} className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-0 md:p-6 mb-8">
     {allDetails.length > 0 ? (
       allDetails.map((data, idx) => {
         const fullAddress = `${data.address ?? ''}, ${data.road ?? ''}, ${data.area ?? ''}, ${data.city ?? ''}, ${data.state ?? ''} - ${data.pincode ?? ''}, ${data.country ?? ''}`;
