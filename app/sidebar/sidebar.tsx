@@ -78,14 +78,14 @@ export function AppSidebar() {
                 <nav className="mt-[36px]">
                     {menuItems.map((item, index) => {
                         // Filter out "Join Hobby Hub" if the user is logged in
-                        const filteredSubmenus = item.submenus.filter(
-                            (i) => !(i.name === "Join Hobby Hub" && checkUserLoggedIn)
-                        );
+                        // const filteredSubmenus = item.submenus.filter(
+                        //     (i) => !(i.name === "Join Hobby Hub" && checkUserLoggedIn)
+                        // );
 
                         return (
                             <div key={index}>
                                 <span className="px-6 text-[24px] items-center mb-4">{item.name}</span>
-                                {filteredSubmenus.map((i, mindex) => (
+                                {item.submenus.map((i, mindex) => (
                                     <div
                                         key={mindex}
                                         onClick={() => !i.isDisabled && handleNavigation(i.link)}

@@ -13,10 +13,10 @@ const HomepageRedirectWithParams = () => {
   const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location, coordinates } = useFilter();
 
   useEffect(() => {
-    const currentSortFilter = searchParams.get("SortFilter");
-    const currentMode = searchParams.get("Mode");
-    const kilometer = searchParams.get("Kilometer");
-    const currentPriceRange = searchParams.get("PriceRange");
+    var currentSortFilter = searchParams.get("SortFilter");
+    var currentMode = searchParams.get("Mode");
+    var kilometer = searchParams.get("Kilometer");
+    var currentPriceRange = searchParams.get("PriceRange");
     const currentGender = searchParams.get("Gender");
     const currentAge = searchParams.get("Age");
     const currentTime = searchParams.get("Time");
@@ -37,7 +37,19 @@ const HomepageRedirectWithParams = () => {
       currentLocation !== location ||
       currentCoordinates !== coordinates
     ) {
+      localStorage.setItem('params', JSON.stringify({
+        currentSortFilter,
+        currentMode,
+        kilometer,
+        currentPriceRange,
+      }))
+
+      const localstorageParams = JSON.parse(localStorage.getItem('params')!);
       const params = new URLSearchParams();
+      currentSortFilter = localstorageParams.currentSortFilter || currentSortFilter;
+      currentMode = localstorageParams.currentMode || currentMode;
+      kilometer = localstorageParams.kilometer || kilometer;
+      currentPriceRange = localstorageParams.currentPriceRange || currentPriceRange;
       params.set("SortFilter", sortFilter);
       params.set("Mode", isOnline ? "Online" : "Offline");
       params.set("Kilometer", distance || "");
@@ -49,10 +61,11 @@ const HomepageRedirectWithParams = () => {
       params.set("Location", location || "");
       params.set("Coordinates", coordinates ? JSON.stringify(coordinates) : "");
       router.replace(`/?${params.toString()}`);
+      
     }
   }, [sortFilter, isOnline, searchParams,areFiltersApplied,filterUpdateTrigger, router]);
 
-  return null; // or show a loader optionally
+  return null; 
 };
 
 export default HomepageRedirectWithParams;

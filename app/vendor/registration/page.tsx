@@ -1968,18 +1968,23 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
 
                       <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md">
                         {[
-                          'Monday', 'Tuesday', 'Wednesday',
-                          'Thursday', 'Friday', 'Saturday', 'Sunday'
-                        ].map((day) => (
-                          <div key={day} className="flex items-center space-x-2">
+  { full: 'Sunday', short: 'Su' },
+  { full: 'Monday', short: 'Mo' },
+  { full: 'Tuesday', short: 'Tu' },
+  { full: 'Wednesday', short: 'We' },
+  { full: 'Thursday', short: 'Th' },
+  { full: 'Friday', short: 'Fr' },
+  { full: 'Saturday', short: 'Sa' }
+].map((day) => (
+                          <div key={day.short} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
-                              id={day.toLowerCase()}
+                              id={day.short.toLowerCase()}
                               className="h-4 w-4 border-[#05244f]"
-                              onChange={() => handleWeekdayChange(day, true)}
-                              checked={(watchClass('weekdays') || []).includes(day)}
+                              onChange={() => handleWeekdayChange(day.short, true)}
+                              checked={(watchClass('weekdays') || []).includes(day.short)}
                             />
-                            <label htmlFor={day.toLowerCase()} className="text-sm">{day}</label>
+                            <label htmlFor={day.short.toLowerCase()} className="text-sm">{day.full}</label>
                           </div>
                         ))}
                         {errorsClass.weekdays && (
@@ -2162,18 +2167,23 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
 
                     <div className="grid grid-cols-3 gap-2 p-2 border border-[#05244f] rounded-md mb-6">
                       {[
-                        'Monday', 'Tuesday', 'Wednesday',
-                        'Thursday', 'Friday', 'Saturday', 'Sunday'
-                      ].map((day) => (
-                        <div key={day} className="flex items-center space-x-2">
+  { full: 'Sunday', short: 'Su' },
+  { full: 'Monday', short: 'Mo' },
+  { full: 'Tuesday', short: 'Tu' },
+  { full: 'Wednesday', short: 'We' },
+  { full: 'Thursday', short: 'Th' },
+  { full: 'Friday', short: 'Fr' },
+  { full: 'Saturday', short: 'Sa' }
+].map((day) => (
+                        <div key={day.short} className="flex items-center space-x-2">
                           <input
                             type="checkbox"
-                            id={`course-${day.toLowerCase()}`}
+                            id={`course-${day.short.toLowerCase()}`}
                             className="h-4 w-4 border-[#05244f]"
-                            onChange={() => handleWeekdayChange(day, false)}
-                            checked={(watchCourse('weekdays') || []).includes(day)}
+                            onChange={() => handleWeekdayChange(day.short, false)}
+                            checked={(watchCourse('weekdays') || []).includes(day.short)}
                           />
-                          <label htmlFor={`course-${day.toLowerCase()}`} className="text-sm">{day}</label>
+                          <label htmlFor={`course-${day.short.toLowerCase()}`} className="text-sm">{day.full}</label>
                         </div>
                       ))}
                       {errorsCourse.weekdays && (
