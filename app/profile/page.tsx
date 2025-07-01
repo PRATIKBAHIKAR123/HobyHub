@@ -283,9 +283,12 @@ function ProfilePage() {
                   )}
                 </div>
               ) : (
-                <div className="col-span-2 bg-gray-50 p-3 rounded">
-                  {formatDate(profile.dob,'dd-MM-yyyy') || "Not specified"}
-                </div>
+                  <div className="col-span-2 bg-gray-50 p-3 rounded">
+                    {profile.dob && !isNaN(new Date(profile.dob).getTime())
+                      ? formatDate(new Date(profile.dob), 'dd-MM-yyyy')
+                      : "Not specified"}
+                  </div>
+
               )}
             </div>
 
