@@ -35,6 +35,7 @@ export function AppSidebar() {
     const isMobile = useIsMobile();
     const router = useRouter();
     const { isSidebarOpen, toggleSidebar } = useSidebar();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [checkUserLoggedIn, setCheckUserLoggedIn] = useState(false);
 
     const handleNavigation = (route: string) => {

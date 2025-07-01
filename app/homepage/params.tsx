@@ -13,10 +13,10 @@ const HomepageRedirectWithParams = () => {
   const { priceRange, gender, age, time, areFiltersApplied, filterUpdateTrigger, categoryFilter, location, coordinates } = useFilter();
 
   useEffect(() => {
-    var currentSortFilter = searchParams.get("SortFilter");
-    var currentMode = searchParams.get("Mode");
-    var kilometer = searchParams.get("Kilometer");
-    var currentPriceRange = searchParams.get("PriceRange");
+    let currentSortFilter = searchParams.get("SortFilter");
+    let currentMode = searchParams.get("Mode");
+    let kilometer = searchParams.get("Kilometer");
+    let currentPriceRange = searchParams.get("PriceRange");
     const currentGender = searchParams.get("Gender");
     const currentAge = searchParams.get("Age");
     const currentTime = searchParams.get("Time");
