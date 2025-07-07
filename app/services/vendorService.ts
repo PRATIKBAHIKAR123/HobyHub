@@ -210,6 +210,23 @@ export interface VendorCourseData {
   endDate: string;
 }
 
+export interface UserValidationRequest {
+  firstName: string;
+  lastName: string;
+  emailId: string;
+  phoneNumber: string;
+  gender: string;
+  dob?: string;
+}
+
+export interface UserValidationResponse {
+  isValid: boolean;
+  message?: string;
+  errors?: {
+    [key: string]: string[];
+  };
+}
+
 export const registerVendor = async (data: FormData): Promise<VendorRegistrationResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/vendor/register`, {
@@ -312,5 +329,17 @@ export const createVendorCourse = async (data: VendorCourseData[]) => {
   } catch (error) {
     console.error('Error creating vendor course:', error);
     throw error;
+  }
+};
+
+export const validateUserRegistration = async (data: UserValidationRequest): Promise<UserValidationResponse> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/validate-user-registration`, data);
+    return response.data as UserValidationResponse;
+  } catch (error: any) {
+    if (error.response?.data) {
+      return error.response.data as UserValidationResponse;
+    }
+    throw new Error('Failed to validate user registration');
   }
 }; 

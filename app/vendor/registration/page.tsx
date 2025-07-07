@@ -13,7 +13,7 @@ import { DirectoryTable } from "./directoryList";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
-import { registerVendor } from "@/app/services/vendorService";
+import { registerVendor, validateUserRegistration, UserValidationRequest } from "@/app/services/vendorService";
 import { CircleCheckBig } from "lucide-react";
 import * as yup from "yup";
 import { ClassTable } from "./classList";
@@ -480,13 +480,42 @@ export default function RegistrationForm() {
 
   // Save personal details to localStorage and proceed to the next section
   const savePersonalDetails = async (data: any) => {
-    ;
     try {
       setIsLoading(true);
 
+      // Prepare validation data
+      const validationData: UserValidationRequest = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        emailId: data.emailId,
+        phoneNumber: data.phoneNumber,
+        gender: data.gender,
+        dob: data.dob ? data.dob.toISOString().split('T')[0] : undefined
+      };
+
+      // Call validation API
+      const validationResult = await validateUserRegistration(validationData);
+
+      if (!validationResult.isValid) {
+        // Handle validation errors
+        if (validationResult.errors) {
+          // Display specific field errors
+          Object.entries(validationResult.errors).forEach(([field, errors]) => {
+            if (errors.length > 0) {
+              toast.error(`${field}: ${errors[0]}`);
+            }
+          });
+        } else if (validationResult.message) {
+          toast.error(validationResult.message);
+        } else {
+          toast.error("Validation failed. Please check your details.");
+        }
+        return;
+      }
+
       // Store personal details in state
       setPersonalDetailsData(data);
-      ;
+      
       // Mark section as completed and move to next
       setCompletedSections(prev => ({ ...prev, personalDetails: true }));
       setActiveAccordion("item-1");
