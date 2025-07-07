@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
 import { generateOTP, loginWithOtp } from "@/services/authService";
+import { getUserProfile } from "@/services/userService";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { Loader2 } from "lucide-react";
@@ -54,9 +55,30 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const data = await loginWithOtp(username, otp.slice(0, 4)) as { AccessToken: string };
-      localStorage.setItem("userData", JSON.stringify(data)); // Save token
-      localStorage.setItem("token", data.AccessToken);
+      const loginData = await loginWithOtp(username, otp.slice(0, 4)) as any;
+      
+      // Save token first so we can use it for the profile API call
+      localStorage.setItem("token", loginData.AccessToken);
+      
+      // Fetch complete user profile data
+      let completeUserData = { ...loginData };
+      try {
+        const profileData = await getUserProfile();
+        // Merge login data with profile data
+        completeUserData = {
+          ...loginData,
+          emailId: profileData.emailId,
+          dob: profileData.dob,
+          gender: profileData.gender
+        };
+      } catch (profileError) {
+        console.warn("Could not fetch complete profile data:", profileError);
+        // Continue with basic login data if profile fetch fails
+      }
+      
+      // Save complete user data to localStorage
+      localStorage.setItem("userData", JSON.stringify(completeUserData));
+      
       setMessage("Login successful!");
       console.log("Login successful:", message);
       setotpFailed(false);
