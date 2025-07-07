@@ -18,16 +18,20 @@ import { useRouter } from "next/navigation";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
   emailId: yup.string().email("Invalid email").required("Email is required"),
   phoneNumber: yup
     .string()
-    .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
-    .required("Phone number is required"),
+    .required("Phone number is required")
+    .min(8, "Phone number must be at least 8 digits")
+    .max(15, "Phone number must not exceed 15 digits"),
   gender: yup.string(),
   dob: yup.string(),
+  countryCode: yup.string(),
 });
 
 export default function LoginPage() {
@@ -37,7 +41,7 @@ export default function LoginPage() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [termsModalType, setTermsModal] = useState<"privacy" | "terms">('privacy');
-  
+  const [countryCode, setCountryCode] = useState('91'); // Default to India
 
   // Add verification status states
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -52,6 +56,9 @@ export default function LoginPage() {
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onChange",
+    defaultValues: {
+      countryCode: '91', // Set default country code
+    },
   });
 
   // Watch all form fields
@@ -67,6 +74,7 @@ export default function LoginPage() {
     name: string;
     emailId: string;
     phoneNumber: string;
+    countryCode: string;
     gender?: string;
     dob?: string;
     password?: string;
@@ -104,12 +112,16 @@ export default function LoginPage() {
     // Example: await sendPhoneVerificationOTP(formValues.phoneNumber);
   };
 
-  const onSubmit = async (formData: FormData) => {
-    formData.password = "123456"; // Default password
+  const onSubmit = async (formData: any) => {
+    const submitData: FormData = {
+      ...formData,
+      password: "123456", // Default password
+      countryCode: countryCode, // Add country code to payload
+    };
     setIsLoading(true);
 
     try {
-      const data = await registerCustomer(formData);
+      const data = await registerCustomer(submitData);
 
       if (data.status === 200) {
         toast.success("Registration successful!");
@@ -208,37 +220,38 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Phone with verification icon */}
+                {/* Phone with verification icon - Updated to use PhoneInput */}
                 <div>
                   <Label className="text-[#9d9d9d] text-[12.80px] font-bold trajan-pro">Contact <span className="text-red-500">*</span></Label>
                   <div className="flex">
-                    <div className="flex items-center flex-1">
-                      <Select>
-                        <SelectTrigger className="w-[25%] h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
-                          <SelectValue placeholder="+91" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="91">+91</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="relative flex-1">
-                        <Input
-                          type="text"
-                          placeholder="Enter Your Contact"
-                          {...register("phoneNumber")}
-                          maxLength={10}
-                          className="placeholder:text-[#e2e3e5] h-[48px] outline-none rounded-l-md rounded-l-none flex-1 border border-gray-300 border-l-0 pr-10"
-                        />
-                        {formValues.phoneNumber && !errors.phoneNumber && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            {isPhoneVerified ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-red-500" />
-                            )}
-                          </div>
-                        )}
-                      </div>
+                    <div className="relative flex-1">
+                      <PhoneInput
+                        country={'in'}
+                        value={watch("phoneNumber")}
+                        onChange={(value, country) => {
+                          setValue("phoneNumber", value);
+                          if (country && typeof country === 'object' && 'dialCode' in country) {
+                            setValue("countryCode", country.dialCode);
+                            setCountryCode(country.dialCode);
+                          }
+                        }}
+                        inputClass="!h-[48px] !pl-[60px] !w-full !border !border-gray-300 !rounded-md"
+                        buttonClass="!border !border-gray-300 !rounded-l-md"
+                        containerClass="!w-full !border !border-gray-300 !rounded-md"
+                        inputProps={{
+                          name: 'phoneNumber',
+                          required: true,
+                        }}
+                      />
+                      {formValues.phoneNumber && !errors.phoneNumber && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">
+                          {isPhoneVerified ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                      )}
                     </div>
                     {formValues.phoneNumber && !errors.phoneNumber && !isPhoneVerified && (
                       <Button

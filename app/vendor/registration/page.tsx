@@ -240,6 +240,9 @@ export default function RegistrationForm() {
   const [savedLocations, setSavedLocations] = useState<Location[]>([]);
   const [savedContacts, setSavedContacts] = useState<Contact[]>([]);
 
+  // Add state to track if profile is auto-filled
+  const [isProfileAutoFilled, setIsProfileAutoFilled] = useState(false);
+
   useEffect(() => {
     if (showClassFields) {
       setActiveAccordion("item-4"); // Open the class accordion
@@ -292,6 +295,8 @@ export default function RegistrationForm() {
       setActiveAccordion(""); // No default open if all sections are completed
     }
   }, [completedSections, showClassFields, showCourseFields]);
+
+
 
   // Form for personal details
   const personalForm = useForm({
@@ -432,6 +437,58 @@ export default function RegistrationForm() {
     }
   }, [setValuePersonal, setValueInstitute, setCourses, setValueClass, setValueCourse]);
 
+  // Check for existing user data and auto-fill profile details
+  useEffect(() => {
+    const checkExistingUserData = () => {
+      try {
+        const userDataString = localStorage.getItem("userData");
+        if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          
+          // Check if user data exists and has required fields
+          if (userData && userData.Name && userData.UserName) {
+            // Auto-fill the personal details form
+            const nameParts = userData.Name.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
+            setValuePersonal("firstName", firstName);
+            setValuePersonal("lastName", lastName);
+            setValuePersonal("phoneNumber", userData.UserName);
+            setValuePersonal("emailId", userData.emailId || '');
+            setValuePersonal("gender", userData.gender || '');
+            
+            // If profile image exists, set it
+            if (userData.ProfileImage) {
+              setProfileImagePreview(userData.ProfileImage);
+            }
+            
+            setIsProfileAutoFilled(true);
+            
+            // Mark personal details as completed since they're auto-filled
+            setCompletedSections(prev => ({ ...prev, personalDetails: true }));
+            setPersonalDetailsData({
+              firstName,
+              lastName,
+              phoneNumber: userData.UserName,
+              emailId: userData.emailId || '',
+              gender: userData.gender || '',
+              dob: userData.dob ? new Date(userData.dob) : null,
+              profileImageFile: null
+            });
+            
+            // Show success message
+            toast.success("Profile details auto-filled from your existing account!");
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    };
+
+    checkExistingUserData();
+  }, [setValuePersonal]);
+
   // Extract complex expressions
   const courseCategory = watchCourse("category");
   const classCategory = watchClass("category");
@@ -519,7 +576,13 @@ export default function RegistrationForm() {
       // Mark section as completed and move to next
       setCompletedSections(prev => ({ ...prev, personalDetails: true }));
       setActiveAccordion("item-1");
-      toast.success(`Personal details saved successfully!`);
+      
+      // Show appropriate success message
+      if (isProfileAutoFilled) {
+        toast.success(`Profile details confirmed and saved successfully!`);
+      } else {
+        toast.success(`Personal details saved successfully!`);
+      }
     } catch (error) {
       console.error("Error saving personal details:", error);
       toast.error("An error occurred while saving personal details. Please try again.");
@@ -1006,6 +1069,10 @@ if (location) {
       classDetails: false
     });
 
+    // Reset auto-fill state
+    setIsProfileAutoFilled(false);
+    setProfileImagePreview(null);
+
     // Reset active accordion
     setActiveAccordion("item-0");
   };
@@ -1295,6 +1362,22 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
+                {isProfileAutoFilled && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <p className="text-blue-800 text-sm font-medium">
+                        ✓ Profile details have been auto-filled from your existing account. These fields are locked to maintain consistency.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileAutoFilled(false)}
+                        className="text-blue-600 hover:text-blue-800 text-sm underline"
+                      >
+                        Edit Details
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <form onSubmit={handleSubmitPersonal(savePersonalDetails)}>
                   <div className="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-6">
                     <div className="flex flex-col gap-2">
@@ -1304,7 +1387,8 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                       <Input
                         placeholder="First Name"
                         {...registerPersonal("firstName")}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        disabled={isProfileAutoFilled}
                       />
                       {errorsPersonal.firstName && (
                         <p className="text-red-500 text-xs">{errorsPersonal.firstName.message}</p>
@@ -1317,7 +1401,8 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                       <Input
                         placeholder="Last Name"
                         {...registerPersonal("lastName")}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        disabled={isProfileAutoFilled}
                       />
                       {errorsPersonal.lastName && (
                         <p className="text-red-500 text-xs">{errorsPersonal.lastName.message}</p>
@@ -1333,13 +1418,15 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                         onChange={(value) => {
                           setValuePersonal("phoneNumber", value);
                         }}
-                        inputClass="!h-[52px] !pl-[60px] !w-full !border !border-[#05244f] !rounded-[6px]"
+                        inputClass={`!h-[52px] !pl-[60px] !w-full !border !border-[#05244f] !rounded-[6px] ${isProfileAutoFilled ? '!bg-gray-100 !cursor-not-allowed' : ''}`}
                         buttonClass="!border !border-[#05244f] !rounded-[6px]"
                         containerClass="!w-full !border !border-[#05244f] !rounded-[6px]"
                         inputProps={{
                           name: 'phoneNumber',
                           required: true,
+                          disabled: isProfileAutoFilled,
                         }}
+                        disabled={isProfileAutoFilled}
                       />
                       {errorsPersonal.phoneNumber && (
                         <p className="text-red-500 text-xs">{errorsPersonal.phoneNumber.message}</p>
@@ -1352,7 +1439,8 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                       <Input
                         placeholder="Email"
                         {...registerPersonal("emailId")}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        disabled={isProfileAutoFilled}
                       />
                       {errorsPersonal.emailId && (
                         <p className="text-red-500 text-xs">{errorsPersonal.emailId.message}</p>
@@ -1365,8 +1453,9 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                       <Select
                         onValueChange={(value) => setValuePersonal("gender", value)}
                         defaultValue={watchPersonal("gender")}
+                        disabled={isProfileAutoFilled}
                       >
-                        <SelectTrigger className="w-full h-[52px] border-[#05244f]">
+                        <SelectTrigger className={`w-full h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
                           <SelectValue placeholder="Gender" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1389,7 +1478,8 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                         {...registerPersonal("dob", {
                           setValueAs: (value) => value === '' ? null : value
                         })}
-                        className="h-[52px] border-[#05244f]"
+                        className={`h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        disabled={isProfileAutoFilled}
                       />
                       {errorsPersonal.dob && (
                         <p className="text-red-500 text-xs">{errorsPersonal.dob.message}</p>
@@ -1405,7 +1495,8 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                             type="file"
                             accept="image/*"
                             onChange={handleProfileImageUpload}
-                            className="h-[52px] border-[#05244f]"
+                            className={`h-[52px] border-[#05244f] ${isProfileAutoFilled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            disabled={isProfileAutoFilled}
                           />
                         </div>
                       )}
@@ -1457,7 +1548,7 @@ const renderLocationSelect = (formType: 'class' | 'course') => {
                     className="my-4 w-20% app-bg-color text-white float-right"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Saving..." : "Save"}
+                    {isLoading ? "Saving..." : isProfileAutoFilled ? "Confirm & Save" : "Save"}
                   </Button>
                 </form>
               </AccordionContent>

@@ -1,16 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect, useRef } from "react";
 import { generateOTP } from "@/services/authService";
 import { toast } from "sonner";
 import { setStoredPhoneNumber } from "@/utils/localStorage";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { Loader2 } from "lucide-react";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,13 +28,14 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Validate phone number length
-  const isPhoneValid = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
+  // Validate phone number length (excluding country code)
+  const isPhoneValid = phoneNumber.length >= 8 && phoneNumber.length <= 15 && /^\d+$/.test(phoneNumber);
 
   const handleGenerateOTP = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Send the full phone number with country code to the API
       await generateOTP(phoneNumber);
       if (isClient) {
         setStoredPhoneNumber(phoneNumber);
@@ -72,24 +73,25 @@ export default function LoginPage() {
             <div className="bg-[#fefefe] rounded-[7px] border-[2px] md:border-[3px] border-[#dddfe3] px-[10px] md:px-[14px] py-[14px] md:py-[18px] mt-[20px]">
               {/* Phone Input */}
               <label className="text-[#9d9d9d] text-[12px] md:text-[12.80px] font-bold trajan-pro">Phone Number</label>
-              <div className="flex items-center">
-                <Select>
-                  <SelectTrigger className="w-[28%] md:w-[20%] h-[42px] md:h-[48px] rounded-l-md rounded-r-none border-gray-300 border-r-0">
-                    <SelectValue placeholder="+91" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="91">+91</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  ref={phoneInputRef}
-                  type="text"
-                  placeholder="Enter your number"
+              <div className="mt-2">
+                <PhoneInput
+                  country={'in'}
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/, ""))}
-                  maxLength={10}
-                  autoFocus
-                  className="placeholder:text-[#e2e3e5] h-[42px] md:h-[48px] outline-none rounded-l-md rounded-l-none flex-1 border border-gray-300 border-l-0 text-sm md:text-base"
+                  onChange={(value) => {
+                    setPhoneNumber(value);
+                  }}
+                  inputClass="!h-[42px] md:!h-[48px] !pl-[60px] !w-full !border !border-gray-300 !rounded-md !text-sm md:!text-base"
+                  buttonClass="!border !border-gray-300 !rounded-l-md !rounded-r-none"
+                  containerClass="!w-full"
+                  inputProps={{
+                    name: 'phoneNumber',
+                    required: true,
+                    autoFocus: true,
+                    placeholder: "Enter your number"
+                  }}
+                  enableSearch={true}
+                  searchPlaceholder="Search country..."
+                  searchNotFound="No country found"
                 />
               </div>
               
