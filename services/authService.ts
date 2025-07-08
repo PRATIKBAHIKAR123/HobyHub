@@ -19,10 +19,11 @@ export const loginWithOtp = async (username: string, loginOtp: string) => {
     }
 };
 
-export const generateOTP = async (username: string) => {
+export const generateOTP = async (username: string, recaptchaToken: string) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/generate/login-otp`, {
-        username
+        username,
+        recaptchaToken
       });
       return response.data;
     } catch (error:any) {
