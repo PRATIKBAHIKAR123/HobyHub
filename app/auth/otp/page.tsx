@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useRouter } from "next/navigation";
 import { generateOTP, loginWithOtp } from "@/services/authService";
@@ -10,6 +10,8 @@ import { getUserProfile } from "@/services/userService";
 import { toast } from "sonner";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { Loader2 } from "lucide-react";
+
+const RECAPTCHA_SITE_KEY = "6Ldj0norAAAAAP0qALi7WpRKtUWf4Yk6bC_B3zJv";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +23,28 @@ export default function LoginPage() {
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const [otpFailed, setotpFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isClient = typeof window !== "undefined";
+  const recaptchaLoaded = useRef(false);
+
+  // Load reCAPTCHA script on mount
+  useEffect(() => {
+    if (isClient && !recaptchaLoaded.current) {
+      const scriptId = "recaptcha-script";
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+        script.async = true;
+        script.onload = () => {
+          recaptchaLoaded.current = true;
+        };
+        document.body.appendChild(script);
+      } else {
+        recaptchaLoaded.current = true;
+      }
+    }
+  }, [isClient]);
 
   // Timer effect
   useEffect(() => {
@@ -43,12 +67,12 @@ export default function LoginPage() {
   }, []);
 
   // Resend OTP handler
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     setOtp("");
     setotpFailed(false);
     setTimer(53); // Reset timer
     setIsResendDisabled(true); // Disable resend button again
-    handleGenerateOTP(); // Call the function to generate OTP
+    await handleGenerateOTP(); // Call the function to generate OTP
   };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -124,7 +148,11 @@ export default function LoginPage() {
 
   const handleGenerateOTP = async () => {
     try {
-      const data = await generateOTP(username);
+      let recaptchaToken = "";
+      if (isClient && (window as any).grecaptcha) {
+        recaptchaToken = await (window as any).grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: "otp" });
+      }
+      const data = await generateOTP(username, recaptchaToken);
       toast.success('OTP Sent Successfully');
       console.log("OTP Sent", data);
     } catch (err) {
