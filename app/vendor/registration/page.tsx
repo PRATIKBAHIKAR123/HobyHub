@@ -456,7 +456,17 @@ export default function RegistrationForm() {
             setValuePersonal("lastName", lastName);
             setValuePersonal("phoneNumber", userData.UserName);
             setValuePersonal("emailId", userData.emailId || '');
-            setValuePersonal("gender", userData.gender || '');
+            // Capitalize gender to match form options
+            const genderValue = userData.gender ? userData.gender.charAt(0).toUpperCase() + userData.gender.slice(1).toLowerCase() : '';
+            setValuePersonal("gender", genderValue);
+            
+            // Handle date of birth - convert to proper format for date input
+            if (userData.dob) {
+              const dobDate = new Date(userData.dob);
+              // Format date as YYYY-MM-DD for the date input
+              const formattedDob = dobDate.toISOString().split('T')[0];
+              setValuePersonal("dob", formattedDob as any);
+            }
             
             // If profile image exists, set it
             if (userData.ProfileImage) {
@@ -472,7 +482,7 @@ export default function RegistrationForm() {
               lastName,
               phoneNumber: userData.UserName,
               emailId: userData.emailId || '',
-              gender: userData.gender || '',
+              gender: genderValue,
               dob: userData.dob ? new Date(userData.dob) : null,
               profileImageFile: null
             });
