@@ -83,10 +83,12 @@ export function AppSidebar() {
             const userData = localStorage.getItem("userData");
             if (userData) {
                 const user = JSON.parse(userData);
-                return user.Role === "Customer";
+                // Show if role is Customer or if no role exists
+                return user.Role === "Customer" || !user.Role;
             }
         }
-        return false;
+        // Show if no user data exists
+        return true;
     };
 
     return (
