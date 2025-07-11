@@ -47,12 +47,14 @@ export function AppSidebar() {
 
     useEffect(() => {
         const updateLoginStatus = () => {
-            const userData = localStorage.getItem("userData");
-            if (userData) {
-                const user = JSON.parse(userData);
-                setCheckUserLoggedIn(!!user);
-            } else {
-                setCheckUserLoggedIn(false);
+            if (typeof window !== 'undefined') {
+                const userData = localStorage.getItem("userData");
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    setCheckUserLoggedIn(!!user);
+                } else {
+                    setCheckUserLoggedIn(false);
+                }
             }
         };
     
@@ -66,19 +68,23 @@ export function AppSidebar() {
             }
         };
     
-        window.addEventListener("storage", handleStorageChange);
+        if (typeof window !== 'undefined') {
+            window.addEventListener("storage", handleStorageChange);
     
-        return () => {
-            window.removeEventListener("storage", handleStorageChange);
-        };
+            return () => {
+                window.removeEventListener("storage", handleStorageChange);
+            };
+        }
     }, [isSidebarOpen]);
 
     // Function to check if user is a Customer
     const isCustomer = () => {
-        const userData = localStorage.getItem("userData");
-        if (userData) {
-            const user = JSON.parse(userData);
-            return user.Role === "Customer";
+        if (typeof window !== 'undefined') {
+            const userData = localStorage.getItem("userData");
+            if (userData) {
+                const user = JSON.parse(userData);
+                return user.Role === "Customer";
+            }
         }
         return false;
     };
