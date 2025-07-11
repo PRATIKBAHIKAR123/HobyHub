@@ -46,7 +46,7 @@ function ClassDetailsSkeleton() {
   return (
     <div className="">
       <NavigationSkeleton />
-      
+
       {/* Header and Controls Skeleton */}
       <div className="flex justify-between items-center mb-6">
         <Skeleton className="h-8 w-32" />
@@ -70,7 +70,7 @@ function ClassListSkeleton() {
   return (
     <div className="p-6">
       <NavigationSkeleton />
-      
+
       {/* Header and Controls Skeleton */}
       <div className="flex justify-between items-center mb-6">
         <Skeleton className="h-8 w-32" />
@@ -110,47 +110,47 @@ function ClassListSkeleton() {
 
 function ClassDetails() {
   const [isListView, setIsListView] = useState<boolean>(() => {
-  if (typeof window !== "undefined") {
-    return window.innerWidth >= 768; // true for desktop, false for mobile
-  }
-  return false; // fallback for SSR
-});
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768; // true for desktop, false for mobile
+    }
+    return false; // fallback for SSR
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);
   const { isOnline } = useMode();
-  const [filterType, setFilterType] = useState(isOnline?'Online':'Offline');
-  const [ category , setCategory] = useState<string | undefined>();
+  const [filterType, setFilterType] = useState(isOnline ? 'Online' : 'Offline');
+  const [category, setCategory] = useState<string | undefined>();
   const [groupedClasses, setGroupedClasses] = useState<{ [key: string]: any[] }>({});
   const [groupedCourses, setGroupedCOursess] = useState<{ [key: string]: any[] }>({});
 
 
-    const fetchCategories = async (catId:any) => {
-      try {
-        const [categoriesData, subCategoriesData] = await Promise.all([
-          getAllCategories(),
-          getAllSubCategories()
-        ]);
+  const fetchCategories = async (catId: any) => {
+    try {
+      const [categoriesData, subCategoriesData] = await Promise.all([
+        getAllCategories(),
+        getAllSubCategories()
+      ]);
 
-        // Combine categories with their subcategories
-        const categoriesWithSubs = categoriesData.map(cat => ({
-          ...cat,
-          subcategories: subCategoriesData.filter(sub => sub.categoryId === cat.id)
-        }));
+      // Combine categories with their subcategories
+      const categoriesWithSubs = categoriesData.map(cat => ({
+        ...cat,
+        subcategories: subCategoriesData.filter(sub => sub.categoryId === cat.id)
+      }));
 
-        if(categoriesWithSubs){
+      if (categoriesWithSubs) {
 
-        const cat = categoriesWithSubs.filter(c=>c.id==catId);
+        const cat = categoriesWithSubs.filter(c => c.id == catId);
         const catName = cat.length > 0 ? cat[0].title : undefined;
         setCategory(catName);
       }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Simulate loading
   useEffect(() => {
     const classList = localStorage.getItem('activityClassData');
@@ -162,7 +162,7 @@ function ClassDetails() {
     const catId = parsedactivity.categoryId;
     console.log(catId);
     fetchCategories(catId)
-    
+
 
     const courseList = localStorage.getItem('activityCourseData');
     const parsedCourseList = courseList ? JSON.parse(courseList) : [];
@@ -176,8 +176,8 @@ function ClassDetails() {
 
   useEffect(() => {
     if (classes.length === 0) return;
-  
-    const grouped = classes.reduce((acc, curr:any) => {
+
+    const grouped = classes.reduce((acc, curr: any) => {
       const subCategory = curr.subCategory || "Uncategorized";
       if (!acc[subCategory]) {
         acc[subCategory] = [];
@@ -185,13 +185,13 @@ function ClassDetails() {
       acc[subCategory].push(curr);
       return acc;
     }, {} as { [key: string]: any[] });
-  
+
     setGroupedClasses(grouped);
   }, [classes]);
 
   useEffect(() => {
     if (courses.length === 0) return;
-  
+
     const grouped = courses.reduce((acc, curr: any) => {
       const subCategory = curr.subCategory || "Uncategorized"; // Group by subCategory or default to "Uncategorized"
       if (!acc[subCategory]) {
@@ -200,7 +200,7 @@ function ClassDetails() {
       acc[subCategory].push(curr);
       return acc;
     }, {} as { [key: string]: any[] });
-  
+
     setGroupedCOursess(grouped);
   }, [courses]);
 
@@ -239,43 +239,43 @@ function ClassDetails() {
             </ToggleGroupItem>
           </ToggleGroup>
           <div className="border-2 border-gray-300 rounded-md p-1 flex">
-            <Button variant={`${filterType=='Online'?'default':'outline'}`} onClick={() => setFilterType('Online')}>Online Classes</Button>
-            <Button variant={`${filterType=='Offline'?'default':'outline'}`} className="ml-1" onClick={() => setFilterType('Offline')}>In Person</Button>
+            <Button variant={`${filterType == 'Online' ? 'default' : 'outline'}`} onClick={() => setFilterType('Online')}>Online Classes</Button>
+            <Button variant={`${filterType == 'Offline' ? 'default' : 'outline'}`} className="ml-1" onClick={() => setFilterType('Offline')}>In Person</Button>
           </div>
         </div>
       </div>
-      
-      {Object.keys(groupedClasses).map((subCat, idx) => (
-  <div key={idx} className="mb-6">
-    <h3 className="text-xl font-bold text-gray-700 mb-2"> {subCat}</h3>
-    {isListView ? (
-      <ClassList classes={groupedClasses[subCat]} filterType={filterType} />
-    ) : (
-      <ClassGridList classes={groupedClasses[subCat]} filterType={filterType} />
-    )}
-  </div>
-))}
 
-     {courses.length>0 && <div> <div className="flex justify-between items-center my-6">
+      {Object.keys(groupedClasses).map((subCat, idx) => (
+        <div key={idx} className="mb-6">
+          <h3 className="text-xl font-bold text-gray-700 mb-2"> {subCat}</h3>
+          {isListView ? (
+            <ClassList classes={groupedClasses[subCat]} filterType={filterType} />
+          ) : (
+            <ClassGridList classes={groupedClasses[subCat]} filterType={filterType} />
+          )}
+        </div>
+      ))}
+
+      {courses.length > 0 && <div> <div className="flex justify-between items-center my-6">
         <h2 className="text-[#767676] text-[22.70px] font-semibold">Courses <div className="text-black text-lg font-bold font-['Trajan_Pro']">Category: {category}</div></h2>
-        
+
       </div>
-      {Object.keys(groupedCourses).map((subCat, idx) => (
-  <div key={idx} className="mb-6">
-    <h3 className="text-xl font-bold text-gray-700 mb-2">{subCat}</h3>
-    {isListView ? (
-      <CourseList classes={groupedCourses[subCat]} filterType={filterType} />
-    ) : (
-      null
-    )}
-  </div>
-))}
+        {Object.keys(groupedCourses).map((subCat, idx) => (
+          <div key={idx} className="mb-6">
+            <h3 className="text-xl font-bold text-gray-700 mb-2">{subCat}</h3>
+            {isListView ? (
+              <CourseList classes={groupedCourses[subCat]} filterType={filterType} />
+            ) : (
+              null
+            )}
+          </div>
+        ))}
       </div>}
     </div>
   );
 }
 
-function ClassGridList({ classes, filterType }:any) {
+function ClassGridList({ classes, filterType }: any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete] = useState<any>(null);
@@ -299,11 +299,11 @@ function ClassGridList({ classes, filterType }:any) {
   }
 
   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {filteredClasses.map((item:any, index:number) => (
+    {filteredClasses.map((item: any, index: number) => (
       <Card key={index} className="bg-neutral-50 rounded-[19px] border-2 border-[#e9e9e9]">
         <CardContent className="px-6">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <Image src="/images/yoga-img.png" alt="class" height={48} width={48}/><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span> 
+            <Image src="/images/yoga-img.png" alt="class" height={48} width={48} /><span className="text-black text-[18px] font-normal font-['Trajan_Pro'] mt-1">{item.title}</span>
           </h3>
           <p className="flex justify-between mt-[18px] text-black text-sm font-bold font-['Trajan_Pro']"><strong>Week Day:</strong> <p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']">{item.day}</p></p>
           <p className="flex justify-between mt-[18px]  text-black text-sm font-bold font-['Trajan_Pro'] "><strong>Time:</strong><p className="text-[#aaaaaa] text-sm font-bold font-['Trajan_Pro']"> {item.timingsFrom} - {item.timingsTo}</p></p>
@@ -322,7 +322,7 @@ function ClassGridList({ classes, filterType }:any) {
             >
               Delete
             </Button> */}
-            <Button 
+            <Button
               className="flex-1 app-bg-color"
               onClick={() => setIsInquiryOpen(true)}
             >
@@ -332,11 +332,11 @@ function ClassGridList({ classes, filterType }:any) {
         </CardContent>
       </Card>
     ))}
-    <InquiryPopupScreen 
-      isOpen={isInquiryOpen} 
+    <InquiryPopupScreen
+      isOpen={isInquiryOpen}
       onClose={() => setIsInquiryOpen(false)}
     />
-    <DeletePopupScreen 
+    <DeletePopupScreen
       open={isDeleteOpen}
       setOpen={setIsDeleteOpen}
       onDelete={handleDelete}
@@ -344,7 +344,7 @@ function ClassGridList({ classes, filterType }:any) {
   </div>
 }
 
-function ClassList({ classes, filterType }:any) {
+function ClassList({ classes, filterType }: any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete] = useState<any>(null);
@@ -387,9 +387,9 @@ function ClassList({ classes, filterType }:any) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredClasses.map((item:any, index:number) => (
+          {filteredClasses.map((item: any, index: number) => (
             <TableRow key={index}>
-              <TableCell>{index +1}</TableCell>
+              <TableCell>{index + 1}</TableCell>
               <TableCell>{item.title}</TableCell>
               <TableCell>{item.day}</TableCell>
               <TableCell>{item.timingsFrom} - {item.timingsTo}</TableCell>
@@ -397,8 +397,8 @@ function ClassList({ classes, filterType }:any) {
               <TableCell>{item.gender}</TableCell>
               {/* <TableCell>{item.sessionFrom}</TableCell>
               <TableCell>{item.sessionTo}</TableCell> */}
-              <TableCell>{item.sessionFrom}</TableCell>
-              <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
+              <TableCell>{(item.sessionFrom ?? 0)} - {(item.sessionTo ?? 0)}</TableCell>
+              <TableCell>{item.fromPrice ?? 0} - {item.toPrice ?? 0}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
                   {/* <Button 
@@ -411,7 +411,7 @@ function ClassList({ classes, filterType }:any) {
                   >
                     Delete
                   </Button> */}
-                  <Button 
+                  <Button
                     className="app-bg-color"
                     onClick={() => setIsInquiryOpen(true)}
                   >
@@ -423,11 +423,11 @@ function ClassList({ classes, filterType }:any) {
           ))}
         </TableBody>
       </Table>
-      <InquiryPopupScreen 
-        isOpen={isInquiryOpen} 
+      <InquiryPopupScreen
+        isOpen={isInquiryOpen}
         onClose={() => setIsInquiryOpen(false)}
       />
-      <DeletePopupScreen 
+      <DeletePopupScreen
         open={isDeleteOpen}
         setOpen={setIsDeleteOpen}
         onDelete={handleDelete}
@@ -436,7 +436,7 @@ function ClassList({ classes, filterType }:any) {
   );
 }
 
-function CourseList({ classes, filterType }:any) {
+function CourseList({ classes, filterType }: any) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedClassToDelete, setSelectedClassToDelete] = useState<any>(null);
@@ -479,9 +479,9 @@ function CourseList({ classes, filterType }:any) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredClasses.map((item:any, index:number) => (
+          {filteredClasses.map((item: any, index: number) => (
             <TableRow key={index}>
-              <TableCell>{index +1}</TableCell>
+              <TableCell>{index + 1}</TableCell>
               <TableCell>{item.title}</TableCell>
               <TableCell>{item.day}</TableCell>
               <TableCell>{item.timingsFrom} - {item.timingsTo}</TableCell>
@@ -493,7 +493,7 @@ function CourseList({ classes, filterType }:any) {
               <TableCell>{item.fromPrice} - {item.toPrice}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => {
                       setSelectedClassToDelete(item);
@@ -503,7 +503,7 @@ function CourseList({ classes, filterType }:any) {
                   >
                     Delete
                   </Button>
-                  <Button 
+                  <Button
                     className="app-bg-color"
                     onClick={() => setIsInquiryOpen(true)}
                   >
@@ -515,11 +515,11 @@ function CourseList({ classes, filterType }:any) {
           ))}
         </TableBody>
       </Table>
-      <InquiryPopupScreen 
-        isOpen={isInquiryOpen} 
+      <InquiryPopupScreen
+        isOpen={isInquiryOpen}
         onClose={() => setIsInquiryOpen(false)}
       />
-      <DeletePopupScreen 
+      <DeletePopupScreen
         open={isDeleteOpen}
         setOpen={setIsDeleteOpen}
         onDelete={handleDelete}
