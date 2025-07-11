@@ -566,12 +566,20 @@ export default function RegistrationForm() {
       if (!validationResult.isValid) {
         // Handle validation errors
         if (validationResult.errors) {
-          // Display specific field errors
-          Object.entries(validationResult.errors).forEach(([field, errors]) => {
-            if (errors.length > 0) {
-              toast.error(`${field}: ${errors[0]}`);
-            }
-          });
+          // Check if errors is an array of strings (new format)
+          if (Array.isArray(validationResult.errors)) {
+            // Display each error message
+            validationResult.errors.forEach(error => {
+              toast.error(error);
+            });
+          } else {
+            // Handle object format (old format)
+            Object.entries(validationResult.errors).forEach(([field, errors]) => {
+              if (errors.length > 0) {
+                toast.error(`${field}: ${errors[0]}`);
+              }
+            });
+          }
         } else if (validationResult.message) {
           toast.error(validationResult.message);
         } else {

@@ -222,7 +222,7 @@ export interface UserValidationRequest {
 export interface UserValidationResponse {
   isValid: boolean;
   message?: string;
-  errors?: {
+  errors?: string[] | {
     [key: string]: string[];
   };
 }

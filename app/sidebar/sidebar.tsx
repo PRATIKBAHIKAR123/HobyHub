@@ -73,20 +73,30 @@ export function AppSidebar() {
         };
     }, [isSidebarOpen]);
 
+    // Function to check if user is a Customer
+    const isCustomer = () => {
+        const userData = localStorage.getItem("userData");
+        if (userData) {
+            const user = JSON.parse(userData);
+            return user.Role === "Customer";
+        }
+        return false;
+    };
+
     return (
         <Sheet open={isSidebarOpen} onOpenChange={toggleSidebar}>
             <SheetContent side={isMobile ? "left" : "right"} className="max-w-[50%] w-[400px] text-black px-[2px]">
                 <nav className="mt-[36px]">
                     {menuItems.map((item, index) => {
-                        // Filter out "Join Hobby Hub" if the user is logged in
-                        // const filteredSubmenus = item.submenus.filter(
-                        //     (i) => !(i.name === "Join Hobby Hub" && checkUserLoggedIn)
-                        // );
+                        // Filter out "Join Hobby Hub" if the user is not a Customer
+                        const filteredSubmenus = item.submenus.filter(
+                            (i) => !(i.name === "Join Hobby Hub" && !isCustomer())
+                        );
 
                         return (
                             <div key={index}>
                                 <span className="px-6 text-[24px] items-center mb-4">{item.name}</span>
-                                {item.submenus.map((i, mindex) => (
+                                {filteredSubmenus.map((i, mindex) => (
                                     <div
                                         key={mindex}
                                         onClick={() => !i.isDisabled && handleNavigation(i.link)}
