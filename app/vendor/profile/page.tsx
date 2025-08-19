@@ -329,7 +329,7 @@ function PhotoOptionsDialog({ open, setOpen, onDelete, setProfile,imagePreview }
         // Parse institute details
         if (instituteDetails.length) {
           // const institutedata = instituteDetails[0];
-          const data = instituteDetails[0];
+          const data = instituteDetails[instituteDetails.length-1];
           setactivityId(data.id);
           
           profileData = {
