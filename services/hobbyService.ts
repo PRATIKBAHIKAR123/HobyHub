@@ -59,6 +59,8 @@ interface Activity {
     isCreatedByAdmin: string;
     createdDate: string;
     viewCount: number;
+    classDetails: any; // Added for token expiration check
+    courseDetails: any; // Added for token expiration check
 }
 
 interface ErrorResponse {
@@ -213,6 +215,28 @@ export const getActivityById = async (activityId: number, latitude?: string, lon
                 }
             }
         );
+        
+        // Check if token has expired by checking if classDetails and courseDetails are null
+        // This indicates the API returned limited data due to expired token
+        if (token && response.data.classDetails === null && response.data.courseDetails === null) {
+            console.log('Token expired detected: classDetails and courseDetails are null');
+            
+            // Clear the expired token from localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('activityClassData');
+                localStorage.removeItem('activityCourseData');
+                localStorage.removeItem('activity');
+                
+                // Dispatch a custom event to notify components about token expiration
+                window.dispatchEvent(new CustomEvent('tokenExpired'));
+                console.log('Token cleared and tokenExpired event dispatched');
+            }
+        } else if (token) {
+            console.log('Token valid: classDetails and courseDetails are available');
+        }
+        
         return response.data;
     } catch (error) {
         const err = error as { response?: { data: ErrorResponse } };
